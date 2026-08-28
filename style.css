@@ -200,6 +200,7 @@ main {
   box-shadow: 0 6px 18px rgba(27, 36, 64, 0.15);
 }
 .roll-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.roll-actions { display: flex; align-items: center; gap: 10px; }
 .roll-panel .round-info { color: var(--muted); font-size: 1rem; }
 .roll-panel .round-info b { color: var(--text); font-size: 1.3rem; }
 .dice-row { display: flex; gap: 10px; }
@@ -224,6 +225,22 @@ main {
 .d10.landed { animation: dicepop 0.32s ease; }
 @keyframes dicepop { 0% { transform: scale(1.5); } 100% { transform: scale(1); } }
 .die-result { font-size: 0.8rem; font-weight: 800; color: var(--text); }
+.die-slot { position: relative; }
+.die-slot.alert { background: #ffe14d; }
+.die-slot.alert .die-result { color: #7a4a00; }
+.alert-tri {
+  position: absolute; top: -12px; right: -10px; width: 32px; height: 32px;
+  filter: drop-shadow(0 2px 3px rgba(27, 36, 64, 0.4));
+  animation: alertWiggle 1.6s ease-in-out infinite;
+}
+.alert-tri svg { width: 100%; height: 100%; }
+@keyframes alertWiggle {
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(6deg); }
+}
+.geek-rolls span.off { opacity: 0.28; filter: grayscale(1); }
+.alert-note { color: #9a6b00 !important; font-weight: 700; }
+.alert-note b { color: #7a4a00; }
 
 /* ---- Player panels ---- */
 .panels { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); }
@@ -342,9 +359,6 @@ main {
 .geek-stats b { color: var(--text); }
 .geek-rolls.big { justify-content: center; padding: 6px 0 2px; }
 .geek-rolls.big span { font-size: 1.05rem; min-width: 38px; padding: 5px 7px; }
-.faces-row { display: flex; align-items: center; gap: 8px; margin: 2px 0; }
-.faces-row .geek-rolls { flex: 1; padding: 4px 0; }
-.faces-label { min-width: 62px; text-align: right; font-weight: 700; font-size: 0.82rem; color: var(--muted); }
 
 .targeting-banner {
   position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);

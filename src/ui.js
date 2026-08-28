@@ -89,6 +89,7 @@ export class UI {
       ${g.over ? this.renderGameOver() : ''}`;
 
     $('#roll-btn', this.root)?.addEventListener('click', () => this.doRoll());
+    $('#skip-btn', this.root)?.addEventListener('click', () => this.requestSkip?.());
     $('#restart-btn', this.root).addEventListener('click', () => this.renderStart());
     this.wireInfo();
     this.wirePanels();
@@ -108,16 +109,26 @@ export class UI {
               ? `Round <b>${Math.min(g.round + 1, CONFIG.onePlayerRounds)}</b> / ${CONFIG.onePlayerRounds}`
               : `Round <b>${g.round + 1}</b> &middot; first to ${CONFIG.twoPlayerGoal} EP`
           }</div>
-          <button class="btn btn-roll" id="roll-btn" ${g.over ? 'disabled' : ''}>🎲 ROLL</button>
+          <div class="roll-actions">
+            <button class="btn btn-tiny" id="skip-btn" hidden>⏭ Skip</button>
+            <button class="btn btn-roll" id="roll-btn" ${g.over ? 'disabled' : ''}>🎲 ROLL</button>
+          </div>
         </div>
         <div class="dice-row">
           ${MASCOTS.map((m) => {
             const last = g.lastRolls[m.id];
+            const alert = g.news && g.news.mascotId === m.id;
             return `
-              <div class="die-slot" data-mascot="${m.id}" style="--mc:${m.color}">
+              <div class="die-slot ${alert ? 'alert' : ''}" data-mascot="${m.id}" style="--mc:${m.color}"
+                ${alert ? `title="Mascot News! ${m.name} can only move ${g.news.direction > 0 ? 'Up' : 'Down'}"` : ''}>
+                ${alert ? `
+                  <span class="alert-tri"><svg viewBox="0 0 100 100">
+                    <path d="M50 6 L97 90 L3 90 Z" fill="#ffd21f" stroke="#1b2440" stroke-width="7" stroke-linejoin="round"/>
+                    <text x="50" y="78" text-anchor="middle" font-size="56" font-weight="900" fill="#1b2440">!</text>
+                  </svg></span>` : ''}
                 ${mascotSvg(m.id, 26)}
                 <div class="d10"><span class="die-num">${rolled ? (last > 0 ? `+${last}` : last) : '?'}</span></div>
-                <div class="die-result">${rolled ? this.upDown(last) : '&mdash;'}</div>
+                <div class="die-result">${alert ? `${g.news.direction > 0 ? '⬆ UP' : '⬇ DOWN'} ONLY` : rolled ? this.upDown(last) : '&mdash;'}</div>
               </div>`;
           }).join('')}
         </div>
@@ -401,6 +412,12 @@ export class UI {
     this.animating = true;
     const rollBtn = $('#roll-btn', this.root);
     if (rollBtn) rollBtn.disabled = true;
+    this.skipRequested = false;
+    this.skipPromise = new Promise((resolve) => {
+      this.requestSkip = () => { this.skipRequested = true; resolve(); };
+    });
+    const skipBtn = $('#skip-btn', this.root);
+    if (skipBtn) skipBtn.hidden = false;
 
     // Group each roll with the collections it caused, so collections animate
     // right after their mascot moves.
@@ -417,14 +434,17 @@ export class UI {
       await this.animateDie(roll);
       this.updateLane(roll.mascotId, roll.from);
       this.log(`${m.name} rolled ${this.upDown(roll.roll)} → step ${roll.to}.`);
-      if (collects.length) {
+      if (collects.length && !this.skipRequested) {
         await sleep(350); // let the lane glide before the stars take off
-        await Promise.all(collects.map((c, i) => sleep(i * 180).then(() => this.animateCollect(c))));
-        for (const c of collects) {
-          this.log(`💰 ${PLAYER_NAMES[c.player]}: ${m.name} collected ⭐${c.amount} EP from step ${c.step}!`, 'good');
-        }
+        await Promise.race([
+          Promise.all(collects.map((c, i) => sleep(i * 180).then(() => this.animateCollect(c)))),
+          this.skipPromise,
+        ]);
       }
-      await sleep(400);
+      for (const c of collects) {
+        this.log(`💰 ${PLAYER_NAMES[c.player]}: ${m.name} collected ⭐${c.amount} EP from step ${c.step}!`, 'good');
+      }
+      if (!this.skipRequested) await sleep(400);
     }
 
     for (const e of tail) {
@@ -481,29 +501,34 @@ export class UI {
   }
 
   // Spin the mascot's d10 through its real faces, then land on the roll.
-  animateDie(e) {
+  // A skip request cuts straight to the result.
+  async animateDie(e) {
     const slot = this.root.querySelector(`.die-slot[data-mascot="${e.mascotId}"]`);
-    if (!slot) return Promise.resolve();
+    if (!slot) return;
     const die = slot.querySelector('.d10');
     const num = slot.querySelector('.die-num');
     const result = slot.querySelector('.die-result');
+    const setFinal = () => {
+      num.textContent = e.roll > 0 ? `+${e.roll}` : `${e.roll}`;
+      result.textContent = this.upDown(e.roll);
+    };
+    if (this.skipRequested) return setFinal();
     const faces = mascotById(e.mascotId).rolls;
     die.classList.add('rolling');
     result.textContent = '…';
-    return new Promise((resolve) => {
-      const spin = setInterval(() => {
-        const f = faces[Math.floor(Math.random() * faces.length)];
-        num.textContent = f > 0 ? `+${f}` : `${f}`;
-      }, 65);
-      setTimeout(() => {
-        clearInterval(spin);
-        die.classList.remove('rolling');
-        die.classList.add('landed');
-        num.textContent = e.roll > 0 ? `+${e.roll}` : `${e.roll}`;
-        result.textContent = this.upDown(e.roll);
-        setTimeout(() => { die.classList.remove('landed'); resolve(); }, 350);
-      }, 700);
-    });
+    const spin = setInterval(() => {
+      const f = faces[Math.floor(Math.random() * faces.length)];
+      num.textContent = f > 0 ? `+${f}` : `${f}`;
+    }, 65);
+    await Promise.race([sleep(700), this.skipPromise]);
+    clearInterval(spin);
+    die.classList.remove('rolling');
+    setFinal();
+    if (!this.skipRequested) {
+      die.classList.add('landed');
+      await sleep(350);
+      die.classList.remove('landed');
+    }
   }
 
   renderGameOver() {
@@ -650,7 +675,10 @@ export class UI {
 
   showStats(mascotId) {
     const m = mascotById(mascotId);
-    const pill = (r) => `<span class="${r > 0 ? 'pos' : 'neg'}">${r > 0 ? '+' : ''}${r}</span>`;
+    const news = this.game?.news;
+    const alert = news && news.mascotId === mascotId ? news : null;
+    const blocked = (r) => alert && (alert.direction > 0 ? r <= 0 : r >= 0);
+    const pill = (r) => `<span class="${r > 0 ? 'pos' : 'neg'} ${blocked(r) ? 'off' : ''}">${r > 0 ? '+' : ''}${r}</span>`;
     const upFaces = m.rolls.filter((r) => r > 0).sort((a, b) => a - b).map(pill).join('');
     const downFaces = m.rolls.filter((r) => r <= 0).sort((a, b) => b - a).map(pill).join('');
     const avg = m.rolls.reduce((s, r) => s + r, 0) / m.rolls.length;
@@ -659,8 +687,9 @@ export class UI {
     this.modal(`
       <div class="stats-head">${mascotSvg(m.id, 56)}<div><h2>${m.name}</h2><p>${m.className} &middot; ${m.sector}</p></div></div>
       <p class="hint">${m.name} rolls a 10-sided die with exactly these sides:</p>
-      <div class="faces-row"><span class="faces-label">⬆ Up</span><div class="geek-rolls big">${upFaces}</div></div>
-      <div class="faces-row"><span class="faces-label">⬇ Down</span><div class="geek-rolls big">${downFaces}</div></div>
+      <div class="geek-rolls big">${upFaces}</div>
+      <div class="geek-rolls big">${downFaces}</div>
+      ${alert ? `<p class="hint alert-note">⚠️ Mascot News: ${m.name} can only move <b>${alert.direction > 0 ? 'Up' : 'Down'}</b> right now — greyed sides can't be rolled.</p>` : ''}
       <p class="hint">Chance up: <b>${up}%</b> &middot; Avg move: <b>${avg >= 0 ? '+' : ''}${avg.toFixed(1)}</b> &middot; Avg size: <b>${avgAbs.toFixed(1)}</b></p>`);
   }
 
