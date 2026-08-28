@@ -128,8 +128,10 @@ export class UI {
                     <text x="50" y="78" text-anchor="middle" font-size="56" font-weight="900" fill="#1b2440">!</text>
                   </svg></span>` : ''}
                 <span class="die-mascot">${mascotSvg(m.id, 54)}</span>
-                <div class="d10"><span class="die-num">${rolled ? (last > 0 ? `+${last}` : last) : '?'}</span></div>
-                <div class="die-result">${alert ? `${g.news.direction > 0 ? '⬆ UP' : '⬇ DOWN'} ONLY` : rolled ? this.upDown(last) : '&mdash;'}</div>
+                <div class="die-col">
+                  <div class="d10"><span class="die-num">${rolled ? (last > 0 ? `+${last}` : last) : '?'}</span></div>
+                  <div class="die-result">${alert ? `${g.news.direction > 0 ? '⬆ UP' : '⬇ DOWN'} ONLY` : rolled ? this.upDown(last) : '&mdash;'}</div>
+                </div>
               </div>`;
           }).join('')}
         </div>

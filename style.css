@@ -211,14 +211,15 @@ main {
 .roll-panel .round-info b { color: var(--text); font-size: 1.3rem; }
 .dice-row { display: flex; gap: 10px; }
 .die-slot {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 12px;
   background: var(--silver2); border: 3px solid var(--mc); border-radius: 10px;
-  padding: 10px 4px 8px;
+  padding: 8px 6px;
 }
 .die-mascot {
-  position: absolute; top: -6px; left: -6px;
+  display: flex;
   filter: drop-shadow(0 2px 4px rgba(27, 36, 64, 0.35));
 }
+.die-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .d10 {
   width: 52px; height: 52px; display: grid; place-items: center;
   background: var(--mc);
