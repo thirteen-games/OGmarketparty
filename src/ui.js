@@ -76,9 +76,14 @@ export class UI {
         <button class="btn btn-ghost" id="restart-btn">New game</button>
       </header>
       <main>
-        <section class="board" id="board">${this.renderBoard()}</section>
-        <section class="panels">${g.players.map((_, p) => this.renderPlayerPanel(p)).join('')}</section>
-        <section class="log-panel"><h3>Game log</h3><div class="log" id="log">${this.logHtml()}</div></section>
+        <section class="board" id="board">
+          <div class="board-heads">${MASCOTS.map((m) => this.renderLaneHead(m)).join('')}</div>
+          <div class="board-scroll" id="board-scroll">${this.renderBoard()}</div>
+        </section>
+        <div class="side">
+          <section class="panels">${g.players.map((_, p) => this.renderPlayerPanel(p)).join('')}</section>
+          <section class="log-panel"><h3>Game log</h3><div class="log" id="log">${this.logHtml()}</div></section>
+        </div>
       </main>
       <div class="targeting-banner" id="targeting-banner" hidden></div>
       ${g.over ? this.renderGameOver() : ''}`;
@@ -103,7 +108,7 @@ export class UI {
     return MASCOTS.map((m) => this.renderLane(m)).join('');
   }
 
-  renderLane(mascot) {
+  renderLaneHead(mascot) {
     const g = this.game;
     const step = g.steps[mascot.id];
     const last = g.lastRolls[mascot.id];
@@ -112,44 +117,58 @@ export class UI {
       flag === 2 ? '<span class="flag">❄ frozen</span>'
       : flag === 1 ? '<span class="flag">⬆ up only</span>'
       : flag === -1 ? '<span class="flag">⬇ down only</span>' : '';
+    return `
+      <div class="lane-label" style="--mc:${mascot.color}">
+        ${mascotSvg(mascot.id, 40)}
+        <div class="lane-title">
+          <b>${mascot.name}</b><span class="class-tag">${mascot.className}</span>
+          <div class="lane-sub">at <b>${step}</b>${last ? ` &middot; ${this.upDown(last)}` : ''} ${flagBadge}</div>
+        </div>
+        <button class="btn btn-tiny stats-btn" data-mascot="${mascot.id}" title="Roll odds">📊</button>
+      </div>`;
+  }
+
+  // Vertical lane column, high steps at the top — like the prototype board.
+  renderLane(mascot) {
+    const g = this.game;
+    const step = g.steps[mascot.id];
     const cells = [];
-    for (let s = BOARD_MIN; s <= BOARD_MAX; s++) {
+    for (let s = BOARD_MAX; s >= BOARD_MIN; s--) {
+      const here = s === step;
       const chips = g.players
         .map((player, p) => {
           const ep = player.board[mascot.id][s];
           return ep
-            ? `<span class="chip p${p}" data-mascot="${mascot.id}" data-step="${s}" data-player="${p}" title="${PLAYER_NAMES[p]}: ${ep} EP on step ${s}">${ep}</span>`
+            ? `<span class="chip p${p}" data-mascot="${mascot.id}" data-step="${s}" data-player="${p}"
+                title="${PLAYER_NAMES[p]}: ${ep} EP on step ${s}">${ep}</span>`
             : '';
         })
         .join('');
       cells.push(`
-        <div class="cell ${s % 10 === 0 ? 'decade' : ''} ${s === step ? 'here' : ''}" data-step="${s}">
-          <span class="step-num">${s % 5 === 0 ? s : ''}</span>
-          ${s === step ? `<span class="token" style="--mc:${mascot.color}">${mascotSvg(mascot.id, 34)}</span>` : ''}
+        <div class="cell ${s % 10 === 0 ? 'decade' : ''} ${here ? 'here' : ''}" data-step="${s}">
+          <span class="step-num">${s}</span>
+          ${here ? `<span class="token">${mascotSvg(mascot.id, 22)}<b>${mascot.name}</b></span>` : ''}
           <span class="chips">${chips}</span>
         </div>`);
     }
     return `
-      <div class="lane" data-mascot="${mascot.id}">
-        <div class="lane-label" style="--mc:${mascot.color}">
-          ${mascotSvg(mascot.id, 44)}
-          <div>
-            <b>${mascot.name}</b><span class="class-tag">${mascot.className}</span>
-            <div class="lane-sub">at <b>${step}</b>${last ? ` &middot; last ${last > 0 ? '+' : ''}${last}` : ''} ${flagBadge}</div>
-          </div>
-          <button class="btn btn-tiny stats-btn" data-mascot="${mascot.id}" title="Roll odds">📊</button>
-        </div>
-        <div class="track-wrap"><div class="track">${cells.join('')}</div></div>
+      <div class="lane" data-mascot="${mascot.id}" style="--mc:${mascot.color}">
+        <div class="track">${cells.join('')}</div>
       </div>`;
   }
 
+  upDown(n) {
+    return n > 0 ? `Up ${n}` : n < 0 ? `Down ${Math.abs(n)}` : 'Frozen';
+  }
+
   centerLanes() {
-    for (const lane of this.root.querySelectorAll('.lane')) {
-      const mascotId = Number(lane.dataset.mascot);
-      const wrap = $('.track-wrap', lane);
-      const cell = lane.querySelector(`.cell[data-step="${this.game.steps[mascotId]}"]`);
-      if (wrap && cell) wrap.scrollLeft = cell.offsetLeft - wrap.clientWidth / 2 + cell.clientWidth / 2;
-    }
+    const scroll = $('#board-scroll', this.root);
+    if (!scroll) return;
+    // Center the view on the average mascot position.
+    const steps = MASCOTS.map((m) => this.game.steps[m.id]);
+    const avg = Math.round(steps.reduce((a, b) => a + b, 0) / steps.length);
+    const cell = scroll.querySelector(`.cell[data-step="${avg}"]`);
+    if (cell) scroll.scrollTop = cell.offsetTop - scroll.clientHeight / 2 + cell.clientHeight / 2;
   }
 
   // --- Player panels -----------------------------------------------------------
@@ -188,14 +207,14 @@ export class UI {
     const base = g.steps[t.mascotId];
     const spots = [t.target1, t.target2]
       .filter((x) => x !== null)
-      .map((x) => `<b>${Math.max(BOARD_MIN, Math.min(BOARD_MAX, base + x))}</b>`)
-      .join(' & ');
+      .map((x) => `<b>${this.upDown(x)}</b> <span class="hint">(step ${Math.max(BOARD_MIN, Math.min(BOARD_MAX, base + x))})</span>`)
+      .join('<br>');
     return `
       <div class="card ticket rarity-${t.rarity.toLowerCase()} ${sold ? 'sold' : ''}" style="--mc:${m.color}">
         <div class="card-head">${mascotSvg(m.id, 26)}<span>${m.name}</span><span class="rarity">${t.rarity}</span></div>
         <div class="card-body">
           <div class="reward">⭐ ${t.reward} EP</div>
-          <div class="targets">on step ${spots}</div>
+          <div class="targets">${spots}</div>
           <div class="difficulty">${t.difficulty}</div>
         </div>
         ${sold
@@ -317,7 +336,7 @@ export class UI {
     for (const e of events) {
       if (e.type === 'roll') {
         const m = mascotById(e.mascotId);
-        this.log(`${m.name} rolled ${e.roll > 0 ? '+' : ''}${e.roll}${e.roll === 0 ? ' (frozen)' : ''} → step ${e.to}.`);
+        this.log(`${m.name} rolled ${this.upDown(e.roll)} → step ${e.to}.`);
       } else if (e.type === 'collect') {
         this.log(`💰 ${PLAYER_NAMES[e.player]}: ${mascotById(e.mascotId).name} collected ⭐${e.amount} EP from step ${e.step}!`, 'good');
       } else if (e.type === 'news' || e.type === 'newsEnd') {

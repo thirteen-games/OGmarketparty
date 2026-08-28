@@ -35,7 +35,7 @@ export const MASCOTS = [
     className: 'Giant',
     // 10 equally likely rolls (Roll and Mascots AC6:AL6)
     rolls: [-4, -3, -2, -1, -1, 1, 1, 2, 3, 4],
-    color: '#8e97a8',
+    color: '#7a3fa8', // purple lane, matching the prototype board
     epMoveSteps: 2, // BuySpell: RewardMoveSteps
   },
   {
@@ -44,7 +44,7 @@ export const MASCOTS = [
     sector: 'Entertainment',
     className: 'Crazy',
     rolls: [-10, -8, -6, -4, 2, 3, 4, 6, 8, 10],
-    color: '#e2504c',
+    color: '#d63430', // red lane
     epMoveSteps: 6,
   },
   {
@@ -53,7 +53,7 @@ export const MASCOTS = [
     sector: 'Entertainment',
     className: 'Grower',
     rolls: [-2, -1, 1, 1, 1, 1, 1, 1, 2, 2],
-    color: '#5d6d8e',
+    color: '#c8960c', // gold lane
     epMoveSteps: 2,
   },
   {
@@ -62,7 +62,7 @@ export const MASCOTS = [
     sector: 'Entertainment',
     className: 'Flyer',
     rolls: [-8, -6, -4, -2, 2, 2, 3, 4, 4, 8],
-    color: '#3aa789',
+    color: '#6e7681', // gray lane
     epMoveSteps: 4,
   },
 ];
