@@ -367,6 +367,15 @@ main {
 .geek-rolls.big { justify-content: center; padding: 6px 0 2px; }
 .geek-rolls.big span { font-size: 1.05rem; min-width: 38px; padding: 5px 7px; }
 
+/* Tutorial */
+.tut-card { max-width: 540px; text-align: left; }
+.tut-host { display: flex; align-items: center; gap: 14px; }
+.tut-host h2 { margin: 0; }
+.tut-host svg { flex: none; filter: drop-shadow(0 3px 6px rgba(27, 36, 64, 0.3)); }
+.tut-body { color: var(--text); line-height: 1.55; }
+.tut-body i { color: var(--muted); }
+.tut-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; }
+
 .targeting-banner {
   position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
   background: var(--accent); color: #1b2440; font-weight: 700;

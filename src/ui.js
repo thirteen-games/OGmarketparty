@@ -9,6 +9,7 @@ import {
 } from './data.js';
 import { mascotSvg } from './mascotArt.js';
 import { collectProbability, oddsLabel } from './odds.js';
+import { TUTORIAL_STEPS } from './tutorial.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -37,6 +38,7 @@ export class UI {
           <div class="start-buttons">
             <button class="btn btn-primary" data-mode="1">1 Player &mdash; ${CONFIG.onePlayerRounds} rounds, chase ${CONFIG.onePlayerGoal} EP</button>
             <button class="btn btn-primary" data-mode="2">2 Players &mdash; first to ${CONFIG.twoPlayerGoal} EP</button>
+            <button class="btn" id="tutorial-btn">📖 Tutorial</button>
           </div>
           <details class="rules">
             <summary>How to play</summary>
@@ -53,6 +55,7 @@ export class UI {
     this.root.querySelectorAll('[data-mode]').forEach((btn) => {
       btn.addEventListener('click', () => this.newGame(Number(btn.dataset.mode)));
     });
+    $('#tutorial-btn', this.root)?.addEventListener('click', () => this.showTutorial());
   }
 
   newGame(mode) {
@@ -85,6 +88,7 @@ export class UI {
       <header class="topbar">
         <div class="brand">${mascotSvg(2, 28)}<span>Market Party</span></div>
         <div class="news-banner info-click ${g.news.length ? 'active' : ''}" id="news-banner" title="How Mascot News works">${this.newsText()}</div>
+        <button class="btn btn-ghost" id="tutorial-btn" title="Learn how to play">📖 Tutorial</button>
         <button class="btn btn-ghost" id="all-bets-btn" title="Every ticket in the game">📋 All Bets</button>
         <button class="btn btn-ghost" id="stats-geek-btn" title="Roll odds for every mascot">🤓 Stats Geek</button>
         <button class="btn btn-ghost" id="restart-btn">New game</button>
@@ -105,6 +109,7 @@ export class UI {
 
     $('#roll-btn', this.root)?.addEventListener('click', () => this.doRoll());
     $('#skip-btn', this.root)?.addEventListener('click', () => this.requestSkip?.());
+    $('#tutorial-btn', this.root)?.addEventListener('click', () => this.showTutorial());
     $('#restart-btn', this.root).addEventListener('click', () => this.renderStart());
     this.wireInfo();
     this.wirePanels();
@@ -665,6 +670,38 @@ export class UI {
           <button class="btn btn-primary" id="play-again">Play again</button>
         </div>
       </div>`;
+  }
+
+  // --- Tutorial (ported from the prototype's speech-bubble sequence) ----------
+
+  showTutorial() {
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay';
+    let step = 0;
+    const render = () => {
+      const s = TUTORIAL_STEPS[step];
+      const last = step === TUTORIAL_STEPS.length - 1;
+      overlay.innerHTML = `
+        <div class="overlay-card tut-card">
+          <div class="tut-host">${mascotSvg(2, 56)}<div><h2>${s.title}</h2>
+            <span class="hint">Tutorial &middot; step ${step + 1} of ${TUTORIAL_STEPS.length}</span></div></div>
+          <p class="tut-body">${s.html}</p>
+          <div class="tut-nav">
+            <button class="btn" id="tut-prev" ${step === 0 ? 'disabled' : ''}>← Back</button>
+            <button class="btn btn-tiny" id="tut-close">Close</button>
+            <button class="btn btn-primary" id="tut-next">${last ? 'Done ✔' : 'Next →'}</button>
+          </div>
+        </div>`;
+      $('#tut-prev', overlay).addEventListener('click', () => { step -= 1; render(); });
+      $('#tut-close', overlay).addEventListener('click', () => overlay.remove());
+      $('#tut-next', overlay).addEventListener('click', () => {
+        if (last) overlay.remove();
+        else { step += 1; render(); }
+      });
+    };
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    render();
+    this.root.appendChild(overlay);
   }
 
   // --- Info popups (the prototype's clickable Show*Info boxes) -----------------
