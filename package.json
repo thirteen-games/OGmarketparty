@@ -1,0 +1,12 @@
+{
+  "name": "market-party",
+  "version": "1.0.0",
+  "description": "Market Party — mascot betting board game, ported from the Excel prototype",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/engine.test.mjs",
+    "serve": "python -m http.server 8642"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
