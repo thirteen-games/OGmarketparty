@@ -210,8 +210,38 @@ main {
 .overlay-card {
   background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
   padding: 30px 40px; text-align: center; max-width: 460px;
+  max-height: 86vh; overflow-y: auto;
   box-shadow: 0 24px 80px rgba(0,0,0,0.5);
 }
+.overlay-card.wide { max-width: 760px; text-align: left; }
+.overlay-card.wide .close-modal { display: block; margin: 14px auto 0; }
+
+/* clickable info elements */
+.info-click { cursor: pointer; }
+.stat.info-click:hover, .news-banner.info-click:hover { color: var(--text); }
+.stat.info-click b { border-bottom: 1px dotted var(--muted); }
+.info-list { text-align: left; color: var(--muted); padding-left: 20px; }
+.info-list li { margin: 7px 0; }
+.info-list b { color: var(--text); }
+
+/* All Bets + Stats Geek modals */
+.bets-section { margin-top: 16px; }
+.bets-head {
+  display: flex; align-items: center; gap: 8px; padding: 5px 10px;
+  background: var(--mc); color: #fff; border-radius: 8px 8px 0 0; font-size: 0.95rem;
+}
+.stats-table.full { width: 100%; margin: 0; font-size: 0.85rem; }
+.geek-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }
+.geek-col { background: var(--panel2); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.geek-rolls { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px; }
+.geek-rolls span {
+  min-width: 26px; text-align: center; padding: 2px 4px; border-radius: 5px;
+  font-weight: 700; font-size: 0.8rem; background: #16181d;
+}
+.geek-rolls .pos { color: var(--good); }
+.geek-rolls .neg { color: var(--danger); }
+.geek-stats { padding: 0 10px 10px; color: var(--muted); font-size: 0.82rem; }
+.geek-stats b { color: var(--text); }
 .overlay-card h2 { margin: 10px 0 6px; }
 .overlay-card p { color: var(--muted); }
 .stats-head { display: flex; align-items: center; gap: 14px; text-align: left; }

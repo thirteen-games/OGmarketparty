@@ -3,6 +3,7 @@
 import { Game } from './engine.js';
 import {
   MASCOTS, CONFIG, BOARD_MIN, BOARD_MAX,
+  TICKETS, SPELLS, EP_LEVELS, NEWS_TABLE,
   mascotById, ticketById, spellById,
 } from './data.js';
 import { mascotSvg } from './mascotArt.js';
@@ -71,7 +72,9 @@ export class UI {
             ? `Round <b>${Math.min(g.round + 1, CONFIG.onePlayerRounds)}</b> / ${CONFIG.onePlayerRounds}`
             : `Round <b>${g.round + 1}</b> &middot; first to ${CONFIG.twoPlayerGoal} EP`
         }</div>
-        <div class="news-banner ${g.news ? 'active' : ''}">${this.newsText()}</div>
+        <div class="news-banner info-click ${g.news ? 'active' : ''}" id="news-banner" title="How Mascot News works">${this.newsText()}</div>
+        <button class="btn btn-ghost" id="all-bets-btn" title="Every ticket in the game">📋 All Bets</button>
+        <button class="btn btn-ghost" id="stats-geek-btn" title="Roll odds for every mascot">🤓 Stats Geek</button>
         <button class="btn btn-roll" id="roll-btn" ${g.over ? 'disabled' : ''}>🎲 ROLL</button>
         <button class="btn btn-ghost" id="restart-btn">New game</button>
       </header>
@@ -90,6 +93,7 @@ export class UI {
 
     $('#roll-btn', this.root)?.addEventListener('click', () => this.doRoll());
     $('#restart-btn', this.root).addEventListener('click', () => this.renderStart());
+    this.wireInfo();
     this.wirePanels();
     this.wireTargeting();
     this.centerLanes();
@@ -181,9 +185,9 @@ export class UI {
       <div class="player-panel" data-player="${p}" style="--pc:${PLAYER_COLORS[p]}">
         <div class="player-head">
           <b>${PLAYER_NAMES[p]}</b>
-          <span class="stat">🪙 <b>${player.coins}</b></span>
-          <span class="stat">⭐ <b>${player.ep}</b> EP</span>
-          <span class="stat level">Level ${level}</span>
+          <span class="stat info-click" data-info="coins" title="How the Coin bank works">🪙 <b>${player.coins}</b></span>
+          <span class="stat info-click" data-info="ep" title="How EP works">⭐ <b>${player.ep}</b> EP</span>
+          <span class="stat level info-click" data-info="ep" title="How EP Levels work">Level ${level}</span>
         </div>
         <div class="shop">
           <div class="shop-row">
@@ -191,7 +195,7 @@ export class UI {
             <div class="cards">${player.tickets.map((id, slot) => this.renderTicketCard(p, id, slot)).join('')}</div>
           </div>
           <div class="shop-row">
-            <div class="shop-title">Spells <span class="hint">(cost EP)</span></div>
+            <div class="shop-title">Spells <span class="hint">(cost EP)</span> <button class="btn btn-tiny info-click" data-info="spells" title="How Spells work">?</button></div>
             <div class="cards">${player.spells.map((id, slot) => this.renderSpellCard(p, id, slot)).join('')}</div>
           </div>
         </div>
@@ -373,6 +377,118 @@ export class UI {
       </div>`;
   }
 
+  // --- Info popups (the prototype's clickable Show*Info boxes) -----------------
+
+  wireInfo() {
+    $('#all-bets-btn', this.root)?.addEventListener('click', () => this.showAllBets());
+    $('#stats-geek-btn', this.root)?.addEventListener('click', () => this.showStatsGeek());
+    $('#news-banner', this.root)?.addEventListener('click', () => this.showInfo('news'));
+    this.root.querySelectorAll('[data-info]').forEach((el) => {
+      el.addEventListener('click', () => this.showInfo(el.dataset.info));
+    });
+  }
+
+  showInfo(topic) {
+    if (topic === 'coins') {
+      this.modal(`
+        <h2>🪙 The Coin Bank</h2>
+        <ul class="info-list">
+          <li>Coins buy <b>Betting Tickets</b>.</li>
+          <li>You start with <b>${CONFIG.startingCoins}</b> and get <b>+${CONFIG.coinsPerRound}</b> after every roll.</li>
+          <li><b>Interest:</b> each round you also earn 1 extra Coin per ${CONFIG.interestDivisor} you're holding
+            (max +${CONFIG.maxInterest}) — saving up pays off.</li>
+          <li>Refreshing your ticket offers costs ${CONFIG.refreshCost} Coins; offers refresh free after every roll.</li>
+        </ul>`);
+    } else if (topic === 'ep') {
+      const rows = EP_LEVELS
+        .map((l) => `<tr><td>Level ${l.level}</td><td>${l.minEP}+ EP</td></tr>`)
+        .join('');
+      this.modal(`
+        <h2>⭐ EP &amp; Levels</h2>
+        <ul class="info-list">
+          <li>EP (Event Points) is your <b>score</b> — and the currency for <b>Spells</b>.</li>
+          <li>Earn EP when a mascot lands on or passes one of your bounties.</li>
+          <li>Your banked EP sets your <b>Level</b>, and higher levels unlock rarer,
+            bigger tickets and spells in the shop:</li>
+        </ul>
+        <table class="stats-table"><tr><th>Level</th><th>EP in bank</th></tr>${rows}</table>
+        <p class="hint">Careful: spending EP on spells can drop your Level (and your score).
+        ${this.game?.mode === 1
+          ? `Score ${CONFIG.onePlayerGoal}+ in ${CONFIG.onePlayerRounds} rounds to make the leaderboard.`
+          : `First player to ${CONFIG.twoPlayerGoal} EP wins.`}</p>`);
+    } else if (topic === 'spells') {
+      this.modal(`
+        <h2>✨ Spells</h2>
+        <ul class="info-list">
+          <li>You're offered 2 spells per round; casting costs <b>EP</b>, not Coins.</li>
+          <li><b>Double</b> (10 EP) — double one of your bounties, up to +50.</li>
+          <li><b>Move closer</b> (15 EP) — slide a bounty toward its mascot
+            (Mousey/Wolf 2 steps, Flixy 4, Bizarro 6). If it reaches the mascot, collect instantly!</li>
+          <li><b>Halve</b> (20 EP) — halve an opponent's bounty, up to −50.</li>
+          <li><b>Steal</b> (50 EP) — take up to 50 EP off an opponent's bounty onto yours.</li>
+          <li><b>Up only / Down only / Freeze</b> (10–30 EP) — control a mascot's next roll.
+            These affect the mascot itself, so <i>both</i> players feel it.</li>
+        </ul>`);
+    } else if (topic === 'news') {
+      const rows = NEWS_TABLE.map((row, i) => {
+        const prev = i === 0 ? 1 : NEWS_TABLE[i - 1].threshold;
+        const pct = Math.round((prev - row.threshold) * 100);
+        return `<tr><td>${mascotById(row.mascotId).name}</td><td>${row.direction > 0 ? '⬆ Up only' : '⬇ Down only'}</td><td>${pct}%</td></tr>`;
+      }).join('');
+      this.modal(`
+        <h2>📣 Mascot News Alerts</h2>
+        <ul class="info-list">
+          <li>After each roll, if no alert is running, there's a <b>40%</b> chance one hits.</li>
+          <li>The named mascot can only move in the reported direction for the next
+            <b>${CONFIG.newsDurationRolls} rolls</b> — plan your bets around it!</li>
+        </ul>
+        <table class="stats-table"><tr><th>Mascot</th><th>Alert</th><th>Odds</th></tr>${rows}</table>`);
+    }
+  }
+
+  showAllBets() {
+    const sections = MASCOTS.map((m) => {
+      const rows = TICKETS.filter((t) => t.mascotId === m.id)
+        .sort((a, b) => a.cost - b.cost)
+        .map((t) => {
+          const targets = [t.target1, t.target2].filter((x) => x !== null).map((x) => this.upDown(x)).join(' & ');
+          return `<tr><td>${t.rarity}</td><td>🪙${t.cost}</td><td>⭐${t.reward}</td><td>${targets}</td><td>${t.difficulty}</td></tr>`;
+        }).join('');
+      return `
+        <div class="bets-section" style="--mc:${m.color}">
+          <div class="bets-head">${mascotSvg(m.id, 30)}<b>${m.name}</b></div>
+          <table class="stats-table full">
+            <tr><th>Rarity</th><th>Cost</th><th>Reward</th><th>Bounty on</th><th>Difficulty</th></tr>${rows}
+          </table>
+        </div>`;
+    }).join('');
+    this.modal(`<h2>📋 All Possible Bets</h2>
+      <p class="hint">Bounties land relative to the mascot's step when you buy.
+      Rarer tickets appear in the shop as your Level rises.</p>${sections}`, { wide: true });
+  }
+
+  showStatsGeek() {
+    const cols = MASCOTS.map((m) => {
+      const sorted = [...m.rolls].sort((a, b) => a - b);
+      const avg = m.rolls.reduce((s, r) => s + r, 0) / m.rolls.length;
+      const avgAbs = m.rolls.reduce((s, r) => s + Math.abs(r), 0) / m.rolls.length;
+      const up = m.rolls.filter((r) => r > 0).length * 10;
+      return `
+        <div class="geek-col" style="--mc:${m.color}">
+          <div class="bets-head">${mascotSvg(m.id, 30)}<b>${m.name}</b></div>
+          <div class="geek-rolls">${sorted.map((r) => `<span class="${r > 0 ? 'pos' : 'neg'}">${r > 0 ? '+' : ''}${r}</span>`).join('')}</div>
+          <div class="geek-stats">
+            <div>Chance up: <b>${up}%</b></div>
+            <div>Avg move: <b>${avg >= 0 ? '+' : ''}${avg.toFixed(1)}</b></div>
+            <div>Avg size: <b>${avgAbs.toFixed(1)}</b></div>
+          </div>
+        </div>`;
+    }).join('');
+    this.modal(`<h2>🤓 Stats Geek</h2>
+      <p class="hint">Each mascot rolls one of its 10 moves, all equally likely.</p>
+      <div class="geek-grid">${cols}</div>`, { wide: true });
+  }
+
   // --- Stats popup, log, toast ------------------------------------------------
 
   showStats(mascotId) {
@@ -390,10 +506,10 @@ export class UI {
       <p class="hint">Average move size: ${avgAbs.toFixed(1)} steps</p>`);
   }
 
-  modal(html) {
+  modal(html, { wide = false } = {}) {
     const overlay = document.createElement('div');
     overlay.className = 'overlay';
-    overlay.innerHTML = `<div class="overlay-card">${html}<button class="btn btn-primary close-modal">Close</button></div>`;
+    overlay.innerHTML = `<div class="overlay-card ${wide ? 'wide' : ''}">${html}<button class="btn btn-primary close-modal">Close</button></div>`;
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay || e.target.classList.contains('close-modal')) overlay.remove();
     });
