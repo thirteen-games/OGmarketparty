@@ -7,6 +7,7 @@ import {
   mascotById, ticketById, spellById,
 } from './data.js';
 import { mascotSvg } from './mascotArt.js';
+import { collectProbability, oddsLabel } from './odds.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -277,17 +278,18 @@ export class UI {
     const sold = g.players[p].ticketSold[slot];
     const canAfford = g.players[p].coins >= t.cost;
     const base = g.steps[t.mascotId];
-    const spots = [t.target1, t.target2]
-      .filter((x) => x !== null)
+    const offsets = [t.target1, t.target2].filter((x) => x !== null);
+    const spots = offsets
       .map((x) => `<b>${this.upDown(x)}</b> <span class="hint">(step ${Math.max(BOARD_MIN, Math.min(BOARD_MAX, base + x))})</span>`)
       .join('<br>');
+    const prob = collectProbability(m, offsets, g.oddsHorizon());
     return `
       <div class="card ticket rarity-${t.rarity.toLowerCase()} ${sold ? 'sold' : ''}" style="--mc:${m.color}">
         <div class="card-head info-click" data-stats="${m.id}" title="See ${m.name}'s die">${mascotSvg(m.id, 26)}<span>${m.name}</span><span class="rarity">${t.rarity}</span></div>
         <div class="card-body">
           <div class="reward">⭐ ${t.reward} EP</div>
           <div class="targets">${spots}</div>
-          <div class="difficulty">${t.difficulty}</div>
+          <div class="difficulty">${oddsLabel(prob)} &middot; ${Math.round(prob * 100)}%</div>
         </div>
         ${sold
           ? '<div class="sold-tag">SOLD</div>'
@@ -629,23 +631,27 @@ export class UI {
   }
 
   showAllBets() {
+    const horizon = this.game.oddsHorizon();
     const sections = MASCOTS.map((m) => {
       const rows = TICKETS.filter((t) => t.mascotId === m.id)
         .sort((a, b) => a.cost - b.cost)
         .map((t) => {
-          const targets = [t.target1, t.target2].filter((x) => x !== null).map((x) => this.upDown(x)).join(' & ');
-          return `<tr><td>${t.rarity}</td><td>🪙${t.cost}</td><td>⭐${t.reward}</td><td>${targets}</td><td>${t.difficulty}</td></tr>`;
+          const offsets = [t.target1, t.target2].filter((x) => x !== null);
+          const targets = offsets.map((x) => this.upDown(x)).join(' & ');
+          const prob = collectProbability(m, offsets, horizon);
+          return `<tr><td>${t.rarity}</td><td>🪙${t.cost}</td><td>⭐${t.reward}</td><td>${targets}</td><td>${oddsLabel(prob)} &middot; ${Math.round(prob * 100)}%</td></tr>`;
         }).join('');
       return `
         <div class="bets-section" style="--mc:${m.color}">
           <div class="bets-head">${mascotSvg(m.id, 30)}<b>${m.name}</b></div>
           <table class="stats-table full">
-            <tr><th>Rarity</th><th>Cost</th><th>Reward</th><th>Bounty on</th><th>Difficulty</th></tr>${rows}
+            <tr><th>Rarity</th><th>Cost</th><th>Reward</th><th>Bounty on</th><th>Odds</th></tr>${rows}
           </table>
         </div>`;
     }).join('');
     this.modal(`<h2>📋 All Possible Bets</h2>
       <p class="hint">Bounties land relative to the mascot's step when you buy.
+      Odds are the chance of a payout within the next ${horizon} roll${horizon === 1 ? '' : 's'}.
       Rarer tickets appear in the shop as your Level rises.</p>${sections}`, { wide: true });
   }
 

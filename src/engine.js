@@ -65,6 +65,16 @@ export class Game {
     return epLevelFor(this.players[p].ep);
   }
 
+  // Horizon for live ticket odds: a 4-roll window, shrinking near the end
+  // of a 1P game when fewer rolls remain.
+  oddsHorizon() {
+    const window = 4;
+    if (this.mode === 1) {
+      return Math.max(1, Math.min(window, CONFIG.onePlayerRounds - this.round));
+    }
+    return window;
+  }
+
   // --- Shops -------------------------------------------------------------
 
   drawTicketTier(level) {

@@ -43,6 +43,12 @@ show/hide).
    original SVG stand-ins.
 5. **MascotNews3 (free spell for each player) is not implemented** — it was
    unreachable in the prototype's threshold table (no branch calls it).
+6. **Ticket difficulty is computed live, not hand-labeled.** The prototype's
+   Difficulty column (Table797 col X) was the designer's judgment and didn't
+   always track the odds columns next to it. The game now computes the exact
+   payout probability within a 4-roll window (first-passage DP over the die,
+   `src/odds.js`) and buckets it into the same Easy→Very Hard vocabulary. The
+   original labels remain in `data.js` for reference.
 
 ## Unused prototype content
 

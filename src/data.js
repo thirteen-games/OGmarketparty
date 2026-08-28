@@ -39,15 +39,6 @@ export const MASCOTS = [
     epMoveSteps: 2, // BuySpell: RewardMoveSteps
   },
   {
-    id: 2,
-    name: 'Bizarro',
-    sector: 'Entertainment',
-    className: 'Crazy',
-    rolls: [-10, -8, -6, -4, 2, 3, 4, 6, 8, 10],
-    color: '#d63430', // red lane
-    epMoveSteps: 6,
-  },
-  {
     id: 3,
     name: 'Wolf',
     sector: 'Entertainment',
@@ -65,11 +56,22 @@ export const MASCOTS = [
     color: '#6e7681', // gray lane
     epMoveSteps: 4,
   },
+  {
+    id: 2,
+    name: 'Bizarro',
+    sector: 'Entertainment',
+    className: 'Crazy',
+    rolls: [-10, -8, -6, -4, 2, 3, 4, 6, 8, 10],
+    color: '#d63430', // red lane
+    epMoveSteps: 6,
+  },
 ];
 
 // Betting tickets (Betting Tickets Table797, S28:AJ51).
 // id = mascotId*100 + tier. target offsets are relative to the mascot's step
 // at purchase time; tickets with target2 place the reward on BOTH steps.
+// `difficulty` is the designer's original hand-written label, kept for
+// reference only — the game now computes live odds instead (see odds.js).
 export const TICKETS = [
   { id: 101, mascotId: 1, rarity: 'Common',    difficulty: 'Medium',    cost: 1,  reward: 11,  target1: 1,  target2: null },
   { id: 201, mascotId: 2, rarity: 'Common',    difficulty: 'Medium',    cost: 1,  reward: 12,  target1: -1, target2: null },

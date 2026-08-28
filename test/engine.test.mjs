@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Game, FLAG } from '../src/engine.js';
+import { collectProbability, oddsLabel } from '../src/odds.js';
 import {
   MASCOTS, TICKETS, SPELLS, CONFIG, START_STEP,
   epLevelFor, ticketById, spellById, SPELL_TYPES,
@@ -256,6 +257,52 @@ test('board steps stay within 0..100', () => {
   g.rollForMascot = (m) => (m.id === 2 ? 10 : 0);
   g.roll();
   assert.equal(g.steps[2], 100);
+});
+
+test('collectProbability matches hand-computed one-roll odds', () => {
+  const wolf = MASCOTS.find((m) => m.name === 'Wolf');
+  const mousey = MASCOTS.find((m) => m.name === 'Mousey');
+  const bizarro = MASCOTS.find((m) => m.name === 'Bizarro');
+  // Wolf down 1 in one roll: faces -1 and -2 hit -> 20%
+  assert.ok(Math.abs(collectProbability(wolf, [-1], 1) - 0.2) < 1e-12);
+  // Mousey up 1 in one roll: five positive faces -> 50%
+  assert.ok(Math.abs(collectProbability(mousey, [1], 1) - 0.5) < 1e-12);
+  // Bizarro +2/-2 in one roll: every face has |move| >= 2 -> 100%
+  assert.ok(Math.abs(collectProbability(bizarro, [2, -2], 1) - 1) < 1e-12);
+});
+
+test('collectProbability grows with the horizon', () => {
+  const mousey = MASCOTS.find((m) => m.name === 'Mousey');
+  let prev = 0;
+  for (let n = 1; n <= 6; n++) {
+    const p = collectProbability(mousey, [3], n);
+    assert.ok(p >= prev && p <= 1);
+    prev = p;
+  }
+});
+
+test('odds horizon is a 4-roll window, shrinking at the end of 1P games', () => {
+  const g = new Game({ mode: 1, seed: 6 });
+  assert.equal(g.oddsHorizon(), 4);
+  g.round = 8;
+  assert.equal(g.oddsHorizon(), 2);
+  g.round = 10;
+  assert.equal(g.oddsHorizon(), 1);
+  const g2 = new Game({ mode: 2, seed: 6 });
+  g2.round = 30;
+  assert.equal(g2.oddsHorizon(), 4);
+});
+
+test('oddsLabel buckets probabilities', () => {
+  assert.equal(oddsLabel(0.9), 'Very Easy');
+  assert.equal(oddsLabel(0.6), 'Easy');
+  assert.equal(oddsLabel(0.45), 'Medium');
+  assert.equal(oddsLabel(0.3), 'Hard');
+  assert.equal(oddsLabel(0.1), 'Very Hard');
+});
+
+test('mascot display order is Mousey, Wolf, Flixy, Bizarro', () => {
+  assert.deepEqual(MASCOTS.map((m) => m.name), ['Mousey', 'Wolf', 'Flixy', 'Bizarro']);
 });
 
 test('simulated 1P games finish with sane scores', () => {
