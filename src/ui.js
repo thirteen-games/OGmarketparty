@@ -592,17 +592,17 @@ export class UI {
 
   showStats(mascotId) {
     const m = mascotById(mascotId);
-    const faces = [...m.rolls]
-      .sort((a, b) => a - b)
-      .map((r) => `<span class="${r > 0 ? 'pos' : 'neg'}">${r > 0 ? '+' : ''}${r}</span>`)
-      .join('');
+    const pill = (r) => `<span class="${r > 0 ? 'pos' : 'neg'}">${r > 0 ? '+' : ''}${r}</span>`;
+    const upFaces = m.rolls.filter((r) => r > 0).sort((a, b) => a - b).map(pill).join('');
+    const downFaces = m.rolls.filter((r) => r <= 0).sort((a, b) => b - a).map(pill).join('');
     const avg = m.rolls.reduce((s, r) => s + r, 0) / m.rolls.length;
     const avgAbs = m.rolls.reduce((s, r) => s + Math.abs(r), 0) / m.rolls.length;
     const up = m.rolls.filter((r) => r > 0).length * 10;
     this.modal(`
       <div class="stats-head">${mascotSvg(m.id, 56)}<div><h2>${m.name}</h2><p>${m.className} &middot; ${m.sector}</p></div></div>
       <p class="hint">${m.name} rolls a 10-sided die with exactly these sides:</p>
-      <div class="geek-rolls big">${faces}</div>
+      <div class="faces-row"><span class="faces-label">⬆ Up</span><div class="geek-rolls big">${upFaces}</div></div>
+      <div class="faces-row"><span class="faces-label">⬇ Down</span><div class="geek-rolls big">${downFaces}</div></div>
       <p class="hint">Chance up: <b>${up}%</b> &middot; Avg move: <b>${avg >= 0 ? '+' : ''}${avg.toFixed(1)}</b> &middot; Avg size: <b>${avgAbs.toFixed(1)}</b></p>`);
   }
 
