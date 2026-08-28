@@ -58,8 +58,12 @@ export class UI {
     this.game = new Game({ mode });
     this.logLines = [];
     this.targeting = null;
+    this.skipPromise = null;
+    this.skipRequested = false;
+    this.animating = false;
     this.log(`New ${mode}-player game. Make some Bets, then Roll!`);
     this.renderGame();
+    this.showRoundBanner(1);
   }
 
   // --- Main render -----------------------------------------------------------
@@ -451,12 +455,92 @@ export class UI {
       if (!this.skipRequested) await sleep(400);
     }
 
+    const newsEvent = tail.find((e) => e.type === 'news');
     for (const e of tail) {
       if (e.type === 'news' || e.type === 'newsEnd') this.log(e.message, 'news');
     }
 
+    // Between-round sequence: round banner, then news popup, then coin gain.
+    if (!this.game.over && !this.skipRequested) {
+      await this.showRoundBanner(this.game.round + 1);
+      if (newsEvent && !this.skipRequested) await this.showNewsPopup(newsEvent);
+      if (!this.skipRequested) await Promise.race([this.animateCoinGain(), this.skipPromise]);
+    }
+
     this.animating = false;
     this.renderGame();
+  }
+
+  showRoundBanner(n) {
+    const banner = document.createElement('div');
+    banner.className = 'round-banner';
+    banner.innerHTML = `<div class="round-banner-text">ROUND ${n}!</div>`;
+    document.body.appendChild(banner);
+    const waits = [sleep(1200)];
+    if (this.skipPromise) waits.push(this.skipPromise);
+    return Promise.race(waits).then(() => banner.remove());
+  }
+
+  showNewsPopup(e) {
+    const m = mascotById(e.mascotId);
+    const overlay = document.createElement('div');
+    overlay.className = 'news-popup';
+    overlay.innerHTML = `
+      <div class="news-card">
+        <span class="news-tri"><svg viewBox="0 0 100 100">
+          <path d="M50 6 L97 90 L3 90 Z" fill="#ffd21f" stroke="#1b2440" stroke-width="7" stroke-linejoin="round"/>
+          <text x="50" y="78" text-anchor="middle" font-size="56" font-weight="900" fill="#1b2440">!</text>
+        </svg></span>
+        ${mascotSvg(m.id, 76)}
+        <h2>MASCOT NEWS!</h2>
+        <p>${m.name} can only move <b>${e.direction > 0 ? 'UP' : 'DOWN'}</b> for the next ${CONFIG.newsDurationRolls} rolls!</p>
+      </div>`;
+    document.body.appendChild(overlay);
+    const dismissed = new Promise((resolve) => overlay.addEventListener('click', resolve));
+    const waits = [sleep(2400), dismissed];
+    if (this.skipPromise) waits.push(this.skipPromise);
+    return Promise.race(waits).then(() => overlay.remove());
+  }
+
+  // Coins fly from the Roll button to each player's coin bank, then the
+  // number ticks up.
+  animateCoinGain() {
+    const g = this.game;
+    const rollRect = $('#roll-btn', this.root)?.getBoundingClientRect()
+      ?? { left: window.innerWidth / 2, top: 120, width: 0, height: 0 };
+    const sx = rollRect.left + rollRect.width / 2;
+    const sy = rollRect.top + rollRect.height / 2;
+    return Promise.all(g.players.map(async (player, p) => {
+      const gain = g.lastCoinGain?.[p] ?? 0;
+      const coinEl = this.root.querySelector(`.player-panel[data-player="${p}"] [data-info="coins"] b`);
+      if (!gain || !coinEl) return;
+      const t = coinEl.getBoundingClientRect();
+      const float = document.createElement('div');
+      float.className = 'float-text coin-float';
+      float.textContent = `+${gain} 🪙`;
+      float.style.left = `${t.left}px`;
+      float.style.top = `${t.top - 10}px`;
+      document.body.appendChild(float);
+      setTimeout(() => float.remove(), 1200);
+      await Promise.all([0, 1, 2].map((i) => sleep(i * 150).then(() => new Promise((resolve) => {
+        const coin = document.createElement('div');
+        coin.className = 'fly-star fly-coin';
+        coin.textContent = '🪙';
+        coin.style.left = `${sx}px`;
+        coin.style.top = `${sy}px`;
+        document.body.appendChild(coin);
+        const dx = t.left + t.width / 2 - sx;
+        const dy = t.top + t.height / 2 - sy;
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          coin.style.transform = `translate(${dx}px, ${dy}px) scale(0.7)`;
+        }));
+        setTimeout(() => { coin.remove(); resolve(); }, 700);
+      }))));
+      coinEl.textContent = Number(coinEl.textContent) + gain;
+      const stat = coinEl.closest('.stat');
+      stat?.classList.add('ep-bump');
+      setTimeout(() => stat?.classList.remove('ep-bump'), 450);
+    }));
   }
 
   // Floating "+N EP" at the collected step, and a star that flies to the

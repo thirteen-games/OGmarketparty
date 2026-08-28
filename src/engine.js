@@ -293,10 +293,12 @@ export class Game {
   }
 
   incrementCoins() {
-    for (const player of this.players) {
+    this.lastCoinGain = this.players.map((player) => {
       const interest = Math.min(CONFIG.maxInterest, Math.floor(player.coins / CONFIG.interestDivisor));
-      player.coins += CONFIG.coinsPerRound + interest;
-    }
+      const gain = CONFIG.coinsPerRound + interest;
+      player.coins += gain;
+      return gain;
+    });
   }
 
   checkGameOver(events) {
