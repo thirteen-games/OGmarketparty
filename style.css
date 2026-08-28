@@ -191,7 +191,6 @@ main {
   background: rgba(255, 255, 255, 0.9); box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
   pointer-events: none;
 }
-.cell.prev { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.95); }
 .cell.prev::after {
   content: ''; position: absolute; left: 50%; top: 50%;
   width: 10px; height: 10px; margin: -7px 0 0 -7px; border-radius: 50%;
