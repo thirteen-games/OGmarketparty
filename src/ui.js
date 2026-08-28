@@ -4,6 +4,7 @@ import { Game } from './engine.js';
 import {
   MASCOTS, CONFIG, BOARD_MIN, BOARD_MAX,
   TICKETS, SPELLS, EP_LEVELS, NEWS_TABLE,
+  TICKET_TIER_WEIGHTS, SPELL_TYPE_WEIGHTS, PAYOUT_RATIOS,
   mascotById, ticketById, spellById,
 } from './data.js';
 import { mascotSvg } from './mascotArt.js';
@@ -741,26 +742,51 @@ export class UI {
       Rarer tickets appear in the shop as your Level rises.</p>${sections}`, { wide: true });
   }
 
+  // The prototype's "Drop Rates and more info" box.
   showStatsGeek() {
-    const cols = MASCOTS.map((m) => {
-      const sorted = [...m.rolls].sort((a, b) => a - b);
-      const avg = m.rolls.reduce((s, r) => s + r, 0) / m.rolls.length;
-      const avgAbs = m.rolls.reduce((s, r) => s + Math.abs(r), 0) / m.rolls.length;
-      const up = m.rolls.filter((r) => r > 0).length * 10;
-      return `
-        <div class="geek-col" style="--mc:${m.color}">
-          <div class="bets-head">${mascotSvg(m.id, 30)}<b>${m.name}</b></div>
-          <div class="geek-rolls">${sorted.map((r) => `<span class="${r > 0 ? 'pos' : 'neg'}">${r > 0 ? '+' : ''}${r}</span>`).join('')}</div>
-          <div class="geek-stats">
-            <div>Chance up: <b>${up}%</b></div>
-            <div>Avg move: <b>${avg >= 0 ? '+' : ''}${avg.toFixed(1)}</b></div>
-            <div>Avg size: <b>${avgAbs.toFixed(1)}</b></div>
-          </div>
-        </div>`;
-    }).join('');
-    this.modal(`<h2>🤓 Stats Geek</h2>
-      <p class="hint">Each mascot rolls one of its 10 moves, all equally likely.</p>
-      <div class="geek-grid">${cols}</div>`, { wide: true });
+    const tiers = Object.keys(TICKET_TIER_WEIGHTS).map(Number);
+    const levelIdx = [0, 1, 2, 3, 4];
+    const ticketSums = levelIdx.map((i) => tiers.reduce((s, t) => s + TICKET_TIER_WEIGHTS[t][i], 0));
+    const ticketRows = tiers.map((t) => `
+      <tr><td>🪙${t}</td>${levelIdx.map((i) =>
+        `<td>${Math.round((TICKET_TIER_WEIGHTS[t][i] / ticketSums[i]) * 100)}%</td>`).join('')}</tr>`).join('');
+    const payoutRows = tiers.map((t) => `<tr><td>🪙${t}</td><td>${PAYOUT_RATIOS[t].toFixed(2)}x</td></tr>`).join('');
+
+    const spellNames = {
+      51: 'Double', 52: 'Halve <span class="hint">(2P only)</span>', 53: 'Move EP',
+      54: 'Steal <span class="hint">(2P only)</span>', 55: 'Mascot Up', 56: 'Mascot Down', 57: 'Mascot Freeze',
+    };
+    const spellTypes = Object.keys(SPELL_TYPE_WEIGHTS).map(Number);
+    const spellSums = levelIdx.map((i) => spellTypes.reduce((s, t) => s + SPELL_TYPE_WEIGHTS[t][i], 0));
+    const spellRows = spellTypes.map((t) => `
+      <tr><td style="text-align:left">${spellNames[t]}</td>${levelIdx.map((i) =>
+        `<td>${Math.round((SPELL_TYPE_WEIGHTS[t][i] / spellSums[i]) * 100)}%</td>`).join('')}</tr>`).join('');
+
+    const overlay = this.modal(`
+      <h2>🤓 Drop Rates and more info</h2>
+      <h3 class="geek-h3">Betting Tickets</h3>
+      <p class="hint">Tickets cost 1, 2, 3, 4, 5, or 10 Coins. As your EP Level goes up, you're
+        more likely to see higher-cost tickets in the shop:</p>
+      <table class="stats-table full">
+        <tr><th>Cost</th><th>Lvl 1</th><th>Lvl 2</th><th>Lvl 3</th><th>Lvl 4</th><th>Lvl 5</th></tr>
+        ${ticketRows}
+      </table>
+      <p class="hint">As the cost goes up, the payout multiplier goes up — the more EP you win
+        per Coin. Buying higher-cost tickets is generally better:</p>
+      <table class="stats-table"><tr><th>Cost</th><th>Payout ratio</th></tr>${payoutRows}</table>
+      <p style="text-align:center"><button class="btn btn-primary" id="geek-all-bets">Show All Possible Bets</button></p>
+      <h3 class="geek-h3">Spells</h3>
+      <p class="hint">Two spell offers per round, paid in EP. Drop rates by EP Level:</p>
+      <table class="stats-table full">
+        <tr><th>Spell</th><th>Lvl 1</th><th>Lvl 2</th><th>Lvl 3</th><th>Lvl 4</th><th>Lvl 5</th></tr>
+        ${spellRows}
+      </table>
+      <p class="hint"><b>EP Levels</b> — click your ⭐ EP to see how Levels work.<br>
+        <b>Gaining Coins</b> — click your 🪙 Coins to see how the bank works.</p>`, { wide: true });
+    $('#geek-all-bets', overlay)?.addEventListener('click', () => {
+      overlay.remove();
+      this.showAllBets();
+    });
   }
 
   // --- Stats popup, log, toast ------------------------------------------------
@@ -793,6 +819,7 @@ export class UI {
       if (e.target === overlay || e.target.classList.contains('close-modal')) overlay.remove();
     });
     this.root.appendChild(overlay);
+    return overlay;
   }
 
   log(text, cls = '') {

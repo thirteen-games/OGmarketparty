@@ -356,9 +356,8 @@ main {
 }
 .bets-head svg { background: #fff; border-radius: 50%; }
 .stats-table.full { width: 100%; margin: 0; font-size: 0.85rem; }
-.stats-table.full th { background: var(--mc); }
-.geek-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }
-.geek-col { background: var(--panel2); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.stats-table.full th { background: var(--mc, var(--blue)); }
+.geek-h3 { color: var(--text); margin: 18px 0 4px; border-bottom: 2px solid var(--blue); display: inline-block; }
 .geek-rolls { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px; }
 .geek-rolls span {
   min-width: 26px; text-align: center; padding: 2px 4px; border-radius: 5px;
@@ -366,8 +365,6 @@ main {
 }
 .geek-rolls .pos { color: var(--good); }
 .geek-rolls .neg { color: var(--danger); }
-.geek-stats { padding: 0 10px 10px; color: var(--muted); font-size: 0.82rem; }
-.geek-stats b { color: var(--text); }
 .geek-rolls.big { justify-content: center; padding: 6px 0 2px; }
 .geek-rolls.big span { font-size: 1.05rem; min-width: 38px; padding: 5px 7px; }
 

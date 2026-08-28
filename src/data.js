@@ -112,6 +112,11 @@ export const TICKET_TIER_WEIGHTS = {
   10: [0,  0,  5,  10, 25],
 };
 
+// Payout multiplier by ticket cost (from the prototype's "Drop Rates and
+// more info" Stats Geek box). Informational: higher-cost tickets pay
+// proportionally more EP per coin.
+export const PAYOUT_RATIOS = { 1: 1.0, 2: 1.1, 3: 1.2, 4: 1.35, 5: 1.5, 10: 1.65 };
+
 // Spells (Game simulation Table9, BG10:BK41). id = mascotId*100 + (50 + type).
 // type: 1 double, 2 halve (opponent), 3 move closer, 4 steal (opponent),
 //       5 up-only next roll, 6 down-only next roll, 7 freeze next roll.
