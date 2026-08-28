@@ -402,24 +402,82 @@ export class UI {
     const rollBtn = $('#roll-btn', this.root);
     if (rollBtn) rollBtn.disabled = true;
 
+    // Group each roll with the collections it caused, so collections animate
+    // right after their mascot moves.
+    const batches = [];
+    const tail = [];
     for (const e of events) {
-      if (e.type === 'roll') {
-        const m = mascotById(e.mascotId);
-        await this.animateDie(e);
-        this.updateLane(e.mascotId, e.from);
-        this.log(`${m.name} rolled ${this.upDown(e.roll)} → step ${e.to}.`);
-        await sleep(500);
-      } else if (e.type === 'collect') {
-        this.log(`💰 ${PLAYER_NAMES[e.player]}: ${mascotById(e.mascotId).name} collected ⭐${e.amount} EP from step ${e.step}!`, 'good');
-      } else if (e.type === 'news' || e.type === 'newsEnd') {
-        this.log(e.message, 'news');
-      } else if (e.type === 'gameover') {
-        // handled by overlay
+      if (e.type === 'roll') batches.push({ roll: e, collects: [] });
+      else if (e.type === 'collect') batches[batches.length - 1].collects.push(e);
+      else tail.push(e);
+    }
+
+    for (const { roll, collects } of batches) {
+      const m = mascotById(roll.mascotId);
+      await this.animateDie(roll);
+      this.updateLane(roll.mascotId, roll.from);
+      this.log(`${m.name} rolled ${this.upDown(roll.roll)} → step ${roll.to}.`);
+      if (collects.length) {
+        await sleep(350); // let the lane glide before the stars take off
+        await Promise.all(collects.map((c, i) => sleep(i * 180).then(() => this.animateCollect(c))));
+        for (const c of collects) {
+          this.log(`💰 ${PLAYER_NAMES[c.player]}: ${m.name} collected ⭐${c.amount} EP from step ${c.step}!`, 'good');
+        }
       }
+      await sleep(400);
+    }
+
+    for (const e of tail) {
+      if (e.type === 'news' || e.type === 'newsEnd') this.log(e.message, 'news');
     }
 
     this.animating = false;
     this.renderGame();
+  }
+
+  // Floating "+N EP" at the collected step, and a star that flies to the
+  // player's EP bank — the number ticks up when it lands.
+  animateCollect(c) {
+    const lane = this.root.querySelector(`.lane[data-mascot="${c.mascotId}"]`);
+    if (!lane) return Promise.resolve();
+    const cell = lane.querySelector(`.cell[data-step="${c.step}"]`);
+    const laneRect = lane.getBoundingClientRect();
+    const cellRect = (cell || lane).getBoundingClientRect();
+    const x = cellRect.left + cellRect.width * 0.65;
+    const y = Math.min(Math.max(cellRect.top + cellRect.height / 2, laneRect.top + 14), laneRect.bottom - 14);
+
+    const float = document.createElement('div');
+    float.className = 'float-text';
+    float.textContent = `+${c.amount} EP`;
+    float.style.left = `${x}px`;
+    float.style.top = `${y - 12}px`;
+    document.body.appendChild(float);
+    setTimeout(() => float.remove(), 1200);
+
+    const epEl = this.root.querySelector(`.player-panel[data-player="${c.player}"] [data-info="ep"] b`);
+    if (!epEl) return Promise.resolve();
+    const target = epEl.getBoundingClientRect();
+    const star = document.createElement('div');
+    star.className = 'fly-star';
+    star.textContent = '⭐';
+    star.style.left = `${x}px`;
+    star.style.top = `${y}px`;
+    document.body.appendChild(star);
+    const dx = target.left + target.width / 2 - x;
+    const dy = target.top + target.height / 2 - y;
+    return new Promise((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        star.style.transform = `translate(${dx}px, ${dy}px) scale(0.6)`;
+      }));
+      setTimeout(() => {
+        star.remove();
+        epEl.textContent = Number(epEl.textContent) + c.amount;
+        const stat = epEl.closest('.stat');
+        stat?.classList.add('ep-bump');
+        setTimeout(() => stat?.classList.remove('ep-bump'), 450);
+        resolve();
+      }, 800);
+    });
   }
 
   // Spin the mascot's d10 through its real faces, then land on the roll.
