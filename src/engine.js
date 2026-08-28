@@ -5,7 +5,7 @@
 import {
   BOARD_MIN, BOARD_MAX, START_STEP, CONFIG,
   MASCOTS, TICKETS, SPELLS, TICKET_TIER_WEIGHTS, SPELL_TYPE_WEIGHTS,
-  NEWS_TABLE, SPELL_TYPES,
+  NEWS_TABLE, NEWS_MAX_ACTIVE, SPELL_TYPES,
   mascotById, ticketById, spellById, epLevelFor,
 } from './data.js';
 import { makeRng, weightedPick } from './rng.js';
@@ -46,7 +46,7 @@ export class Game {
     this.lastRolls = {}; // mascotId -> last roll value
     this.lastFrom = {};  // mascotId -> step before the last roll (for the trail)
     this.flags = {};    // mascotId -> FLAG
-    this.news = null;   // {mascotId, direction, count}
+    this.news = [];     // active alerts: {mascotId, direction, newsType, count}
     this.players = [newPlayer()];
     if (mode === 2) this.players.push(newPlayer());
     for (const m of MASCOTS) {
@@ -59,6 +59,9 @@ export class Game {
       this.refreshTickets(p, { free: true });
       this.refreshSpells(p);
     }
+    // A news draw happens before round 1 too.
+    this.startEvents = [];
+    this.drawNews(this.startEvents);
   }
 
   playerLevel(p) {
@@ -318,35 +321,50 @@ export class Game {
     }
   }
 
-  // --- Mascot News (VBA MascotNews) ---------------------------------------
+  // --- Mascot News ----------------------------------------------------------
+  // Redesigned from the prototype: one weighted draw per round (including one
+  // before round 1), up to NEWS_MAX_ACTIVE concurrent alerts, and a draw for
+  // an already-alerted mascot is wasted.
+
+  drawNews(events) {
+    if (this.news.length >= NEWS_MAX_ACTIVE) return;
+    const r = this.rng() * 100;
+    let acc = 0;
+    let row = null;
+    for (const entry of NEWS_TABLE) {
+      acc += entry.weight;
+      if (r < acc) { row = entry; break; }
+    }
+    if (!row) return; // remaining probability: no alert this round
+    if (this.news.some((a) => a.mascotId === row.mascotId)) return; // wasted draw
+    this.news.push({ mascotId: row.mascotId, direction: row.direction, newsType: row.newsType, count: 1 });
+    this.flags[row.mascotId] = row.direction;
+    events.push({
+      type: 'news',
+      mascotId: row.mascotId,
+      direction: row.direction,
+      newsType: row.newsType,
+      message: `Mascot News — ${row.newsType}! ${mascotById(row.mascotId).name} can only move ${row.direction > 0 ? 'Up' : 'Down'} for the next ${CONFIG.newsDurationRolls} rolls.`,
+    });
+  }
 
   updateNews(events) {
-    if (this.news === null) {
-      const r = this.rng();
-      for (const row of NEWS_TABLE) {
-        if (r > row.threshold) {
-          this.news = { mascotId: row.mascotId, direction: row.direction, count: 1 };
-          this.flags[row.mascotId] = row.direction;
-          events.push({
-            type: 'news',
-            mascotId: row.mascotId,
-            direction: row.direction,
-            message: `Mascot News! ${mascotById(row.mascotId).name} can only move ${row.direction > 0 ? 'Up' : 'Down'}!`,
-          });
-          return;
-        }
+    const active = [];
+    for (const alert of this.news) {
+      if (alert.count < CONFIG.newsDurationRolls) {
+        alert.count += 1;
+        this.flags[alert.mascotId] = alert.direction; // re-arm for the next roll
+        active.push(alert);
+      } else {
+        events.push({
+          type: 'newsEnd',
+          mascotId: alert.mascotId,
+          message: `Mascot News! ${mascotById(alert.mascotId).name} is back to normal movement.`,
+        });
+        if (this.flags[alert.mascotId] === alert.direction) this.flags[alert.mascotId] = FLAG.NONE;
       }
-    } else if (this.news.count < CONFIG.newsDurationRolls) {
-      this.news.count += 1;
-      this.flags[this.news.mascotId] = this.news.direction; // re-arm for the next roll
-    } else {
-      events.push({
-        type: 'newsEnd',
-        mascotId: this.news.mascotId,
-        message: `Mascot News! ${mascotById(this.news.mascotId).name} is back to normal movement.`,
-      });
-      this.news = null;
-      for (const m of MASCOTS) if (this.flags[m.id] !== FLAG.FREEZE) this.flags[m.id] = FLAG.NONE;
     }
+    this.news = active;
+    this.drawNews(events);
   }
 }

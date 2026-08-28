@@ -3,7 +3,7 @@
 import { Game } from './engine.js';
 import {
   MASCOTS, CONFIG, BOARD_MIN, BOARD_MAX,
-  TICKETS, SPELLS, EP_LEVELS, NEWS_TABLE,
+  TICKETS, SPELLS, EP_LEVELS, NEWS_TABLE, NEWS_MAX_ACTIVE, NEWS_EMOJI,
   TICKET_TIER_WEIGHTS, SPELL_TYPE_WEIGHTS, PAYOUT_RATIOS,
   mascotById, ticketById, spellById,
 } from './data.js';
@@ -64,7 +64,16 @@ export class UI {
     this.animating = false;
     this.log(`New ${mode}-player game. Make some Bets, then Roll!`);
     this.renderGame();
-    this.showRoundBanner(1);
+    (async () => {
+      await this.showRoundBanner(1);
+      for (const e of this.game.startEvents) {
+        if (e.type === 'news') {
+          this.log(e.message, 'news');
+          await this.showNewsPopup(e);
+        }
+      }
+      this.renderGame(); // refresh the news banner / alert boxes
+    })();
   }
 
   // --- Main render -----------------------------------------------------------
@@ -75,7 +84,7 @@ export class UI {
     this.root.innerHTML = `
       <header class="topbar">
         <div class="brand">${mascotSvg(2, 28)}<span>Market Party</span></div>
-        <div class="news-banner info-click ${g.news ? 'active' : ''}" id="news-banner" title="How Mascot News works">${this.newsText()}</div>
+        <div class="news-banner info-click ${g.news.length ? 'active' : ''}" id="news-banner" title="How Mascot News works">${this.newsText()}</div>
         <button class="btn btn-ghost" id="all-bets-btn" title="Every ticket in the game">📋 All Bets</button>
         <button class="btn btn-ghost" id="stats-geek-btn" title="Roll odds for every mascot">🤓 Stats Geek</button>
         <button class="btn btn-ghost" id="restart-btn">New game</button>
@@ -123,10 +132,10 @@ export class UI {
         <div class="dice-row">
           ${MASCOTS.map((m) => {
             const last = g.lastRolls[m.id];
-            const alert = g.news && g.news.mascotId === m.id;
+            const alert = g.news.find((a) => a.mascotId === m.id);
             return `
               <div class="die-slot ${alert ? 'alert' : ''}" data-mascot="${m.id}" style="--mc:${m.color}"
-                ${alert ? `title="Mascot News! ${m.name} can only move ${g.news.direction > 0 ? 'Up' : 'Down'}"` : ''}>
+                ${alert ? `title="${alert.newsType}! ${m.name} can only move ${alert.direction > 0 ? 'Up' : 'Down'}"` : ''}>
                 ${alert ? `
                   <span class="alert-tri"><svg viewBox="0 0 100 100">
                     <path d="M50 6 L97 90 L3 90 Z" fill="#ffd21f" stroke="#1b2440" stroke-width="7" stroke-linejoin="round"/>
@@ -135,7 +144,7 @@ export class UI {
                 <span class="die-mascot">${mascotSvg(m.id, 54)}</span>
                 <div class="die-col">
                   <div class="d10"><span class="die-num">${rolled ? (last > 0 ? `+${last}` : last) : '?'}</span></div>
-                  <div class="die-result">${alert ? `${g.news.direction > 0 ? '⬆ UP' : '⬇ DOWN'} ONLY` : rolled ? this.upDown(last) : '&mdash;'}</div>
+                  <div class="die-result">${alert ? `${alert.direction > 0 ? '⬆ UP' : '⬇ DOWN'} ONLY` : rolled ? this.upDown(last) : '&mdash;'}</div>
                 </div>
               </div>`;
           }).join('')}
@@ -145,9 +154,12 @@ export class UI {
 
   newsText() {
     const g = this.game;
-    if (!g.news) return 'Mascot News: all quiet on the Street.';
-    const m = mascotById(g.news.mascotId);
-    return `📣 ${m.name} can only move ${g.news.direction > 0 ? 'UP' : 'DOWN'} (${CONFIG.newsDurationRolls - g.news.count + 1} roll${CONFIG.newsDurationRolls - g.news.count ? 's' : ''} left)`;
+    if (!g.news.length) return 'Mascot News: all quiet on the Street.';
+    return g.news.map((a) => {
+      const m = mascotById(a.mascotId);
+      const left = CONFIG.newsDurationRolls - a.count + 1;
+      return `${NEWS_EMOJI[a.newsType]} ${a.newsType}: ${m.name} ${a.direction > 0 ? 'UP' : 'DOWN'} only (${left} roll${left === 1 ? '' : 's'} left)`;
+    }).join(' &nbsp;•&nbsp; ');
   }
 
   // --- Board -----------------------------------------------------------------
@@ -456,15 +468,17 @@ export class UI {
       if (!this.skipRequested) await sleep(400);
     }
 
-    const newsEvent = tail.find((e) => e.type === 'news');
+    const newsEvents = tail.filter((e) => e.type === 'news');
     for (const e of tail) {
       if (e.type === 'news' || e.type === 'newsEnd') this.log(e.message, 'news');
     }
 
-    // Between-round sequence: round banner, then news popup, then coin gain.
+    // Between-round sequence: round banner, then news popups, then coin gain.
     if (!this.game.over && !this.skipRequested) {
       await this.showRoundBanner(this.game.round + 1);
-      if (newsEvent && !this.skipRequested) await this.showNewsPopup(newsEvent);
+      for (const e of newsEvents) {
+        if (!this.skipRequested) await this.showNewsPopup(e);
+      }
       if (!this.skipRequested) await Promise.race([this.animateCoinGain(), this.skipPromise]);
     }
 
@@ -493,7 +507,7 @@ export class UI {
           <text x="50" y="78" text-anchor="middle" font-size="56" font-weight="900" fill="#1b2440">!</text>
         </svg></span>
         ${mascotSvg(m.id, 76)}
-        <h2>MASCOT NEWS!</h2>
+        <h2>${NEWS_EMOJI[e.newsType]} ${e.newsType.toUpperCase()}!</h2>
         <p>${m.name} can only move <b>${e.direction > 0 ? 'UP' : 'DOWN'}</b> for the next ${CONFIG.newsDurationRolls} rolls!</p>
       </div>`;
     document.body.appendChild(overlay);
@@ -701,19 +715,22 @@ export class UI {
             These affect the mascot itself, so <i>both</i> players feel it.</li>
         </ul>`);
     } else if (topic === 'news') {
-      const rows = NEWS_TABLE.map((row, i) => {
-        const prev = i === 0 ? 1 : NEWS_TABLE[i - 1].threshold;
-        const pct = Math.round((prev - row.threshold) * 100);
-        return `<tr><td>${mascotById(row.mascotId).name}</td><td>${row.direction > 0 ? '⬆ Up only' : '⬇ Down only'}</td><td>${pct}%</td></tr>`;
+      const totalPct = NEWS_TABLE.reduce((s, r) => s + r.weight, 0);
+      const rows = MASCOTS.map((m) => {
+        const up = NEWS_TABLE.find((r) => r.mascotId === m.id && r.direction === 1).weight;
+        const down = NEWS_TABLE.find((r) => r.mascotId === m.id && r.direction === -1).weight;
+        return `<tr><td>${m.name}</td><td>${up}%</td><td>${down}%</td></tr>`;
       }).join('');
       this.modal(`
         <h2>📣 Mascot News Alerts</h2>
         <ul class="info-list">
-          <li>After each roll, if no alert is running, there's a <b>40%</b> chance one hits.</li>
-          <li>The named mascot can only move in the reported direction for the next
-            <b>${CONFIG.newsDurationRolls} rolls</b> — plan your bets around it!</li>
+          <li>Every round — including before Round 1 — there's a <b>${totalPct}%</b> chance an alert hits.</li>
+          <li>${NEWS_EMOJI['Oil Strike']} <b>Oil Strike</b> — the mascot can only move <b>Up</b> for ${CONFIG.newsDurationRolls} rolls.</li>
+          <li>${NEWS_EMOJI.Earthquake} <b>Earthquake</b> — the mascot can only move <b>Down</b> for ${CONFIG.newsDurationRolls} rolls.</li>
+          <li>Up to <b>${NEWS_MAX_ACTIVE} alerts</b> can run at once — but a mascot can only have one,
+            so a draw for an already-alerted mascot fizzles.</li>
         </ul>
-        <table class="stats-table"><tr><th>Mascot</th><th>Alert</th><th>Odds</th></tr>${rows}</table>`);
+        <table class="stats-table"><tr><th>Mascot</th><th>${NEWS_EMOJI['Oil Strike']} Oil Strike</th><th>${NEWS_EMOJI.Earthquake} Earthquake</th></tr>${rows}</table>`);
     }
   }
 
@@ -793,8 +810,7 @@ export class UI {
 
   showStats(mascotId) {
     const m = mascotById(mascotId);
-    const news = this.game?.news;
-    const alert = news && news.mascotId === mascotId ? news : null;
+    const alert = this.game?.news.find((a) => a.mascotId === mascotId) ?? null;
     const blocked = (r) => alert && (alert.direction > 0 ? r <= 0 : r >= 0);
     const pill = (r) => `<span class="${r > 0 ? 'pos' : 'neg'} ${blocked(r) ? 'off' : ''}">${r > 0 ? '+' : ''}${r}</span>`;
     const upFaces = m.rolls.filter((r) => r > 0).sort((a, b) => a - b).map(pill).join('');
@@ -807,7 +823,7 @@ export class UI {
       <p class="hint">${m.name} rolls a 10-sided die with exactly these sides:</p>
       <div class="geek-rolls big">${upFaces}</div>
       <div class="geek-rolls big">${downFaces}</div>
-      ${alert ? `<p class="hint alert-note">⚠️ Mascot News: ${m.name} can only move <b>${alert.direction > 0 ? 'Up' : 'Down'}</b> right now — greyed sides can't be rolled.</p>` : ''}
+      ${alert ? `<p class="hint alert-note">${NEWS_EMOJI[alert.newsType]} ${alert.newsType}: ${m.name} can only move <b>${alert.direction > 0 ? 'Up' : 'Down'}</b> right now — greyed sides can't be rolled.</p>` : ''}
       <p class="hint">Chance up: <b>${up}%</b> &middot; Avg move: <b>${avg >= 0 ? '+' : ''}${avg.toFixed(1)}</b> &middot; Avg size: <b>${avgAbs.toFixed(1)}</b></p>`);
   }
 

@@ -43,7 +43,13 @@ show/hide).
    original SVG stand-ins.
 5. **MascotNews3 (free spell for each player) is not implemented** — it was
    unreachable in the prototype's threshold table (no branch calls it).
-6. **Ticket difficulty is computed live, not hand-labeled.** The prototype's
+6. **Mascot News redesigned** (Aug 2026, by request). Alerts are named
+   (🛢️ Oil Strike = up-only, 🌍 Earthquake = down-only), one weighted draw
+   happens every round *including before round 1* (65% total chance; per-
+   mascot weights in `NEWS_TABLE`), up to 2 alerts can run concurrently, and
+   a draw for an already-alerted mascot is wasted. The prototype instead had
+   a single alert, drawn at 40% only when none was active.
+7. **Ticket difficulty is computed live, not hand-labeled.** The prototype's
    Difficulty column (Table797 col X) was the designer's judgment and didn't
    always track the odds columns next to it. The game now computes the exact
    payout probability within a 4-roll window (first-passage DP over the die,

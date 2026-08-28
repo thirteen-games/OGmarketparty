@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { Game, FLAG } from '../src/engine.js';
 import { collectProbability, oddsLabel } from '../src/odds.js';
 import {
-  MASCOTS, TICKETS, SPELLS, CONFIG, START_STEP,
+  MASCOTS, TICKETS, SPELLS, CONFIG, START_STEP, NEWS_TABLE,
   epLevelFor, ticketById, spellById, SPELL_TYPES,
 } from '../src/data.js';
 
@@ -229,26 +229,77 @@ test('solo mode never offers opponent-targeting spells', () => {
   }
 });
 
-test('mascot news arms a direction and expires after 3 rolls', () => {
+test('news table matches spec: weights per mascot, 65% total', () => {
+  const w = (id, dir) => NEWS_TABLE.find((r) => r.mascotId === id && r.direction === dir).weight;
+  assert.deepEqual([w(1, 1), w(2, 1), w(3, 1), w(4, 1)], [8, 10, 5, 12]); // Oil Strike
+  assert.deepEqual([w(1, -1), w(2, -1), w(3, -1), w(4, -1)], [8, 7, 5, 10]); // Earthquake
+  assert.equal(NEWS_TABLE.reduce((s, r) => s + r.weight, 0), 65);
+});
+
+test('news draw activates an alert, wastes same-mascot draws, caps at 2', () => {
   const g = new Game({ mode: 1, seed: 1 });
-  // Force the news draw deterministically: r=0.96 -> Mousey up
-  const realRng = g.rng;
-  g.updateNews = Game.prototype.updateNews.bind(g);
-  g.rng = () => 0.96;
-  const events = [];
-  Game.prototype.updateNews.call(g, events);
-  assert.ok(g.news && g.news.mascotId === 1 && g.news.direction === 1);
+  g.news = []; // clear any game-start alert
+  for (const m of MASCOTS) g.flags[m.id] = FLAG.NONE;
+  // r*100 = 1 -> first row: Mousey Oil Strike (weight 8)
+  g.rng = () => 0.01;
+  const ev1 = [];
+  g.drawNews(ev1);
+  assert.equal(g.news.length, 1);
+  assert.equal(g.news[0].mascotId, 1);
+  assert.equal(g.news[0].newsType, 'Oil Strike');
   assert.equal(g.flags[1], FLAG.UP);
-  g.rng = realRng;
-  // Two more update calls re-arm, the third clears
-  Game.prototype.updateNews.call(g, []);
-  assert.equal(g.news.count, 2);
-  Game.prototype.updateNews.call(g, []);
-  assert.equal(g.news.count, 3);
+  // Same draw again: Mousey already has an alert -> wasted
+  const ev2 = [];
+  g.drawNews(ev2);
+  assert.equal(g.news.length, 1);
+  assert.equal(ev2.length, 0);
+  // r*100 = 12 -> Bizarro Oil Strike (8..18) -> second concurrent alert
+  g.rng = () => 0.12;
+  g.drawNews(ev2);
+  assert.equal(g.news.length, 2);
+  // Third mascot draw is refused at the cap
+  g.rng = () => 0.20; // Wolf Oil Strike (18..23)
+  const ev3 = [];
+  g.drawNews(ev3);
+  assert.equal(g.news.length, 2);
+  assert.equal(ev3.length, 0);
+  // r*100 = 70 -> beyond the 65% table: no alert
+  g.news = [];
+  g.rng = () => 0.70;
+  const ev4 = [];
+  g.drawNews(ev4);
+  assert.equal(g.news.length, 0);
+});
+
+test('alerts last 3 rolls then expire', () => {
+  const g = new Game({ mode: 1, seed: 1 });
+  g.news = [{ mascotId: 3, direction: -1, newsType: 'Earthquake', count: 1 }];
+  g.rng = () => 0.99; // no new draws
+  g.updateNews([]);
+  assert.equal(g.news[0].count, 2);
+  assert.equal(g.flags[3], FLAG.DOWN);
+  g.updateNews([]);
+  assert.equal(g.news[0].count, 3);
   const endEvents = [];
-  Game.prototype.updateNews.call(g, endEvents);
-  assert.equal(g.news, null);
+  g.flags[3] = FLAG.DOWN; // as re-armed
+  g.updateNews(endEvents);
+  assert.equal(g.news.length, 0);
   assert.ok(endEvents.some((e) => e.type === 'newsEnd'));
+  assert.equal(g.flags[3], FLAG.NONE);
+});
+
+test('a game can start with an alert already active', () => {
+  let found = 0;
+  for (let seed = 0; seed < 30; seed++) {
+    const g = new Game({ mode: 1, seed });
+    if (g.news.length > 0) {
+      found++;
+      assert.equal(g.news[0].count, 1);
+      assert.ok(g.startEvents.some((e) => e.type === 'news'));
+      assert.equal(g.flags[g.news[0].mascotId], g.news[0].direction);
+    }
+  }
+  assert.ok(found > 5, `only ${found}/30 games started with news (expected ~65%)`);
 });
 
 test('board steps stay within 0..100', () => {
