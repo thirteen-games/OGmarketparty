@@ -122,7 +122,7 @@ main {
 .lane {
   flex: 1 0 100px;
   position: relative; /* so cell.offsetTop measures from the lane, for centering */
-  overflow-y: auto; scroll-behavior: smooth;
+  overflow-y: auto;
   scrollbar-width: none; /* re-centered every render; hide the bars */
 }
 .lane::-webkit-scrollbar { display: none; }
@@ -175,6 +175,53 @@ main {
   cursor: pointer; outline: 2px solid #1b2440; animation: pulse 0.9s infinite alternate; z-index: 2;
 }
 @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.2); } }
+
+/* movement trail from the last roll */
+.cell.trail::after {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9); box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+.cell.prev { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.95); }
+.cell.prev::after {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: 10px; height: 10px; margin: -7px 0 0 -7px; border-radius: 50%;
+  border: 2px solid #fff; background: transparent;
+  pointer-events: none;
+}
+
+/* ---- Roll panel ---- */
+.roll-panel {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+  padding: 10px 14px 12px;
+  box-shadow: 0 6px 18px rgba(27, 36, 64, 0.15);
+}
+.roll-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.roll-panel .round-info { color: var(--muted); font-size: 1rem; }
+.roll-panel .round-info b { color: var(--text); font-size: 1.3rem; }
+.dice-row { display: flex; gap: 10px; }
+.die-slot {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: var(--panel2); border: 1px solid var(--border); border-radius: 10px;
+  padding: 8px 4px;
+}
+.d10 {
+  width: 52px; height: 52px; display: grid; place-items: center;
+  background: var(--mc);
+  clip-path: polygon(50% 0%, 100% 38%, 81% 100%, 19% 100%, 0% 38%);
+  filter: drop-shadow(0 2px 3px rgba(27, 36, 64, 0.35));
+}
+.die-num { color: #fff; font-weight: 900; font-size: 1.05rem; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+.d10.rolling { animation: diceshake 0.14s infinite; }
+@keyframes diceshake {
+  0% { transform: rotate(-10deg) translateY(-2px); }
+  50% { transform: rotate(10deg) translateY(2px); }
+  100% { transform: rotate(-10deg) translateY(-2px); }
+}
+.d10.landed { animation: dicepop 0.32s ease; }
+@keyframes dicepop { 0% { transform: scale(1.5); } 100% { transform: scale(1); } }
+.die-result { font-size: 0.8rem; font-weight: 800; color: var(--text); }
 
 /* ---- Player panels ---- */
 .panels { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); }
@@ -291,6 +338,8 @@ main {
 .geek-rolls .neg { color: var(--danger); }
 .geek-stats { padding: 0 10px 10px; color: var(--muted); font-size: 0.82rem; }
 .geek-stats b { color: var(--text); }
+.geek-rolls.big { justify-content: center; padding: 6px 0 2px; }
+.geek-rolls.big span { font-size: 1.05rem; min-width: 38px; padding: 5px 7px; }
 
 .targeting-banner {
   position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);

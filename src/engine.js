@@ -44,6 +44,7 @@ export class Game {
     this.winner = null; // 0/1 player index, 'tie', or (1P) true/false for goal reached
     this.steps = {};    // mascotId -> current step
     this.lastRolls = {}; // mascotId -> last roll value
+    this.lastFrom = {};  // mascotId -> step before the last roll (for the trail)
     this.flags = {};    // mascotId -> FLAG
     this.news = null;   // {mascotId, direction, count}
     this.players = [newPlayer()];
@@ -51,6 +52,7 @@ export class Game {
     for (const m of MASCOTS) {
       this.steps[m.id] = START_STEP;
       this.lastRolls[m.id] = 0;
+      this.lastFrom[m.id] = START_STEP;
       this.flags[m.id] = FLAG.NONE;
     }
     for (let p = 0; p < this.players.length; p++) {
@@ -246,6 +248,7 @@ export class Game {
       const to = clamp(from + rollValue);
       this.steps[mascot.id] = to;
       this.lastRolls[mascot.id] = rollValue;
+      this.lastFrom[mascot.id] = from;
       events.push({ type: 'roll', mascotId: mascot.id, roll: rollValue, from, to });
 
       // Collect EP on every step the mascot passed over or landed on
