@@ -78,7 +78,7 @@ export class UI {
       <main>
         <section class="board" id="board">
           <div class="board-heads">${MASCOTS.map((m) => this.renderLaneHead(m)).join('')}</div>
-          <div class="board-scroll" id="board-scroll">${this.renderBoard()}</div>
+          <div class="board-tracks">${this.renderBoard()}</div>
         </section>
         <div class="side">
           <section class="panels">${g.players.map((_, p) => this.renderPlayerPanel(p)).join('')}</section>
@@ -161,14 +161,14 @@ export class UI {
     return n > 0 ? `Up ${n}` : n < 0 ? `Down ${Math.abs(n)}` : 'Frozen';
   }
 
+  // Each lane scrolls independently so its mascot's current step is always
+  // centered in the visible frame (like the prototype's re-centering board).
   centerLanes() {
-    const scroll = $('#board-scroll', this.root);
-    if (!scroll) return;
-    // Center the view on the average mascot position.
-    const steps = MASCOTS.map((m) => this.game.steps[m.id]);
-    const avg = Math.round(steps.reduce((a, b) => a + b, 0) / steps.length);
-    const cell = scroll.querySelector(`.cell[data-step="${avg}"]`);
-    if (cell) scroll.scrollTop = cell.offsetTop - scroll.clientHeight / 2 + cell.clientHeight / 2;
+    for (const lane of this.root.querySelectorAll('.lane')) {
+      const mascotId = Number(lane.dataset.mascot);
+      const cell = lane.querySelector(`.cell[data-step="${this.game.steps[mascotId]}"]`);
+      if (cell) lane.scrollTop = cell.offsetTop - lane.clientHeight / 2 + cell.clientHeight / 2;
+    }
   }
 
   // --- Player panels -----------------------------------------------------------

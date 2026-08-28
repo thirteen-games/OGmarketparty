@@ -97,11 +97,17 @@ main {
   overflow: hidden;
 }
 .board-heads { display: flex; gap: 6px; padding: 0 8px; }
-.board-scroll {
+.board-tracks {
   display: flex; gap: 6px; padding: 0 8px 8px;
-  max-height: calc(100vh - 180px); overflow-y: auto; scroll-behavior: smooth;
+  height: calc(100vh - 180px);
 }
-.lane { flex: 1 0 100px; display: flex; flex-direction: column; }
+.lane {
+  flex: 1 0 100px;
+  position: relative; /* so cell.offsetTop measures from the lane, for centering */
+  overflow-y: auto; scroll-behavior: smooth;
+  scrollbar-width: none; /* re-centered every render; hide the bars */
+}
+.lane::-webkit-scrollbar { display: none; }
 .lane-label {
   flex: 1 0 100px; min-width: 0;
   display: flex; align-items: center; gap: 6px; padding: 8px 4px 6px;
@@ -230,6 +236,6 @@ main {
 
 @media (max-width: 980px) {
   main { grid-template-columns: 1fr; }
-  .board-scroll { max-height: 46vh; }
+  .board-tracks { height: 44vh; }
   .panels { grid-template-columns: 1fr; }
 }
