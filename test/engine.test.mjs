@@ -322,6 +322,17 @@ test('collectProbability matches hand-computed one-roll odds', () => {
   assert.ok(Math.abs(collectProbability(bizarro, [2, -2], 1) - 1) < 1e-12);
 });
 
+test('collectProbability respects a forced-direction alert', () => {
+  const bizarro = MASCOTS.find((m) => m.name === 'Bizarro');
+  // Down-only for 1 roll: an Up 1 bounty can't pay this roll
+  assert.equal(collectProbability(bizarro, [1], 1, { direction: -1, rolls: 1 }), 0);
+  // ...but a Down 1 bounty is guaranteed (all down faces are <= -4)
+  assert.equal(collectProbability(bizarro, [-1], 1, { direction: -1, rolls: 1 }), 1);
+  // After the alert expires the walk can recover: 2-roll horizon, 1-roll alert
+  const p = collectProbability(bizarro, [1], 2, { direction: -1, rolls: 1 });
+  assert.ok(p > 0 && p < 0.5, `expected partial recovery, got ${p}`);
+});
+
 test('collectProbability grows with the horizon', () => {
   const mousey = MASCOTS.find((m) => m.name === 'Mousey');
   let prev = 0;

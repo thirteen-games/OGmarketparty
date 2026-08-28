@@ -9,14 +9,20 @@
 // both are rare and small effects.
 
 // Probability that at least one of `offsets` is collected within `rolls` rolls.
-export function collectProbability(mascot, offsets, rolls) {
+// `forced` models an active Mascot News alert: {direction: 1|-1, rolls: k}
+// means the mascot's next k rolls re-roll until they match the direction —
+// equivalently, they draw uniformly from just that sign's faces.
+export function collectProbability(mascot, offsets, rolls, forced = null) {
   const up = Math.min(...offsets.filter((o) => o > 0), Infinity);
   const down = Math.max(...offsets.filter((o) => o < 0), -Infinity);
-  const faces = mascot.rolls;
-  const p = 1 / faces.length;
   let dist = new Map([[0, 1]]); // position offset -> probability, not yet collected
   let hit = 0;
   for (let k = 0; k < rolls; k++) {
+    let faces = mascot.rolls;
+    if (forced && k < forced.rolls) {
+      faces = faces.filter((r) => (forced.direction > 0 ? r > 0 : r < 0));
+    }
+    const p = 1 / faces.length;
     const next = new Map();
     for (const [pos, prob] of dist) {
       for (const m of faces) {

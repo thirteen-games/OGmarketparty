@@ -228,6 +228,14 @@ export class UI {
     return n > 0 ? `Up ${n}` : n < 0 ? `Down ${Math.abs(n)}` : 'Frozen';
   }
 
+  // Active news alert for a mascot, as a constraint for the odds math.
+  newsConstraint(mascotId) {
+    const alert = this.game.news.find((a) => a.mascotId === mascotId);
+    return alert
+      ? { direction: alert.direction, rolls: CONFIG.newsDurationRolls - alert.count + 1 }
+      : null;
+  }
+
   // Each lane scrolls independently so its mascot's current step is always
   // centered in the visible frame (like the prototype's re-centering board).
   // Instant by default so ordinary re-renders (buying a bet) don't visibly
@@ -301,14 +309,14 @@ export class UI {
     const spots = offsets
       .map((x) => `<b>${this.upDown(x)}</b> <span class="hint">(step ${Math.max(BOARD_MIN, Math.min(BOARD_MAX, base + x))})</span>`)
       .join('<br>');
-    const prob = collectProbability(m, offsets, g.oddsHorizon());
+    const prob = collectProbability(m, offsets, g.oddsHorizon(), this.newsConstraint(t.mascotId));
     return `
       <div class="card ticket rarity-${t.rarity.toLowerCase()} ${sold ? 'sold' : ''}" style="--mc:${m.color}">
         <div class="card-head info-click" data-stats="${m.id}" title="See ${m.name}'s die">${mascotSvg(m.id, 26)}<span>${m.name}</span><span class="rarity">${t.rarity}</span></div>
         <div class="card-body">
           <div class="reward">⭐ ${t.reward} EP</div>
           <div class="targets">${spots}</div>
-          <div class="difficulty">${oddsLabel(prob)} &middot; ${Math.round(prob * 100)}%</div>
+          <div class="difficulty">${oddsLabel(prob)}</div>
         </div>
         ${sold
           ? '<div class="sold-tag">SOLD</div>'
@@ -742,7 +750,7 @@ export class UI {
         .map((t) => {
           const offsets = [t.target1, t.target2].filter((x) => x !== null);
           const targets = offsets.map((x) => this.upDown(x)).join(' & ');
-          const prob = collectProbability(m, offsets, horizon);
+          const prob = collectProbability(m, offsets, horizon, this.newsConstraint(m.id));
           return `<tr><td>${t.rarity}</td><td>🪙${t.cost}</td><td>⭐${t.reward}</td><td>${targets}</td><td>${oddsLabel(prob)} &middot; ${Math.round(prob * 100)}%</td></tr>`;
         }).join('');
       return `
