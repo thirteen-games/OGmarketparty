@@ -160,9 +160,15 @@ main {
 }
 .step-num { font-size: 0.66rem; color: #fffffff0; font-weight: 700; min-width: 20px; }
 .cell.here .step-num { color: #1b2440; }
-.token { display: flex; align-items: center; gap: 3px; animation: hop 0.4s ease; }
-.token b { font-size: 0.72rem; color: #1b2440; }
-.token svg { flex: none; }
+/* Big mascot token: overflows its step by ~50% of a cell above and below */
+.token {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3; pointer-events: none;
+  display: flex;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+}
+.token svg { animation: hop 0.4s ease; }
 @keyframes hop { from { transform: translateY(-10px); } to { transform: translateY(0); } }
 .chips { display: flex; gap: 2px; margin-left: auto; }
 .chip {
@@ -207,7 +213,11 @@ main {
 .die-slot {
   flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
   background: var(--silver2); border: 3px solid var(--mc); border-radius: 10px;
-  padding: 8px 4px;
+  padding: 10px 4px 8px;
+}
+.die-mascot {
+  position: absolute; top: -6px; left: -6px;
+  filter: drop-shadow(0 2px 4px rgba(27, 36, 64, 0.35));
 }
 .d10 {
   width: 52px; height: 52px; display: grid; place-items: center;

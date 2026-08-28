@@ -127,7 +127,7 @@ export class UI {
                     <path d="M50 6 L97 90 L3 90 Z" fill="#ffd21f" stroke="#1b2440" stroke-width="7" stroke-linejoin="round"/>
                     <text x="50" y="78" text-anchor="middle" font-size="56" font-weight="900" fill="#1b2440">!</text>
                   </svg></span>` : ''}
-                ${mascotSvg(m.id, 26)}
+                <span class="die-mascot">${mascotSvg(m.id, 54)}</span>
                 <div class="d10"><span class="die-num">${rolled ? (last > 0 ? `+${last}` : last) : '?'}</span></div>
                 <div class="die-result">${alert ? `${g.news.direction > 0 ? '⬆ UP' : '⬇ DOWN'} ONLY` : rolled ? this.upDown(last) : '&mdash;'}</div>
               </div>`;
@@ -195,7 +195,7 @@ export class UI {
       cells.push(`
         <div class="cell ${s % 10 === 0 ? 'decade' : ''} ${here ? 'here' : ''} ${trailCls}" data-step="${s}">
           <span class="step-num">${s}</span>
-          ${here ? `<span class="token">${mascotSvg(mascot.id, 22)}<b>${mascot.name}</b></span>` : ''}
+          ${here ? `<span class="token">${mascotSvg(mascot.id, 42)}</span>` : ''}
           <span class="chips">${chips}</span>
         </div>`);
     }
