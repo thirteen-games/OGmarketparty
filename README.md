@@ -13,8 +13,10 @@ No build step, no dependencies — it's plain HTML/JS. Serve the folder with any
 static server and open it:
 
 ```bash
-python -m http.server 8642
+python serve.py 8642
 ```
+
+(`serve.py` is a stock `http.server` with caching disabled; any static server works.)
 
 Then visit <http://localhost:8642>.
 

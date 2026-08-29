@@ -68,8 +68,8 @@ export const TUTORIAL_STEPS = [
   {
     title: 'Seeing New Bets',
     html: `If you don't like any of the bets offered in the shop, you can press the
-      <b>↻ Refresh</b> button to spend 2 Coins from your bank and see 4 new bets.
-      The shop also refreshes for free after every roll.`,
+      <b>↻ Refresh</b> button to see 4 new bets. The first refresh each round costs
+      1 Coin; after that they cost 2. The shop also refreshes for free after every roll.`,
   },
   {
     title: 'Casting Spells',

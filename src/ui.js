@@ -292,7 +292,7 @@ export class UI {
         </div>
         <div class="shop">
           <div class="shop-row">
-            <div class="shop-title">Betting Tickets <button class="btn btn-tiny" data-action="refresh" data-player="${p}" ${player.coins < CONFIG.refreshCost || g.over ? 'disabled' : ''}>↻ Refresh (${CONFIG.refreshCost}🪙)</button></div>
+            <div class="shop-title">Betting Tickets <button class="btn btn-tiny" data-action="refresh" data-player="${p}" ${player.coins < g.refreshCost(p) || g.over ? 'disabled' : ''}>↻ Refresh (${g.refreshCost(p)}🪙)</button></div>
             <div class="cards">${player.tickets.map((id, slot) => this.renderTicketCard(p, id, slot)).join('')}</div>
           </div>
           <div class="shop-row">
@@ -384,9 +384,10 @@ export class UI {
       btn.addEventListener('click', () => {
         if (this.animating) return;
         const p = Number(btn.dataset.player);
+        const cost = this.game.refreshCost(p);
         const res = this.game.refreshTickets(p);
         if (!res.ok) return this.toast(res.reason);
-        this.log(`${PLAYER_NAMES[p]} refreshed their Bets for 🪙${CONFIG.refreshCost}.`);
+        this.log(`${PLAYER_NAMES[p]} refreshed their Bets for 🪙${cost}.`);
         this.renderGame();
       });
     });
@@ -731,7 +732,8 @@ export class UI {
           <li>You start with <b>${CONFIG.startingCoins}</b> and get <b>+${CONFIG.coinsPerRound}</b> after every roll.</li>
           <li><b>Interest:</b> each round you also earn 1 extra Coin per ${CONFIG.interestDivisor} you're holding
             (max +${CONFIG.maxInterest}) — saving up pays off.</li>
-          <li>Refreshing your ticket offers costs ${CONFIG.refreshCost} Coins; offers refresh free after every roll.</li>
+          <li>Refreshing your ticket offers costs <b>${CONFIG.refreshCostFirst} Coin</b> the first time each round,
+            then <b>${CONFIG.refreshCostNext} Coins</b> after that; offers refresh free after every roll.</li>
         </ul>`);
     } else if (topic === 'ep') {
       const rows = EP_LEVELS

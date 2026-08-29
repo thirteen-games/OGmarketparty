@@ -123,14 +123,21 @@ test('coins increment with interest capped at 5', () => {
   assert.equal(p.coins, 60 + CONFIG.coinsPerRound + 5);
 });
 
-test('manual refresh costs 2 coins and redraws offers', () => {
+test('manual refresh costs 1 coin the first time each round, then 2', () => {
   const g = new Game({ mode: 1, seed: 11 });
   const p = g.players[0];
   const coins = p.coins;
-  const res = g.refreshTickets(0);
-  assert.ok(res.ok);
-  assert.equal(p.coins, coins - CONFIG.refreshCost);
-  p.coins = 1;
+  assert.equal(g.refreshCost(0), 1);
+  assert.ok(g.refreshTickets(0).ok);
+  assert.equal(p.coins, coins - 1);
+  assert.equal(g.refreshCost(0), 2);
+  assert.ok(g.refreshTickets(0).ok);
+  assert.ok(g.refreshTickets(0).ok);
+  assert.equal(p.coins, coins - 1 - 2 - 2); // never more than 2
+  // rolling resets the first-refresh discount
+  g.roll();
+  assert.equal(g.refreshCost(0), 1);
+  p.coins = 0;
   assert.equal(g.refreshTickets(0).ok, false);
 });
 

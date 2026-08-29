@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test test/engine.test.mjs",
-    "serve": "python -m http.server 8642"
+    "serve": "python serve.py 8642"
   },
   "license": "UNLICENSED",
   "private": true

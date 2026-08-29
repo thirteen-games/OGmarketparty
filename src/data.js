@@ -11,7 +11,8 @@ export const CONFIG = {
   coinsPerRound: 7,        // Game simulation DO32
   interestDivisor: 5,      // GameSimIncrementCoins: floor(coins/5)
   maxInterest: 5,          // capped at 5
-  refreshCost: 2,          // GameSimRefreshAndPayCoins
+  refreshCostFirst: 1,     // first manual shop refresh each round
+  refreshCostNext: 2,      // every refresh after that (prototype charged a flat 2)
   onePlayerRounds: 10,     // IsGameOver: P1Rounds
   onePlayerGoal: 1000,     // IsGameOver: GameTo1
   twoPlayerGoal: 1000,     // IsGameOver: GameTo2

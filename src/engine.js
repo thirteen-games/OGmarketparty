@@ -29,6 +29,7 @@ function newPlayer() {
     board: emptyBoard(),
     tickets: [null, null, null, null], // offer per mascot slot
     ticketSold: [false, false, false, false],
+    refreshesThisRound: 0,
     spells: [null, null],
     spellSold: [false, false],
   };
@@ -87,11 +88,20 @@ export class Game {
     return weightedPick(this.rng, entries);
   }
 
+  // 1 Coin for the first manual refresh each round, 2 for every one after.
+  refreshCost(p) {
+    return this.players[p].refreshesThisRound === 0 ? CONFIG.refreshCostFirst : CONFIG.refreshCostNext;
+  }
+
   refreshTickets(p, { free = false } = {}) {
     const player = this.players[p];
-    if (!free) {
-      if (player.coins < CONFIG.refreshCost) return { ok: false, reason: 'Not enough Coins to refresh Bets' };
-      player.coins -= CONFIG.refreshCost;
+    if (free) {
+      player.refreshesThisRound = 0; // new round: the discount comes back
+    } else {
+      const cost = this.refreshCost(p);
+      if (player.coins < cost) return { ok: false, reason: 'Not enough Coins to refresh Bets' };
+      player.coins -= cost;
+      player.refreshesThisRound += 1;
     }
     const level = this.playerLevel(p);
     // One independent tier draw per mascot (VBA GameSimRefreshCardShop).
