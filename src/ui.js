@@ -504,13 +504,27 @@ export class UI {
   async doRoll() {
     if (this.animating || this.game.over) return;
     this.targeting = null;
+    this.animating = true;
+
+    // Bot turn: act, then show its new bets pulsing on the board (and its
+    // coins dropping) for a beat before the dice start.
     if (this.botLevel) {
-      for (const action of botTakeTurn(this.game, this.botLevel)) {
-        this.log(`${this.playerName(1)} ${action}`);
+      const before = this.snapshotBoard(1);
+      const coinsBefore = this.game.players[1].coins;
+      const epBefore = this.game.players[1].ep;
+      const actions = botTakeTurn(this.game, this.botLevel);
+      for (const action of actions) this.log(`${this.playerName(1)} ${action}`);
+      if (actions.length) {
+        this.renderGame();
+        $('#roll-btn', this.root)?.setAttribute('disabled', '');
+        this.highlightNewChips(1, before);
+        this.floatSpend(1, 'coins', coinsBefore - this.game.players[1].coins, '🪙');
+        this.floatSpend(1, 'ep', epBefore - this.game.players[1].ep, '⭐');
+        await sleep(1500);
       }
     }
+
     const events = this.game.roll();
-    this.animating = true;
     const rollBtn = $('#roll-btn', this.root);
     if (rollBtn) rollBtn.disabled = true;
     this.skipRequested = false;
@@ -681,6 +695,51 @@ export class UI {
         resolve();
       }, 800);
     });
+  }
+
+  // Snapshot of one player's board chips: mascotId -> {step: ep}.
+  snapshotBoard(p) {
+    const snap = {};
+    for (const m of MASCOTS) snap[m.id] = { ...this.game.players[p].board[m.id] };
+    return snap;
+  }
+
+  // Pulse every chip that appeared or grew since the snapshot. Returns how
+  // many were highlighted.
+  highlightNewChips(p, before) {
+    let count = 0;
+    for (const m of MASCOTS) {
+      const now = this.game.players[p].board[m.id];
+      for (const [step, ep] of Object.entries(now)) {
+        if (ep > (before[m.id][step] || 0)) {
+          const chip = this.root.querySelector(
+            `.chip[data-player="${p}"][data-mascot="${m.id}"][data-step="${step}"]`);
+          if (chip) {
+            chip.classList.add('bot-new');
+            count += 1;
+          }
+        }
+      }
+    }
+    return count;
+  }
+
+  // Float a "-N" over a player's coin/EP stat when they spend.
+  floatSpend(p, stat, amount, icon) {
+    if (amount <= 0) return;
+    const el = this.root.querySelector(`.player-panel[data-player="${p}"] [data-info="${stat === 'coins' ? 'coins' : 'ep'}"] b`);
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const float = document.createElement('div');
+    float.className = 'float-text spend-float';
+    float.textContent = `-${amount} ${icon}`;
+    float.style.left = `${rect.left}px`;
+    float.style.top = `${rect.top - 8}px`;
+    document.body.appendChild(float);
+    setTimeout(() => float.remove(), 1200);
+    const statEl = el.closest('.stat');
+    statEl?.classList.add('ep-bump');
+    setTimeout(() => statEl?.classList.remove('ep-bump'), 450);
   }
 
   // Spin the mascot's d10 through its real faces, then land on the roll.

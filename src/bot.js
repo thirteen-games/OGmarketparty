@@ -24,6 +24,16 @@ export function botTakeTurn(game, level) {
   return level === 'easy' ? easyTurn(game) : valueTurn(game, level === 'hard');
 }
 
+// No bot, however dim, buys a ticket whose every target points the wrong way
+// during an active alert (e.g. an Up bounty while the mascot is Down-only).
+function badUnderAlert(game, ticket) {
+  const alert = game.news.find((a) => a.mascotId === ticket.mascotId);
+  if (!alert) return false;
+  return [ticket.target1, ticket.target2]
+    .filter((o) => o !== null)
+    .every((o) => Math.sign(o) !== alert.direction);
+}
+
 // --- Easy: random shopper -----------------------------------------------------
 
 function easyTurn(game) {
@@ -32,6 +42,7 @@ function easyTurn(game) {
   for (let slot = 0; slot < 4; slot++) {
     if (game.rng() < 0.55) {
       const t = ticketById(bot.tickets[slot]);
+      if (badUnderAlert(game, t)) continue;
       if (game.buyTicket(P, slot).ok) {
         actions.push(`bet 🪙${t.cost} on ${mascotById(t.mascotId).name}.`);
       }
@@ -95,6 +106,7 @@ function valueTurn(game, hard) {
     .sort((a, b) => b.perCoin - a.perCoin);
   for (const { slot, t, perCoin } of ranked) {
     if (perCoin < bar) break;
+    if (badUnderAlert(game, t)) continue;
     if (bot.coins < t.cost) continue;
     if (game.buyTicket(P, slot).ok) {
       actions.push(`bet 🪙${t.cost} on ${mascotById(t.mascotId).name} (⭐${t.reward}).`);

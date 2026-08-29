@@ -398,6 +398,21 @@ test('bots at every level play legal games to completion', () => {
   }
 });
 
+test('no bot buys a ticket whose targets are all blocked by an alert', () => {
+  for (const level of Object.keys(BOT_LEVELS)) {
+    for (let seed = 0; seed < 20; seed++) {
+      const g = new Game({ mode: 2, seed });
+      g.news = [{ mascotId: 2, direction: -1, newsType: 'Earthquake', count: 1 }];
+      g.flags[2] = FLAG.DOWN;
+      const bot = g.players[1];
+      bot.tickets = [101, 301, 401, 202]; // 202 = Bizarro "Up 1": dead while Bizarro is Down-only
+      bot.coins = 50;
+      botTakeTurn(g, level);
+      assert.equal(bot.ticketSold[3], false, `${level} seed ${seed} bought a dead ticket`);
+    }
+  }
+});
+
 test('the hard bot outscores the easy bot on average', () => {
   const avgEP = (level) => {
     let total = 0;
