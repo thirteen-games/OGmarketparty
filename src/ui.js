@@ -13,6 +13,8 @@ import { TUTORIAL_STEPS } from './tutorial.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const escapeHtml = (s) =>
+  s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 const PLAYER_COLORS = ['var(--p1)', 'var(--p2)'];
 const PLAYER_NAMES = ['Player 1', 'Player 2'];
@@ -39,6 +41,7 @@ export class UI {
             <button class="btn btn-primary" data-mode="1">1 Player &mdash; ${CONFIG.onePlayerRounds} rounds, chase ${CONFIG.onePlayerGoal} EP</button>
             <button class="btn btn-primary" data-mode="2">2 Players &mdash; first to ${CONFIG.twoPlayerGoal} EP</button>
             <button class="btn" id="tutorial-btn">📖 Tutorial</button>
+            <button class="btn" id="leaderboard-btn">🏆 Leaderboard</button>
           </div>
           <details class="rules">
             <summary>How to play</summary>
@@ -56,6 +59,9 @@ export class UI {
       btn.addEventListener('click', () => this.newGame(Number(btn.dataset.mode)));
     });
     $('#tutorial-btn', this.root)?.addEventListener('click', () => this.showTutorial());
+    $('#leaderboard-btn', this.root)?.addEventListener('click', () => {
+      this.modal(`<h2>🏆 Leaderboard</h2>${this.leaderboardHtml()}`);
+    });
   }
 
   newGame(mode) {
@@ -65,6 +71,8 @@ export class UI {
     this.skipPromise = null;
     this.skipRequested = false;
     this.animating = false;
+    this.scoreSaved = false;
+    this.lastScoreIndex = null;
     this.log(`New ${mode}-player game. Make some Bets, then Roll!`);
     this.renderGame();
     (async () => {
@@ -111,6 +119,12 @@ export class UI {
     $('#skip-btn', this.root)?.addEventListener('click', () => this.requestSkip?.());
     $('#tutorial-btn', this.root)?.addEventListener('click', () => this.showTutorial());
     $('#restart-btn', this.root).addEventListener('click', () => this.renderStart());
+    $('#lb-save-btn', this.root)?.addEventListener('click', () => {
+      const name = $('#lb-name', this.root)?.value.trim() || 'Anonymous';
+      this.lastScoreIndex = this.saveScore(name.slice(0, 16), this.game.players[0].ep);
+      this.scoreSaved = true;
+      this.renderGame();
+    });
     this.wireInfo();
     this.wirePanels();
     this.wireTargeting();
@@ -216,8 +230,10 @@ export class UI {
             : '';
         })
         .join('');
+      const shade = this.laneShade(mascot.color, s);
       cells.push(`
-        <div class="cell ${s % 10 === 0 ? 'decade' : ''} ${here ? 'here' : ''} ${trailCls}" data-step="${s}">
+        <div class="cell ${here ? 'here' : ''} ${trailCls} ${shade.light ? 'light' : ''}" data-step="${s}"
+          ${here ? '' : `style="background:${shade.bg}"`}>
           <span class="step-num">${s}</span>
           ${here ? `<span class="token">${mascotSvg(mascot.id, 42)}</span>` : ''}
           <span class="chips">${chips}</span>
@@ -231,6 +247,22 @@ export class UI {
 
   upDown(n) {
     return n > 0 ? `Up ${n}` : n < 0 ? `Down ${Math.abs(n)}` : 'Frozen';
+  }
+
+  // Per-step lane tint: step 0 is the lightest shade of the mascot's color,
+  // step 100 the darkest.
+  laneShade(hex, step) {
+    const m = 0.55 - 0.95 * (step / 100); // >0 mixes toward white, <0 toward black
+    const target = m >= 0 ? 255 : 0;
+    const k = Math.abs(m);
+    const channel = (i) => {
+      const c = parseInt(hex.slice(i, i + 2), 16);
+      return Math.round(c + (target - c) * k);
+    };
+    return {
+      bg: `rgb(${channel(1)}, ${channel(3)}, ${channel(5)})`,
+      light: m > 0.25, // light cells switch to dark step numbers
+    };
   }
 
   // Active news alert for a mascot, as a constraint for the odds math.
@@ -654,13 +686,21 @@ export class UI {
 
   renderGameOver() {
     const g = this.game;
-    let headline, detail;
+    let headline, detail, leaderboard = '';
     if (g.mode === 1) {
       const ep = g.players[0].ep;
-      headline = g.winner ? '🎉 You made the leaderboard!' : 'Good game!';
+      headline = g.winner ? '🎉 A leaderboard score!' : 'Good game!';
       detail = g.winner
         ? `You scored <b>${ep} EP</b> — over ${CONFIG.onePlayerGoal}!`
-        : `You scored <b>${ep} EP</b>. Get ${CONFIG.onePlayerGoal} to make the leaderboard — better luck next time!`;
+        : `You scored <b>${ep} EP</b>. Get ${CONFIG.onePlayerGoal} to prove you're a Market Party master!`;
+      leaderboard = `
+        ${this.scoreSaved ? '' : `
+          <div class="lb-save">
+            <input id="lb-name" maxlength="16" placeholder="Your name">
+            <button class="btn btn-primary" id="lb-save-btn">Save score</button>
+          </div>`}
+        <h3>🏆 Leaderboard</h3>
+        ${this.leaderboardHtml(this.lastScoreIndex)}`;
     } else {
       const [a, b] = g.players.map((x) => x.ep);
       headline = g.winner === 'tie' ? "🤝 It's a tie!" : `🏆 ${PLAYER_NAMES[g.winner]} wins!`;
@@ -672,9 +712,45 @@ export class UI {
           <div class="start-mascots">${MASCOTS.map((m) => mascotSvg(m.id, 56)).join('')}</div>
           <h2>${headline}</h2>
           <p>${detail}</p>
+          ${leaderboard}
           <button class="btn btn-primary" id="play-again">Play again</button>
         </div>
       </div>`;
+  }
+
+  // --- Leaderboard (local, per browser) ----------------------------------------
+
+  loadLeaderboard() {
+    try {
+      return JSON.parse(localStorage.getItem('mp-leaderboard') || '[]');
+    } catch {
+      return [];
+    }
+  }
+
+  saveScore(name, ep) {
+    const entry = { name, ep, date: new Date().toISOString().slice(0, 10) };
+    const list = this.loadLeaderboard();
+    list.push(entry);
+    list.sort((a, b) => b.ep - a.ep);
+    const top = list.slice(0, 10);
+    try {
+      localStorage.setItem('mp-leaderboard', JSON.stringify(top));
+    } catch { /* private mode etc. — the table just won't persist */ }
+    return top.indexOf(entry); // -1 if the score didn't crack the top 10
+  }
+
+  leaderboardHtml(highlight = null) {
+    const list = this.loadLeaderboard();
+    if (!list.length) return '<p class="hint">No scores yet — finish a 1 player game!</p>';
+    return `
+      <table class="stats-table lb-table">
+        <tr><th>#</th><th>Name</th><th>EP</th><th>Date</th></tr>
+        ${list.map((e, i) => `
+          <tr class="${highlight === i ? 'lb-highlight' : ''}">
+            <td>${i + 1}</td><td>${escapeHtml(e.name)}</td><td>⭐${e.ep}</td><td>${e.date}</td>
+          </tr>`).join('')}
+      </table>`;
   }
 
   // --- Tutorial (ported from the prototype's speech-bubble sequence) ----------

@@ -7,7 +7,7 @@ export const BOARD_MAX = 100;
 export const START_STEP = 50;
 
 export const CONFIG = {
-  startingCoins: 7,        // Game simulation DO31
+  startingCoins: 10,       // raised from the prototype's 7 (Game simulation DO31)
   coinsPerRound: 7,        // Game simulation DO32
   interestDivisor: 5,      // GameSimIncrementCoins: floor(coins/5)
   maxInterest: 5,          // capped at 5

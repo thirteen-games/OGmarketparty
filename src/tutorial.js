@@ -40,7 +40,7 @@ export const TUTORIAL_STEPS = [
   },
   {
     title: 'Coins and EP',
-    html: `You start the game with <b>7 Coins</b> and <b>0 EP</b>, shown in your bank.
+    html: `You start the game with <b>10 Coins</b> and <b>0 EP</b>, shown in your bank.
       You start at EP Level 1, which increases up to Level 5 as you gain EP. As your EP
       Level increases, you are more likely to see better Bets and Spells in the shop.<br><br>
       <i>Gamer Details — click ⭐ <b>EP</b> in your bank to see the EP required for each
