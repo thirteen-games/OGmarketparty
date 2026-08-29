@@ -144,6 +144,16 @@ export class Game {
     let entries = Object.entries(TICKET_TIER_WEIGHTS)
       .map(([tier, w]) => ({ value: Number(tier), weight: w[level - 1] }))
       .filter((e) => e.weight > 0);
+    // Roguelike rarity gates: Epic tickets (tiers 4-5) need a 2nd mascot,
+    // Legendary (tier 10) needs a 3rd. Relative odds among the rest hold.
+    if (this.rogue) {
+      const roster = this.activeMascots.length;
+      entries = entries.filter((e) => {
+        if (roster < 2 && (e.value === 4 || e.value === 5)) return false;
+        if (roster < 3 && e.value === 10) return false;
+        return true;
+      });
+    }
     // Draw without replacement within one mascot's offers (only matters when
     // a small roguelike roster gives a mascot several slots).
     if (exclude && exclude.size) {
@@ -169,30 +179,38 @@ export class Game {
       player.refreshesThisRound += 1;
     }
     const level = this.playerLevel(p);
-    // Four offers split evenly among the active mascots (all four in normal
-    // play; fewer in roguelike, where leftovers go to random active mascots).
+    // Offers split evenly among the active mascots. Roguelike opens with two
+    // ticket slots and grows one per drafted mascot up to the normal four;
+    // leftovers after the even split go to random active mascots.
     const ids = this.activeMascots;
+    const slotCount = this.ticketSlotCount();
     const slots = [];
     for (const id of ids) {
-      for (let i = 0; i < Math.floor(4 / ids.length); i++) slots.push(id);
+      for (let i = 0; i < Math.floor(slotCount / ids.length); i++) slots.push(id);
     }
     const extras = [...ids];
-    while (slots.length < 4 && extras.length) {
+    while (slots.length < slotCount && extras.length) {
       slots.push(extras.splice(Math.floor(this.rng() * extras.length), 1)[0]);
     }
     slots.sort((a, b) => ids.indexOf(a) - ids.indexOf(b));
     // One independent tier draw per slot (VBA GameSimRefreshCardShop), but a
     // mascot holding several slots never shows the same ticket twice.
     const drawn = new Map();
-    player.tickets = slots.map((id) => {
+    player.tickets = [null, null, null, null];
+    player.ticketSold = [true, true, true, true];
+    slots.forEach((id, i) => {
       const used = drawn.get(id) || new Set();
       const tier = this.drawTicketTier(level, used);
       used.add(tier);
       drawn.set(id, used);
-      return id * 100 + tier;
+      player.tickets[i] = id * 100 + tier;
+      player.ticketSold[i] = false;
     });
-    player.ticketSold = [false, false, false, false];
     return { ok: true };
+  }
+
+  ticketSlotCount() {
+    return this.rogue ? Math.min(4, this.activeMascots.length + 1) : 4;
   }
 
   spellPool(p) {
@@ -251,6 +269,7 @@ export class Game {
   buyTicket(p, slot) {
     const player = this.players[p];
     if (this.over) return { ok: false, reason: 'Game is over' };
+    if (!player.tickets[slot]) return { ok: false, reason: 'That ticket slot is locked' };
     if (player.ticketSold[slot]) return { ok: false, reason: 'Already bought this Bet this round' };
     const ticket = ticketById(player.tickets[slot]);
     if (player.coins < ticket.cost) return { ok: false, reason: 'Not enough Coins to make this Bet' };

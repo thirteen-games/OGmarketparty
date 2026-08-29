@@ -24,7 +24,7 @@ export const CONFIG = {
 // steady play clears the early gates and the win takes a strong run.
 export const ROGUE = {
   rounds: 15,
-  targets: { 3: 75, 6: 250, 9: 500, 12: 800, 15: 1250 },
+  targets: { 3: 30, 6: 150, 9: 450, 12: 1000, 15: 1650 },
 };
 
 // EP level thresholds (Game simulation DN11:DO15). Level = highest row <= banked EP.

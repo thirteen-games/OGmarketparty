@@ -40,6 +40,7 @@ function easyTurn(game) {
   const actions = [];
   const bot = game.players[P];
   for (let slot = 0; slot < 4; slot++) {
+    if (!bot.tickets[slot]) continue;
     if (game.rng() < 0.55) {
       const t = ticketById(bot.tickets[slot]);
       if (badUnderAlert(game, t)) continue;
@@ -90,7 +91,7 @@ function valueTurn(game, hard) {
 
   // Hard: refresh a weak shop once (first refresh is cheap).
   if (hard && !bot.ticketSold.some(Boolean)) {
-    const bestPerCoin = Math.max(...bot.tickets.map((id) => evOf(id) / ticketById(id).cost));
+    const bestPerCoin = Math.max(...bot.tickets.filter(Boolean).map((id) => evOf(id) / ticketById(id).cost));
     const cost = game.refreshCost(P);
     if (bestPerCoin < 3 && bot.coins > cost + 3 && game.refreshTickets(P).ok) {
       actions.push(`refreshed the shop for 🪙${cost}.`);
@@ -100,6 +101,7 @@ function valueTurn(game, hard) {
   // Buy the best EP-per-coin tickets above a quality bar.
   const bar = hard ? 3.5 : 3;
   const ranked = [0, 1, 2, 3]
+    .filter((slot) => bot.tickets[slot])
     .map((slot) => {
       const t = ticketById(bot.tickets[slot]);
       return { slot, t, perCoin: evOf(t.id) / t.cost };

@@ -433,7 +433,11 @@ test('roguelike: starts with a 2-mascot choice; everything scopes to the roster'
   const pick = g.pendingChoice[0];
   assert.ok(g.chooseMascot(pick).ok);
   assert.deepEqual(g.activeMascots, [pick]);
-  for (const id of g.players[0].tickets) assert.equal(Math.floor(id / 100), pick);
+  // two ticket slots to start, both for the chosen mascot, locked slots refuse buys
+  const offers = g.players[0].tickets.filter(Boolean);
+  assert.equal(offers.length, 2);
+  for (const id of offers) assert.equal(Math.floor(id / 100), pick);
+  assert.equal(g.buyTicket(0, 3).ok, false);
   // spells are locked until the 2nd mascot joins
   assert.deepEqual(g.players[0].spells, [null, null]);
   assert.equal(g.castSpell(0, 0).ok, false);
@@ -442,23 +446,32 @@ test('roguelike: starts with a 2-mascot choice; everything scopes to the roster'
   assert.equal(rolls[0].mascotId, pick);
 });
 
-test('roguelike: no duplicate tickets within a mascot, spells unlock with roster', () => {
+test('roguelike: slots, rarity gates, and spells all grow with the roster', () => {
+  const tierOf = (id) => id % 100;
   for (let seed = 0; seed < 25; seed++) {
     const g = new Game({ mode: 'rogue', seed });
+    g.players[0].ep = 600; // level 5, where epic/legendary weights are highest
     g.chooseMascot(g.pendingChoice[0]);
-    // one mascot: 4 distinct offers
-    assert.equal(new Set(g.players[0].tickets).size, 4, `seed ${seed}: ${g.players[0].tickets}`);
+    // one mascot: 2 distinct offers, no Epics (tiers 4/5) or Legendaries (10)
+    let offers = g.players[0].tickets.filter(Boolean);
+    assert.equal(offers.length, 2);
+    assert.equal(new Set(offers).size, 2, `seed ${seed}: ${offers}`);
+    for (const id of offers) assert.ok(![4, 5, 10].includes(tierOf(id)), `seed ${seed}: epic/legendary too early (${id})`);
     assert.equal(g.spellSlotCount(), 0);
-    // two mascots: each mascot's pair is distinct; one spell slot
+    // two mascots: 3 offers, Epics allowed, no Legendaries; one spell slot
     g.pendingChoice = g.pickChoice();
     g.chooseMascot(g.pendingChoice[0]);
-    assert.equal(new Set(g.players[0].tickets).size, 4, `seed ${seed} (2 mascots): ${g.players[0].tickets}`);
+    offers = g.players[0].tickets.filter(Boolean);
+    assert.equal(offers.length, 3);
+    assert.equal(new Set(offers).size, 3, `seed ${seed} (2 mascots): ${offers}`);
+    for (const id of offers) assert.notEqual(tierOf(id), 10, `seed ${seed}: legendary too early (${id})`);
     assert.equal(g.spellSlotCount(), 1);
     assert.notEqual(g.players[0].spells[0], null);
     assert.equal(g.players[0].spells[1], null);
-    // three mascots: both spell slots
+    // three mascots: full 4 offers and both spell slots
     g.pendingChoice = g.pickChoice();
     g.chooseMascot(g.pendingChoice[0]);
+    assert.equal(g.players[0].tickets.filter(Boolean).length, 4);
     assert.equal(g.spellSlotCount(), 2);
     assert.notEqual(g.players[0].spells[1], null);
   }
@@ -488,11 +501,11 @@ test('roguelike: checkpoints end the run or grow the roster', () => {
   g2.chooseMascot(g2.pendingChoice[1]);
   assert.equal(g2.activeMascots.length, 2);
   const counts = {};
-  for (const id of g2.players[0].tickets) {
+  for (const id of g2.players[0].tickets.filter(Boolean)) {
     const m = Math.floor(id / 100);
     counts[m] = (counts[m] || 0) + 1;
   }
-  assert.deepEqual(Object.values(counts).sort(), [2, 2]); // even 2/2 shop split
+  assert.deepEqual(Object.values(counts).sort(), [1, 2]); // 3 slots: 1 each + 1 random
 });
 
 test('roguelike: three-mascot shop is 1 each plus 1 random repeat', () => {

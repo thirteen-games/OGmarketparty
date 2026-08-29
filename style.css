@@ -420,7 +420,7 @@ main {
 .checkpoint-card h2 { color: #1e8a4c !important; }
 .checkpoint-card p { color: #14532d !important; }
 .card.empty-card { visibility: hidden; }
-.card.spell.locked-slot {
+.card.locked-slot {
   background: #3a3d46; border-style: dashed; border-color: #6a6f7c;
   display: grid; place-items: center; min-height: 92px;
 }
