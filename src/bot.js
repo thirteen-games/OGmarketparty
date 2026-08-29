@@ -49,6 +49,7 @@ function easyTurn(game) {
     }
   }
   for (let slot = 0; slot < 2; slot++) {
+    if (!bot.spells[slot]) continue;
     if (game.rng() >= 0.35) continue;
     const spell = spellById(bot.spells[slot]);
     if (bot.ep < spell.cost) continue;
@@ -115,6 +116,7 @@ function valueTurn(game, hard) {
 
   // Spells, only when the expected return beats the EP price.
   for (let slot = 0; slot < 2; slot++) {
+    if (!bot.spells[slot]) continue;
     const spell = spellById(bot.spells[slot]);
     if (bot.spellSold[slot] || bot.ep < spell.cost) continue;
     const target = pickSpellPlay(game, spell, hard, horizon, constraintFor);

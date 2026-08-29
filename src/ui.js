@@ -159,12 +159,20 @@ export class UI {
       this.root.querySelector('.overlay')?.remove();
     });
     this.root.querySelectorAll('.choice-pick').forEach((btn) => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const id = Number(btn.dataset.mascot);
+        const slotsBefore = this.game.spellSlotCount();
         const res = this.game.chooseMascot(id);
         if (!res.ok) return this.toast(res.reason);
         this.log(`🗺️ ${mascotById(id).name} joins the run!`, 'news');
         this.renderGame();
+        const slotsAfter = this.game.spellSlotCount();
+        if (slotsAfter > slotsBefore) {
+          this.log(slotsAfter === 1
+            ? '✨ Spells unlocked! Cast one per round for EP.'
+            : '✨ Second Spell slot unlocked!', 'news');
+          await this.showSpellUnlockPopup(slotsAfter);
+        }
       });
     });
     $('#tutorial-btn', this.root)?.addEventListener('click', () => this.showTutorial());
@@ -206,6 +214,7 @@ export class UI {
           <button class="btn btn-primary choice-pick" data-mascot="${id}">Choose ${m.name}</button>
         </div>`;
     }).join('');
+    const unlocksSpell = g.spellSlotCount() < 2 && g.activeMascots.length >= 1;
     return `
       <div class="overlay">
         <div class="overlay-card wide">
@@ -215,9 +224,29 @@ export class UI {
             : g.pendingChoice.length > 1 ? 'Checkpoint cleared! Pick one of these two to add to your board.'
             : 'Checkpoint cleared! Only one mascot remains — welcome them aboard.'
           }</p>
+          ${unlocksSpell ? `<p class="unlock-note">✨ This draft also unlocks ${g.spellSlotCount() === 0 ? 'SPELLS' : 'a SECOND Spell slot'}!</p>` : ''}
           <div class="choice-cards">${cards}</div>
         </div>
       </div>`;
+  }
+
+  showSpellUnlockPopup(slotCount) {
+    const overlay = document.createElement('div');
+    overlay.className = 'news-popup';
+    overlay.innerHTML = slotCount === 1
+      ? `<div class="news-card unlock-card">
+          <h2>✨ SPELLS UNLOCKED!</h2>
+          <p>With two mascots on the board you can now cast <b>one Spell per round</b>.
+          Spells cost <b>EP</b> instead of Coins — double a bounty on the board, or drag one
+          closer to its mascot. A second slot unlocks with your 3rd mascot!</p>
+        </div>`
+      : `<div class="news-card unlock-card">
+          <h2>✨ SECOND SPELL SLOT!</h2>
+          <p>Your growing roster earns you <b>two Spell offers every round</b> from here on.</p>
+        </div>`;
+    document.body.appendChild(overlay);
+    const dismissed = new Promise((resolve) => overlay.addEventListener('click', resolve));
+    return Promise.race([sleep(3200), dismissed]).then(() => overlay.remove());
   }
 
   renderRollPanel() {
@@ -480,7 +509,14 @@ export class UI {
 
   renderSpellCard(p, id, slot) {
     const g = this.game;
-    if (!id) return '<div class="card spell empty-card"></div>';
+    if (!id) {
+      if (g.rogue) {
+        return `<div class="card spell locked-slot">
+          <div class="locked-msg">🔒 Unlocks when your ${slot === 0 ? '2nd' : '3rd'} mascot joins the run</div>
+        </div>`;
+      }
+      return '<div class="card spell empty-card"></div>';
+    }
     const s = spellById(id);
     const m = mascotById(s.mascotId);
     const sold = g.players[p].spellSold[slot];

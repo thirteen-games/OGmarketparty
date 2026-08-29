@@ -140,10 +140,16 @@ export class Game {
 
   // --- Shops -------------------------------------------------------------
 
-  drawTicketTier(level) {
-    const entries = Object.entries(TICKET_TIER_WEIGHTS)
+  drawTicketTier(level, exclude = null) {
+    let entries = Object.entries(TICKET_TIER_WEIGHTS)
       .map(([tier, w]) => ({ value: Number(tier), weight: w[level - 1] }))
       .filter((e) => e.weight > 0);
+    // Draw without replacement within one mascot's offers (only matters when
+    // a small roguelike roster gives a mascot several slots).
+    if (exclude && exclude.size) {
+      const remaining = entries.filter((e) => !exclude.has(e.value));
+      if (remaining.length) entries = remaining;
+    }
     return weightedPick(this.rng, entries);
   }
 
@@ -175,8 +181,16 @@ export class Game {
       slots.push(extras.splice(Math.floor(this.rng() * extras.length), 1)[0]);
     }
     slots.sort((a, b) => ids.indexOf(a) - ids.indexOf(b));
-    // One independent tier draw per slot (VBA GameSimRefreshCardShop).
-    player.tickets = slots.map((id) => id * 100 + this.drawTicketTier(level));
+    // One independent tier draw per slot (VBA GameSimRefreshCardShop), but a
+    // mascot holding several slots never shows the same ticket twice.
+    const drawn = new Map();
+    player.tickets = slots.map((id) => {
+      const used = drawn.get(id) || new Set();
+      const tier = this.drawTicketTier(level, used);
+      used.add(tier);
+      drawn.set(id, used);
+      return id * 100 + tier;
+    });
     player.ticketSold = [false, false, false, false];
     return { ok: true };
   }
@@ -205,23 +219,31 @@ export class Game {
       });
   }
 
+  // Roguelike: spells unlock with roster size — none with one mascot, one
+  // slot with two, both slots from three on. Normal play always has both.
+  spellSlotCount() {
+    return this.rogue ? Math.min(2, Math.max(0, this.activeMascots.length - 1)) : 2;
+  }
+
   refreshSpells(p) {
     const player = this.players[p];
     const pool = this.spellPool(p);
-    if (!pool.length) {
-      player.spells = [null, null];
-      player.spellSold = [true, true];
-      return;
-    }
+    const slots = this.spellSlotCount();
+    player.spells = [null, null];
+    player.spellSold = [true, true];
+    if (!pool.length || slots === 0) return;
     const first = weightedPick(this.rng, pool);
+    player.spells[0] = first;
+    player.spellSold[0] = false;
+    if (slots < 2) return;
     let second = weightedPick(this.rng, pool);
     // VBA RefreshSpell: the two offers must differ — when the pool has more
     // than one option (a lone-mascot roguelike round at level 1 may not).
     if (new Set(pool.map((e) => e.value)).size > 1) {
       while (second === first) second = weightedPick(this.rng, pool);
     }
-    player.spells = [first, second];
-    player.spellSold = [false, false];
+    player.spells[1] = second;
+    player.spellSold[1] = false;
   }
 
   // --- Betting -----------------------------------------------------------
@@ -263,6 +285,7 @@ export class Game {
   castSpell(p, slot, targetStep = null) {
     const player = this.players[p];
     if (this.over) return { ok: false, reason: 'Game is over' };
+    if (!player.spells[slot]) return { ok: false, reason: 'No Spell in that slot' };
     if (player.spellSold[slot]) return { ok: false, reason: 'Already bought this Spell this round' };
     const spell = spellById(player.spells[slot]);
     if (player.ep < spell.cost) return { ok: false, reason: 'Not enough EP to buy this Spell' };

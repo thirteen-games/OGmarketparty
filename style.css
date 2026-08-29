@@ -416,10 +416,22 @@ main {
 }
 .choice-card .geek-rolls { justify-content: center; padding: 4px 8px; }
 .choice-card .choice-pick { margin: 8px 10px 12px; }
-.checkpoint-card { background: #b8f5c9; border-color: #1e8a4c; }
+.news-card.checkpoint-card { background: #b8f5c9; border-color: #1e8a4c; }
 .checkpoint-card h2 { color: #1e8a4c !important; }
 .checkpoint-card p { color: #14532d !important; }
 .card.empty-card { visibility: hidden; }
+.card.spell.locked-slot {
+  background: #3a3d46; border-style: dashed; border-color: #6a6f7c;
+  display: grid; place-items: center; min-height: 92px;
+}
+.locked-msg { color: #b9bfcc; font-size: 0.85rem; padding: 10px; text-align: center; }
+.unlock-note {
+  background: var(--accent); color: #1b2440; font-weight: 800;
+  border-radius: 8px; padding: 6px 12px; display: inline-block;
+}
+.news-card.unlock-card { background: #e9d8ff; border-color: #7a3fa8; }
+.unlock-card h2 { color: #7a3fa8 !important; }
+.unlock-card p { color: #46246b !important; }
 
 /* Leaderboard */
 .lb-save { display: flex; gap: 8px; justify-content: center; margin: 12px 0; }

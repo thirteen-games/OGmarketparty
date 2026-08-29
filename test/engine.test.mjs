@@ -434,10 +434,34 @@ test('roguelike: starts with a 2-mascot choice; everything scopes to the roster'
   assert.ok(g.chooseMascot(pick).ok);
   assert.deepEqual(g.activeMascots, [pick]);
   for (const id of g.players[0].tickets) assert.equal(Math.floor(id / 100), pick);
-  for (const id of g.players[0].spells) assert.equal(Math.floor(id / 100), pick);
+  // spells are locked until the 2nd mascot joins
+  assert.deepEqual(g.players[0].spells, [null, null]);
+  assert.equal(g.castSpell(0, 0).ok, false);
   const rolls = g.roll().filter((e) => e.type === 'roll');
   assert.equal(rolls.length, 1);
   assert.equal(rolls[0].mascotId, pick);
+});
+
+test('roguelike: no duplicate tickets within a mascot, spells unlock with roster', () => {
+  for (let seed = 0; seed < 25; seed++) {
+    const g = new Game({ mode: 'rogue', seed });
+    g.chooseMascot(g.pendingChoice[0]);
+    // one mascot: 4 distinct offers
+    assert.equal(new Set(g.players[0].tickets).size, 4, `seed ${seed}: ${g.players[0].tickets}`);
+    assert.equal(g.spellSlotCount(), 0);
+    // two mascots: each mascot's pair is distinct; one spell slot
+    g.pendingChoice = g.pickChoice();
+    g.chooseMascot(g.pendingChoice[0]);
+    assert.equal(new Set(g.players[0].tickets).size, 4, `seed ${seed} (2 mascots): ${g.players[0].tickets}`);
+    assert.equal(g.spellSlotCount(), 1);
+    assert.notEqual(g.players[0].spells[0], null);
+    assert.equal(g.players[0].spells[1], null);
+    // three mascots: both spell slots
+    g.pendingChoice = g.pickChoice();
+    g.chooseMascot(g.pendingChoice[0]);
+    assert.equal(g.spellSlotCount(), 2);
+    assert.notEqual(g.players[0].spells[1], null);
+  }
 });
 
 test('roguelike: checkpoints end the run or grow the roster', () => {
