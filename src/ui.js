@@ -1,6 +1,6 @@
 // Market Party — DOM UI. Renders the engine state and wires player actions.
 
-import { Game } from './engine.js';
+import { Game, FLAG } from './engine.js';
 import {
   MASCOTS, CONFIG, BOARD_MIN, BOARD_MAX,
   TICKETS, SPELLS, EP_LEVELS, NEWS_TABLE, NEWS_EMOJI,
@@ -629,7 +629,11 @@ export class UI {
       result.textContent = this.upDown(e.roll);
     };
     if (this.skipRequested) return setFinal();
-    const faces = mascotById(e.mascotId).rolls;
+    // Under an alert (or a cast spell), only spin through the possible faces.
+    let faces = mascotById(e.mascotId).rolls;
+    if (e.flag === FLAG.UP) faces = faces.filter((r) => r > 0);
+    else if (e.flag === FLAG.DOWN) faces = faces.filter((r) => r < 0);
+    else if (e.flag === FLAG.FREEZE) return setFinal(); // frozen: nothing to spin
     die.classList.add('rolling');
     result.textContent = '…';
     const spin = setInterval(() => {

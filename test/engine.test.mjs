@@ -101,12 +101,14 @@ test('frozen mascot does not move or collect', () => {
   assert.equal(g.flags[3], FLAG.NONE); // flag consumed
 });
 
-test('up-only flag forces a positive roll', () => {
+test('up-only flag forces a positive roll and is reported on the event', () => {
   for (let seed = 0; seed < 25; seed++) {
     const g = new Game({ mode: 1, seed });
     g.flags[2] = FLAG.UP;
-    g.roll();
+    const events = g.roll();
     assert.ok(g.lastRolls[2] > 0, `seed ${seed} rolled ${g.lastRolls[2]}`);
+    const e = events.find((ev) => ev.type === 'roll' && ev.mascotId === 2);
+    assert.equal(e.flag, FLAG.UP);
   }
 });
 

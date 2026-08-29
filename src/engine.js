@@ -257,12 +257,13 @@ export class Game {
 
     for (const mascot of MASCOTS) {
       const from = this.steps[mascot.id];
+      const flag = this.flags[mascot.id]; // captured before the roll consumes it
       const rollValue = this.rollForMascot(mascot);
       const to = clamp(from + rollValue);
       this.steps[mascot.id] = to;
       this.lastRolls[mascot.id] = rollValue;
       this.lastFrom[mascot.id] = from;
-      events.push({ type: 'roll', mascotId: mascot.id, roll: rollValue, from, to });
+      events.push({ type: 'roll', mascotId: mascot.id, roll: rollValue, from, to, flag });
 
       // Collect EP on every step the mascot passed over or landed on
       // (VBA *RewardCollect: exclusive of the start step, inclusive of the end).
