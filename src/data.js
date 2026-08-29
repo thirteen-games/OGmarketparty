@@ -112,22 +112,22 @@ export const TICKETS = [
   { id: 204, mascotId: 2, rarity: 'Epic',      difficulty: 'Very Easy', cost: 4,  reward: 77,  target1: -4, target2: null },
   { id: 304, mascotId: 3, rarity: 'Epic',      difficulty: 'Easy',      cost: 4,  reward: 69,  target1: 3,  target2: null },
   { id: 404, mascotId: 4, rarity: 'Epic',      difficulty: 'Medium',    cost: 4,  reward: 71,  target1: 4,  target2: null },
-  { id: 105, mascotId: 1, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 85,  target1: 4,  target2: -4 },
-  { id: 205, mascotId: 2, rarity: 'Epic',      difficulty: 'Medium',    cost: 5,  reward: 74,  target1: 10, target2: -8 },
-  { id: 305, mascotId: 3, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 78,  target1: 4,  target2: -1 },
-  { id: 405, mascotId: 4, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 73,  target1: 7,  target2: -6 },
+  { id: 105, mascotId: 1, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 95,  target1: 4,  target2: -4 },
+  { id: 205, mascotId: 2, rarity: 'Epic',      difficulty: 'Medium',    cost: 5,  reward: 85,  target1: 10, target2: -8 },
+  { id: 305, mascotId: 3, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 88,  target1: 4,  target2: -1 },
+  { id: 405, mascotId: 4, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 85,  target1: 7,  target2: -6 },
   // Lev's tickets: rewards priced so each tier's expected EP matches the
   // average of the other mascots' tickets at that tier (4-roll odds).
   { id: 501, mascotId: 5, rarity: 'Common',    difficulty: 'Very Easy', cost: 1,  reward: 11,  target1: -1, target2: null },
   { id: 502, mascotId: 5, rarity: 'Common',    difficulty: 'Easy',      cost: 2,  reward: 28,  target1: 1,  target2: null },
   { id: 503, mascotId: 5, rarity: 'Rare',      difficulty: 'Easy',      cost: 3,  reward: 49,  target1: -5, target2: null },
   { id: 504, mascotId: 5, rarity: 'Epic',      difficulty: 'Medium',    cost: 4,  reward: 88, target1: 5,  target2: null },
-  { id: 505, mascotId: 5, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 72,  target1: 8,  target2: -8 },
-  { id: 510, mascotId: 5, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 216, target1: 8,  target2: -10 },
-  { id: 110, mascotId: 1, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 227, target1: 4,  target2: -4 },
-  { id: 210, mascotId: 2, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 246, target1: 12, target2: -10 },
-  { id: 310, mascotId: 3, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 253, target1: 4,  target2: -2 },
-  { id: 410, mascotId: 4, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 229, target1: 9,  target2: -6 },
+  { id: 505, mascotId: 5, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 80,  target1: 8,  target2: -8 },
+  { id: 510, mascotId: 5, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 205, target1: 7,  target2: -9 },
+  { id: 110, mascotId: 1, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 200, target1: 3,  target2: -3 },
+  { id: 210, mascotId: 2, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 247, target1: 11, target2: -9 },
+  { id: 310, mascotId: 3, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 219, target1: 4,  target2: -1 },
+  { id: 410, mascotId: 4, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 212, target1: 8,  target2: -5 },
 ];
 
 // Ticket tier drop weights per EP level (Betting Tickets G8:O31; identical for
@@ -146,7 +146,7 @@ export const TICKET_TIER_WEIGHTS = {
 // Payout multiplier by ticket cost (from the prototype's "Drop Rates and
 // more info" Stats Geek box). Informational: higher-cost tickets pay
 // proportionally more EP per coin.
-export const PAYOUT_RATIOS = { 1: 1.0, 2: 1.1, 3: 1.2, 4: 1.35, 5: 1.5, 10: 2.0 };
+export const PAYOUT_RATIOS = { 1: 1.0, 2: 1.1, 3: 1.2, 4: 1.35, 5: 1.7, 10: 2.1 };
 
 // Spells (Game simulation Table9, BG10:BK41). id = mascotId*100 + (50 + type).
 // type: 1 double, 2 halve (opponent), 3 move closer, 4 steal (opponent),
