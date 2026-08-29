@@ -70,6 +70,16 @@ export class Game {
     return epLevelFor(this.players[p].ep);
   }
 
+  // Rolls left in the game: finite only in 1P mode.
+  roundsLeft() {
+    return this.mode === 1 ? Math.max(0, CONFIG.onePlayerRounds - this.round) : Infinity;
+  }
+
+  // True when an alert starting now would still be running at the final roll.
+  alertOutlastsGame() {
+    return this.roundsLeft() < CONFIG.newsDurationRolls;
+  }
+
   // Horizon for live ticket odds: a 4-roll window, shrinking near the end
   // of a 1P game when fewer rolls remain.
   oddsHorizon() {
@@ -119,8 +129,9 @@ export class Game {
         if (e.weight <= 0) return false;
         const s = spellById(e.value);
         // Opponent-targeting spells are useless in solo mode; keep them out of
-        // the draw (the prototype offered them but refused the cast).
-        if (this.mode === 1 && s.targetsOpponent) return false;
+        // the draw (the prototype offered them but refused the cast). Freeze
+        // is likewise pointless solo — it only stops your own collections.
+        if (this.mode === 1 && (s.targetsOpponent || s.type === SPELL_TYPES.FREEZE)) return false;
         // A direction spell that matches an active alert is redundant — e.g.
         // "Flixy can only move Up" during a Flixy Oil Strike.
         const alert = this.news.find((a) => a.mascotId === s.mascotId);
@@ -368,7 +379,8 @@ export class Game {
       mascotId: row.mascotId,
       direction: row.direction,
       newsType: row.newsType,
-      message: `Mascot News — ${row.newsType}! ${mascotById(row.mascotId).name} can only move ${row.direction > 0 ? 'Up' : 'Down'} for the next ${CONFIG.newsDurationRolls} rolls.`,
+      message: `Mascot News — ${row.newsType}! ${mascotById(row.mascotId).name} can only move ${row.direction > 0 ? 'Up' : 'Down'} ${
+        this.alertOutlastsGame() ? 'until the game ends' : `for the next ${CONFIG.newsDurationRolls} rolls`}.`,
     });
   }
 

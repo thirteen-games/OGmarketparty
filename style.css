@@ -385,6 +385,8 @@ main {
 .geek-rolls.big { justify-content: center; padding: 6px 0 2px; }
 .geek-rolls.big span { font-size: 1.05rem; min-width: 38px; padding: 5px 7px; }
 
+.over-actions { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; }
+
 /* Bot opponent */
 .bot-panel .shop .btn { pointer-events: none; opacity: 0.55; }
 .chip.bot-new {

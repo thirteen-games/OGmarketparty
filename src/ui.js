@@ -98,6 +98,7 @@ export class UI {
     this.animating = false;
     this.scoreSaved = false;
     this.lastScoreIndex = null;
+    this.resultsDismissed = false;
     this.log(botLevel
       ? `New game vs ${botName(botLevel)}! Make some Bets, then Roll — your opponent moves when you do.`
       : `New ${mode}-player game. Make some Bets, then Roll!`);
@@ -140,10 +141,18 @@ export class UI {
         </div>
       </main>
       <div class="targeting-banner" id="targeting-banner" hidden></div>
-      ${g.over ? this.renderGameOver() : ''}`;
+      ${g.over && !this.resultsDismissed ? this.renderGameOver() : ''}`;
 
     $('#roll-btn', this.root)?.addEventListener('click', () => this.doRoll());
     $('#skip-btn', this.root)?.addEventListener('click', () => this.requestSkip?.());
+    $('#results-btn', this.root)?.addEventListener('click', () => {
+      this.resultsDismissed = false;
+      this.renderGame();
+    });
+    $('#close-results', this.root)?.addEventListener('click', () => {
+      this.resultsDismissed = true;
+      this.root.querySelector('.overlay')?.remove();
+    });
     $('#tutorial-btn', this.root)?.addEventListener('click', () => this.showTutorial());
     $('#restart-btn', this.root).addEventListener('click', () => this.renderStart());
     $('#lb-save-btn', this.root)?.addEventListener('click', () => {
@@ -172,7 +181,9 @@ export class UI {
           }</div>
           <div class="roll-actions">
             <button class="btn btn-tiny" id="skip-btn" hidden>⏭ Skip</button>
-            <button class="btn btn-roll" id="roll-btn" ${g.over ? 'disabled' : ''}>🎲 ROLL</button>
+            ${g.over
+              ? '<button class="btn btn-primary" id="results-btn">🏁 Results</button>'
+              : '<button class="btn btn-roll" id="roll-btn">🎲 ROLL</button>'}
           </div>
         </div>
         <div class="dice-row">
@@ -204,7 +215,8 @@ export class UI {
     return g.news.map((a) => {
       const m = mascotById(a.mascotId);
       const left = CONFIG.newsDurationRolls - a.count + 1;
-      return `${NEWS_EMOJI[a.newsType]} ${a.newsType}: ${m.name} ${a.direction > 0 ? 'UP' : 'DOWN'} only (${left} roll${left === 1 ? '' : 's'} left)`;
+      const dur = left >= g.roundsLeft() ? 'until the game ends' : `${left} roll${left === 1 ? '' : 's'} left`;
+      return `${NEWS_EMOJI[a.newsType]} ${a.newsType}: ${m.name} ${a.direction > 0 ? 'UP' : 'DOWN'} only (${dur})`;
     }).join(' &nbsp;•&nbsp; ');
   }
 
@@ -602,7 +614,8 @@ export class UI {
         </svg></span>
         ${mascotSvg(m.id, 76)}
         <h2>${NEWS_EMOJI[e.newsType]} ${e.newsType.toUpperCase()}!</h2>
-        <p>${m.name} can only move <b>${e.direction > 0 ? 'UP' : 'DOWN'}</b> for the next ${CONFIG.newsDurationRolls} rolls!</p>
+        <p>${m.name} can only move <b>${e.direction > 0 ? 'UP' : 'DOWN'}</b> ${
+          this.game.alertOutlastsGame() ? 'until the game ends' : `for the next ${CONFIG.newsDurationRolls} rolls`}!</p>
       </div>`;
     document.body.appendChild(overlay);
     const dismissed = new Promise((resolve) => overlay.addEventListener('click', resolve));
@@ -806,7 +819,10 @@ export class UI {
           <h2>${headline}</h2>
           <p>${detail}</p>
           ${leaderboard}
-          <button class="btn btn-primary" id="play-again">Play again</button>
+          <div class="over-actions">
+            <button class="btn" id="close-results">Close &mdash; see the board</button>
+            <button class="btn btn-primary" id="play-again">Play again</button>
+          </div>
         </div>
       </div>`;
   }

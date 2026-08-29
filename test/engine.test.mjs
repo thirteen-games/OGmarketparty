@@ -228,15 +228,44 @@ test('targeted spells refuse invalid steps', () => {
   assert.ok(g.castSpell(0, 0, 40).ok);
 });
 
-test('solo mode never offers opponent-targeting spells', () => {
+test('solo mode never offers opponent-targeting or freeze spells', () => {
   for (let seed = 0; seed < 40; seed++) {
     const g = new Game({ mode: 1, seed });
-    g.players[0].ep = 600; // level 5 pool includes halve/steal weights
+    g.players[0].ep = 600; // level 5 pool includes halve/steal/freeze weights
     g.refreshSpells(0);
     for (const id of g.players[0].spells) {
-      assert.ok(!spellById(id).targetsOpponent, `seed ${seed} offered ${id}`);
+      const s = spellById(id);
+      assert.ok(!s.targetsOpponent, `seed ${seed} offered opponent spell ${id}`);
+      assert.notEqual(s.type, SPELL_TYPES.FREEZE, `seed ${seed} offered freeze ${id}`);
     }
   }
+  // 2P still gets freeze at level 5
+  let sawFreeze = false;
+  for (let seed = 0; seed < 200 && !sawFreeze; seed++) {
+    const g = new Game({ mode: 2, seed });
+    g.players[0].ep = 600;
+    g.refreshSpells(0);
+    sawFreeze = g.players[0].spells.some((id) => spellById(id).type === SPELL_TYPES.FREEZE);
+  }
+  assert.ok(sawFreeze, '2P mode should still offer freeze spells');
+});
+
+test('alerts report "until the game ends" late in a 1P game', () => {
+  const g = new Game({ mode: 1, seed: 5 });
+  assert.equal(g.roundsLeft(), CONFIG.onePlayerRounds);
+  assert.equal(g.alertOutlastsGame(), false);
+  g.round = 8; // 2 rounds left, shorter than a 3-roll alert
+  assert.equal(g.roundsLeft(), 2);
+  assert.ok(g.alertOutlastsGame());
+  g.news = [];
+  g.rng = () => 0.01; // Mousey Oil Strike
+  const events = [];
+  g.drawNews(events);
+  assert.match(events[0].message, /until the game ends/);
+  // 2P games never say it
+  const g2 = new Game({ mode: 2, seed: 5 });
+  g2.round = 99;
+  assert.equal(g2.alertOutlastsGame(), false);
 });
 
 test('news table matches spec: weights per mascot, 65% total', () => {
