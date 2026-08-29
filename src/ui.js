@@ -10,6 +10,7 @@ import {
 import { mascotSvg } from './mascotArt.js';
 import { collectProbability, oddsLabel } from './odds.js';
 import { TUTORIAL_STEPS } from './tutorial.js';
+import { BOT_LEVELS, botName, botTakeTurn } from './bot.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -40,6 +41,7 @@ export class UI {
           <div class="start-buttons">
             <button class="btn btn-primary" data-mode="1">1 Player &mdash; ${CONFIG.onePlayerRounds} rounds, chase ${CONFIG.onePlayerGoal} EP</button>
             <button class="btn btn-primary" data-mode="2">2 Players &mdash; first to ${CONFIG.twoPlayerGoal} EP</button>
+            <button class="btn btn-primary" id="vs-bot-btn">🤖 Play vs Bot &mdash; first to ${CONFIG.twoPlayerGoal} EP</button>
             <button class="btn" id="tutorial-btn">📖 Tutorial</button>
             <button class="btn" id="leaderboard-btn">🏆 Leaderboard</button>
           </div>
@@ -59,12 +61,35 @@ export class UI {
       btn.addEventListener('click', () => this.newGame(Number(btn.dataset.mode)));
     });
     $('#tutorial-btn', this.root)?.addEventListener('click', () => this.showTutorial());
+    $('#vs-bot-btn', this.root)?.addEventListener('click', () => this.showBotPicker());
     $('#leaderboard-btn', this.root)?.addEventListener('click', () => {
       this.modal(`<h2>🏆 Leaderboard</h2>${this.leaderboardHtml()}`);
     });
   }
 
-  newGame(mode) {
+  showBotPicker() {
+    const overlay = this.modal(`
+      <h2>🤖 Pick your opponent</h2>
+      <div class="start-buttons bot-picker">
+        ${Object.entries(BOT_LEVELS).map(([key, b]) => `
+          <button class="btn btn-primary bot-pick" data-bot="${key}">
+            ${b.emoji} <b>${b.name}</b> &mdash; ${b.blurb}
+          </button>`).join('')}
+      </div>`);
+    overlay.querySelectorAll('.bot-pick').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        overlay.remove();
+        this.newGame(2, btn.dataset.bot);
+      });
+    });
+  }
+
+  playerName(p) {
+    return p === 1 && this.botLevel ? botName(this.botLevel) : PLAYER_NAMES[p];
+  }
+
+  newGame(mode, botLevel = null) {
+    this.botLevel = botLevel;
     this.game = new Game({ mode });
     this.logLines = [];
     this.targeting = null;
@@ -73,7 +98,9 @@ export class UI {
     this.animating = false;
     this.scoreSaved = false;
     this.lastScoreIndex = null;
-    this.log(`New ${mode}-player game. Make some Bets, then Roll!`);
+    this.log(botLevel
+      ? `New game vs ${botName(botLevel)}! Make some Bets, then Roll — your opponent moves when you do.`
+      : `New ${mode}-player game. Make some Bets, then Roll!`);
     this.renderGame();
     (async () => {
       await this.showRoundBanner(1);
@@ -226,7 +253,7 @@ export class UI {
           const ep = player.board[mascot.id][s];
           return ep
             ? `<span class="chip p${p}" data-mascot="${mascot.id}" data-step="${s}" data-player="${p}"
-                title="${PLAYER_NAMES[p]}: ${ep} EP on step ${s}">${ep}</span>`
+                title="${this.playerName(p)}: ${ep} EP on step ${s}">${ep}</span>`
             : '';
         })
         .join('');
@@ -314,10 +341,12 @@ export class UI {
     const g = this.game;
     const player = g.players[p];
     const level = g.playerLevel(p);
+    const isBot = p === 1 && this.botLevel;
     return `
-      <div class="player-panel" data-player="${p}" style="--pc:${PLAYER_COLORS[p]}">
+      <div class="player-panel ${isBot ? 'bot-panel' : ''}" data-player="${p}" style="--pc:${PLAYER_COLORS[p]}">
         <div class="player-head">
-          <b>${PLAYER_NAMES[p]}</b>
+          <b>${this.playerName(p)}</b>
+          ${isBot ? '<span class="hint bot-hint">plays when you Roll</span>' : ''}
           <span class="stat info-click" data-info="coins" title="How the Coin bank works">🪙 <b>${player.coins}</b></span>
           <span class="stat info-click" data-info="ep" title="How EP works">⭐ <b>${player.ep}</b> EP</span>
           <span class="stat level info-click" data-info="ep" title="How EP Levels work">Level ${level}</span>
@@ -386,7 +415,7 @@ export class UI {
         const res = this.game.buyTicket(p, slot);
         if (!res.ok) return this.toast(res.reason);
         const t = res.ticket;
-        this.log(`${PLAYER_NAMES[p]} bet 🪙${t.cost} on ${mascotById(t.mascotId).name}: ⭐${t.reward} EP on step ${res.placed.map((x) => x.step).join(' & ')}.`);
+        this.log(`${this.playerName(p)} bet 🪙${t.cost} on ${mascotById(t.mascotId).name}: ⭐${t.reward} EP on step ${res.placed.map((x) => x.step).join(' & ')}.`);
         this.renderGame();
       });
     });
@@ -399,7 +428,7 @@ export class UI {
         if (!spell.needsTarget) {
           const res = this.game.castSpell(p, slot);
           if (!res.ok) return this.toast(res.reason);
-          this.log(`${PLAYER_NAMES[p]} cast: ${spell.description}.`);
+          this.log(`${this.playerName(p)} cast: ${spell.description}.`);
           this.renderGame();
         } else {
           const steps = this.game.spellTargets(p, slot);
@@ -419,7 +448,7 @@ export class UI {
         const cost = this.game.refreshCost(p);
         const res = this.game.refreshTickets(p);
         if (!res.ok) return this.toast(res.reason);
-        this.log(`${PLAYER_NAMES[p]} refreshed their Bets for 🪙${cost}.`);
+        this.log(`${this.playerName(p)} refreshed their Bets for 🪙${cost}.`);
         this.renderGame();
       });
     });
@@ -462,7 +491,7 @@ export class UI {
           else if (res.stolen) detail = ` &mdash; stole ⭐${res.stolen}!`;
           else if (res.movedTo !== undefined) detail = ` &mdash; moved to step ${res.movedTo}.`;
           else if (res.newValue !== undefined) detail = ` &mdash; step ${step} now ⭐${res.newValue}.`;
-          this.log(`${PLAYER_NAMES[player]} cast: ${spell.description}${detail}`);
+          this.log(`${this.playerName(player)} cast: ${spell.description}${detail}`);
         }
         this.renderGame();
       });
@@ -475,6 +504,11 @@ export class UI {
   async doRoll() {
     if (this.animating || this.game.over) return;
     this.targeting = null;
+    if (this.botLevel) {
+      for (const action of botTakeTurn(this.game, this.botLevel)) {
+        this.log(`${this.playerName(1)} ${action}`);
+      }
+    }
     const events = this.game.roll();
     this.animating = true;
     const rollBtn = $('#roll-btn', this.root);
@@ -509,7 +543,7 @@ export class UI {
         ]);
       }
       for (const c of collects) {
-        this.log(`💰 ${PLAYER_NAMES[c.player]}: ${m.name} collected ⭐${c.amount} EP from step ${c.step}!`, 'good');
+        this.log(`💰 ${this.playerName(c.player)}: ${m.name} collected ⭐${c.amount} EP from step ${c.step}!`, 'good');
       }
       if (!this.skipRequested) await sleep(400);
     }
@@ -703,7 +737,7 @@ export class UI {
         ${this.leaderboardHtml(this.lastScoreIndex)}`;
     } else {
       const [a, b] = g.players.map((x) => x.ep);
-      headline = g.winner === 'tie' ? "🤝 It's a tie!" : `🏆 ${PLAYER_NAMES[g.winner]} wins!`;
+      headline = g.winner === 'tie' ? "🤝 It's a tie!" : `🏆 ${this.playerName(g.winner)} wins!`;
       detail = `Final score: <b>${a}</b> to <b>${b}</b>.`;
     }
     return `

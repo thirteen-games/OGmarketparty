@@ -22,6 +22,8 @@ Then visit <http://localhost:8642>.
 
 - **1 Player** — 10 rounds; score 1000+ EP to make the leaderboard.
 - **2 Players** — hotseat; first to 1000 EP wins.
+- **vs Bot** — battle 🐣 Rookie Randy, 🐂 Billy Bull, or 🐻 Baldy Bear; the bot
+  takes its turn automatically when you hit Roll.
 
 ## How a round works
 

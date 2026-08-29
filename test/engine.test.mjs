@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Game, FLAG } from '../src/engine.js';
 import { collectProbability, oddsLabel } from '../src/odds.js';
+import { BOT_LEVELS, botTakeTurn } from '../src/bot.js';
 import {
   MASCOTS, TICKETS, SPELLS, CONFIG, START_STEP, NEWS_TABLE,
   epLevelFor, ticketById, spellById, SPELL_TYPES,
@@ -378,6 +379,42 @@ test('oddsLabel buckets probabilities', () => {
 
 test('mascot display order is Mousey, Wolf, Flixy, Bizarro', () => {
   assert.deepEqual(MASCOTS.map((m) => m.name), ['Mousey', 'Wolf', 'Flixy', 'Bizarro']);
+});
+
+test('bots at every level play legal games to completion', () => {
+  for (const level of Object.keys(BOT_LEVELS)) {
+    for (let seed = 0; seed < 12; seed++) {
+      const g = new Game({ mode: 2, seed });
+      let rounds = 0;
+      while (!g.over && rounds < 40) {
+        botTakeTurn(g, level);
+        g.roll();
+        rounds += 1;
+      }
+      const bot = g.players[1];
+      assert.ok(bot.coins >= 0, `${level} seed ${seed}: negative coins`);
+      assert.ok(bot.ep >= 0, `${level} seed ${seed}: negative EP`);
+    }
+  }
+});
+
+test('the hard bot outscores the easy bot on average', () => {
+  const avgEP = (level) => {
+    let total = 0;
+    const games = 50;
+    for (let seed = 0; seed < games; seed++) {
+      const g = new Game({ mode: 2, seed });
+      for (let r = 0; r < 10 && !g.over; r++) {
+        botTakeTurn(g, level);
+        if (!g.over) g.roll();
+      }
+      total += g.players[1].ep;
+    }
+    return total / games;
+  };
+  const easy = avgEP('easy');
+  const hard = avgEP('hard');
+  assert.ok(hard > easy, `hard avg ${hard} should beat easy avg ${easy}`);
 });
 
 test('simulated 1P games finish with sane scores', () => {

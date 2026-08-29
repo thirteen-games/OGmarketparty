@@ -385,6 +385,11 @@ main {
 .geek-rolls.big { justify-content: center; padding: 6px 0 2px; }
 .geek-rolls.big span { font-size: 1.05rem; min-width: 38px; padding: 5px 7px; }
 
+/* Bot opponent */
+.bot-panel .shop .btn { pointer-events: none; opacity: 0.55; }
+.bot-hint { color: #eaf7ff !important; font-size: 0.78rem; }
+.bot-picker .bot-pick { text-align: left; }
+
 /* Leaderboard */
 .lb-save { display: flex; gap: 8px; justify-content: center; margin: 12px 0; }
 .lb-save input {
