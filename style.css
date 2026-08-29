@@ -299,6 +299,7 @@ main {
 }
 .rarity-common .rarity { background: #d7dde6; }
 .rarity-rare .rarity { background: #4fd2ff; }
+.rarity-super-rare .rarity { background: #7d8cff; }
 .rarity-epic .rarity { background: #cf9dff; }
 .rarity-legendary .rarity { background: var(--accent); }
 .card.spell .rarity { background: transparent; color: #fff; }
@@ -309,6 +310,7 @@ main {
 .difficulty { color: #ffffff9a; margin-top: 2px; }
 .spell-desc { line-height: 1.35; }
 .rarity-rare { box-shadow: 0 0 0 3px #1ec8ff, 0 4px 12px rgba(30, 200, 255, 0.5); }
+.rarity-super-rare { box-shadow: 0 0 0 3px #5f74ff, 0 4px 13px rgba(95, 116, 255, 0.6); }
 .rarity-epic { box-shadow: 0 0 0 3px #b45cff, 0 4px 14px rgba(180, 92, 255, 0.6); }
 .rarity-legendary {
   box-shadow: 0 0 0 4px var(--accent), 0 0 20px rgba(255, 210, 31, 0.9);

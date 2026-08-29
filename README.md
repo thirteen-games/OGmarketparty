@@ -29,7 +29,7 @@ Then visit <http://localhost:8642>.
 - **Roguelike** — 15 rounds with EP checkpoints at rounds 3/6/9/12 (30/150/450/1000;
   miss one and the run ends) and a 1650 EP victory target. Start with one mascot,
   two ticket slots, and no spells - draft mascots at cleared checkpoints to grow
-  the shop (slots, Epic and Legendary drops) and unlock spells.
+  the shop (slots, Super Rare/Epic and Legendary drops) and unlock spells.
 
 ## How a round works
 

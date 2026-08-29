@@ -236,7 +236,7 @@ export class UI {
             : 'Checkpoint cleared! Only one mascot remains — welcome them aboard.'
           }</p>
           ${unlocksSpell ? `<p class="unlock-note">✨ This draft also unlocks ${g.spellSlotCount() === 0
-            ? 'SPELLS, a 3rd ticket slot & Epic tickets'
+            ? 'SPELLS, a 3rd ticket slot & Super Rare/Epic tickets'
             : 'a 2nd Spell slot, a 4th ticket slot & Legendary tickets'}!</p>` : ''}
           <div class="choice-cards">${cards}</div>
         </div>
@@ -249,8 +249,8 @@ export class UI {
         <p>With two mascots on the board you can now cast <b>one Spell per round</b>.
         Spells cost <b>EP</b> instead of Coins — double a bounty on the board, or drag one
         closer to its mascot.</p>
-        <p>The shop grows too: a <b>3rd ticket slot</b> opens and <b>Epic tickets</b> can
-        now drop!</p>`
+        <p>The shop grows too: a <b>3rd ticket slot</b> opens and <b>Super Rare &amp; Epic
+        tickets</b> can now drop!</p>`
       : `<h2>✨ SECOND SPELL SLOT!</h2>
         <p>Your growing roster earns you <b>two Spell offers every round</b> from here on —
         plus a <b>4th ticket slot</b> and 👑 <b>Legendary tickets</b> in the shop!</p>`);
@@ -511,7 +511,7 @@ export class UI {
       .join('<br>');
     const prob = collectProbability(m, offsets, g.oddsHorizon(), this.newsConstraint(t.mascotId));
     return `
-      <div class="card ticket rarity-${t.rarity.toLowerCase()} ${sold ? 'sold' : ''}" style="--mc:${m.color}">
+      <div class="card ticket rarity-${t.rarity.toLowerCase().replace(/\s+/g, '-')} ${sold ? 'sold' : ''}" style="--mc:${m.color}">
         <div class="card-head info-click" data-stats="${m.id}" title="See ${m.name}'s die">${mascotSvg(m.id, 26)}<span>${m.name}</span><span class="rarity">${t.rarity}</span></div>
         <div class="card-body">
           <div class="reward">⭐ ${t.reward} EP</div>

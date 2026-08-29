@@ -155,7 +155,7 @@ export class Game {
     let entries = Object.entries(TICKET_TIER_WEIGHTS)
       .map(([tier, w]) => ({ value: Number(tier), weight: w[level - 1] }))
       .filter((e) => e.weight > 0);
-    // Roguelike rarity gates: Epic tickets (tiers 4-5) need a 2nd mascot,
+    // Roguelike rarity gates: Super Rare/Epic tickets (tiers 4-5) need a 2nd mascot,
     // Legendary (tier 10) needs a 3rd. Relative odds among the rest hold.
     if (this.rogue) {
       const roster = this.activeMascots.length;
