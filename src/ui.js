@@ -3,7 +3,7 @@
 import { Game } from './engine.js';
 import {
   MASCOTS, CONFIG, BOARD_MIN, BOARD_MAX,
-  TICKETS, SPELLS, EP_LEVELS, NEWS_TABLE, NEWS_MAX_ACTIVE, NEWS_EMOJI,
+  TICKETS, SPELLS, EP_LEVELS, NEWS_TABLE, NEWS_EMOJI,
   TICKET_TIER_WEIGHTS, SPELL_TYPE_WEIGHTS, PAYOUT_RATIOS,
   mascotById, ticketById, spellById,
 } from './data.js';
@@ -772,8 +772,7 @@ export class UI {
           <li>Every round — including before Round 1 — there's a <b>${totalPct}%</b> chance an alert hits.</li>
           <li>${NEWS_EMOJI['Oil Strike']} <b>Oil Strike</b> — the mascot can only move <b>Up</b> for ${CONFIG.newsDurationRolls} rolls.</li>
           <li>${NEWS_EMOJI.Earthquake} <b>Earthquake</b> — the mascot can only move <b>Down</b> for ${CONFIG.newsDurationRolls} rolls.</li>
-          <li>Up to <b>${NEWS_MAX_ACTIVE} alerts</b> can run at once — but a mascot can only have one,
-            so a draw for an already-alerted mascot fizzles.</li>
+          <li>Up to <b>3 alerts</b> can run at once — but each mascot can only have one.</li>
         </ul>
         <table class="stats-table"><tr><th>Mascot</th><th>${NEWS_EMOJI['Oil Strike']} Oil Strike</th><th>${NEWS_EMOJI.Earthquake} Earthquake</th></tr>${rows}</table>`);
     }

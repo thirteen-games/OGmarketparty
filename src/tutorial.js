@@ -107,8 +107,8 @@ export const TUTORIAL_STEPS = [
       Alert</b>:<br><br>
       🛢️ <b>Oil Strike</b> — that mascot can only move <b>Up</b> for 3 rolls.<br>
       🌍 <b>Earthquake</b> — that mascot can only move <b>Down</b> for 3 rolls.<br><br>
-      Up to two alerts can run at once. Use them to help decide which Bets to place and
-      Spells to buy!<br><br>
+      Several alerts can run at once, but each mascot can only have one. Use them to help
+      decide which Bets to place and Spells to buy!<br><br>
       <i>Gamer Details — click the yellow news banner at the top to see every alert and
       its odds.</i>`,
   },

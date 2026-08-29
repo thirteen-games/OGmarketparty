@@ -5,7 +5,7 @@
 import {
   BOARD_MIN, BOARD_MAX, START_STEP, CONFIG,
   MASCOTS, TICKETS, SPELLS, TICKET_TIER_WEIGHTS, SPELL_TYPE_WEIGHTS,
-  NEWS_TABLE, NEWS_MAX_ACTIVE, SPELL_TYPES,
+  NEWS_TABLE, SPELL_TYPES,
   mascotById, ticketById, spellById, epLevelFor,
 } from './data.js';
 import { makeRng, weightedPick } from './rng.js';
@@ -323,11 +323,10 @@ export class Game {
 
   // --- Mascot News ----------------------------------------------------------
   // Redesigned from the prototype: one weighted draw per round (including one
-  // before round 1), up to NEWS_MAX_ACTIVE concurrent alerts, and a draw for
-  // an already-alerted mascot is wasted.
+  // before round 1); alerts can overlap, but a draw for an already-alerted
+  // mascot is wasted.
 
   drawNews(events) {
-    if (this.news.length >= NEWS_MAX_ACTIVE) return;
     const r = this.rng() * 100;
     let acc = 0;
     let row = null;

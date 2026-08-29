@@ -236,7 +236,7 @@ test('news table matches spec: weights per mascot, 65% total', () => {
   assert.equal(NEWS_TABLE.reduce((s, r) => s + r.weight, 0), 65);
 });
 
-test('news draw activates an alert, wastes same-mascot draws, caps at 2', () => {
+test('news draw activates an alert and wastes same-mascot draws', () => {
   const g = new Game({ mode: 1, seed: 1 });
   g.news = []; // clear any game-start alert
   for (const m of MASCOTS) g.flags[m.id] = FLAG.NONE;
@@ -257,12 +257,16 @@ test('news draw activates an alert, wastes same-mascot draws, caps at 2', () => 
   g.rng = () => 0.12;
   g.drawNews(ev2);
   assert.equal(g.news.length, 2);
-  // Third mascot draw is refused at the cap
+  // A third mascot's alert stacks too — only per-mascot exclusivity limits alerts
   g.rng = () => 0.20; // Wolf Oil Strike (18..23)
   const ev3 = [];
   g.drawNews(ev3);
-  assert.equal(g.news.length, 2);
-  assert.equal(ev3.length, 0);
+  assert.equal(g.news.length, 3);
+  assert.equal(ev3.length, 1);
+  // ...but repeat draws for any alerted mascot are still wasted
+  g.drawNews(ev3);
+  assert.equal(g.news.length, 3);
+  assert.equal(ev3.length, 1);
   // r*100 = 70 -> beyond the 65% table: no alert
   g.news = [];
   g.rng = () => 0.70;

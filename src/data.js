@@ -185,8 +185,9 @@ export const SPELL_TYPE_WEIGHTS = {
 // Mascot News alerts. One draw per round (including one before round 1):
 // each row's weight is its percent chance; the remainder (35%) is no alert.
 // Oil Strike = up-only, Earthquake = down-only, each lasting 3 rolls.
-// Up to NEWS_MAX_ACTIVE alerts can run at once, but a mascot can only have
-// one — a draw for an already-alerted mascot is wasted.
+// Each mascot can only have one alert — a draw for an already-alerted mascot
+// is wasted. (With one draw per round and 3-roll durations, at most 3 alerts
+// can overlap naturally.)
 export const NEWS_TABLE = [
   { mascotId: 1, direction: 1,  weight: 8,  newsType: 'Oil Strike' },
   { mascotId: 2, direction: 1,  weight: 10, newsType: 'Oil Strike' },
@@ -197,7 +198,6 @@ export const NEWS_TABLE = [
   { mascotId: 3, direction: -1, weight: 5,  newsType: 'Earthquake' },
   { mascotId: 4, direction: -1, weight: 10, newsType: 'Earthquake' },
 ];
-export const NEWS_MAX_ACTIVE = 2;
 export const NEWS_EMOJI = { 'Oil Strike': '🛢️', Earthquake: '🌍' };
 
 export function mascotById(id) {
