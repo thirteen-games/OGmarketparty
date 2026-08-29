@@ -61,7 +61,7 @@ export const MASCOTS = [
     name: 'Flixy',
     sector: 'Entertainment',
     className: 'Flyer',
-    rolls: [-8, -6, -4, -2, 2, 2, 3, 4, 4, 8],
+    rolls: [-8, -6, -4, -2, 2, 3, 3, 4, 4, 8],
     color: '#6e7681', // gray lane
     epMoveSteps: 4,
   },
@@ -103,7 +103,7 @@ export const TICKETS = [
   { id: 102, mascotId: 1, rarity: 'Common',    difficulty: 'Medium',    cost: 2,  reward: 24,  target1: -1, target2: null },
   { id: 202, mascotId: 2, rarity: 'Common',    difficulty: 'Medium',    cost: 2,  reward: 21,  target1: 1,  target2: null },
   { id: 302, mascotId: 3, rarity: 'Common',    difficulty: 'Very Easy', cost: 2,  reward: 17,  target1: 1,  target2: null },
-  { id: 402, mascotId: 4, rarity: 'Common',    difficulty: 'Medium',    cost: 2,  reward: 24,  target1: -1, target2: null },
+  { id: 402, mascotId: 4, rarity: 'Common',    difficulty: 'Medium',    cost: 2,  reward: 26,  target1: -1, target2: null },
   { id: 103, mascotId: 1, rarity: 'Rare',      difficulty: 'Hard',      cost: 3,  reward: 50,  target1: -2, target2: null },
   { id: 203, mascotId: 2, rarity: 'Rare',      difficulty: 'Medium',    cost: 3,  reward: 47,  target1: 5,  target2: null },
   { id: 303, mascotId: 3, rarity: 'Rare',      difficulty: 'Medium',    cost: 3,  reward: 32,  target1: 2,  target2: null },
@@ -114,20 +114,20 @@ export const TICKETS = [
   { id: 404, mascotId: 4, rarity: 'Epic',      difficulty: 'Medium',    cost: 4,  reward: 75,  target1: 4,  target2: null },
   { id: 105, mascotId: 1, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 95,  target1: 4,  target2: -4 },
   { id: 205, mascotId: 2, rarity: 'Epic',      difficulty: 'Medium',    cost: 5,  reward: 85,  target1: 10, target2: -8 },
-  { id: 305, mascotId: 3, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 80,  target1: 4,  target2: -1 },
+  { id: 305, mascotId: 3, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 88,  target1: 4,  target2: -1 },
   { id: 405, mascotId: 4, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 85,  target1: 7,  target2: -6 },
   // Lev's tickets: rewards priced so each tier's expected EP matches the
   // average of the other mascots' tickets at that tier (4-roll odds).
-  { id: 501, mascotId: 5, rarity: 'Common',    difficulty: 'Very Easy', cost: 1,  reward: 11,  target1: -1, target2: null },
+  { id: 501, mascotId: 5, rarity: 'Common',    difficulty: 'Very Easy', cost: 1,  reward: 10,  target1: -1, target2: null },
   { id: 502, mascotId: 5, rarity: 'Common',    difficulty: 'Easy',      cost: 2,  reward: 25,  target1: 1,  target2: null },
-  { id: 503, mascotId: 5, rarity: 'Rare',      difficulty: 'Easy',      cost: 3,  reward: 46,  target1: -5, target2: null },
-  { id: 504, mascotId: 5, rarity: 'Epic',      difficulty: 'Medium',    cost: 4,  reward: 88,  target1: 5,  target2: null },
+  { id: 503, mascotId: 5, rarity: 'Rare',      difficulty: 'Easy',      cost: 3,  reward: 48,  target1: -5, target2: null },
+  { id: 504, mascotId: 5, rarity: 'Epic',      difficulty: 'Medium',    cost: 4,  reward: 100, target1: 5,  target2: null },
   { id: 505, mascotId: 5, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 80,  target1: 8,  target2: -8 },
   { id: 510, mascotId: 5, rarity: 'Legendary', difficulty: 'Medium',    cost: 10, reward: 135, target1: 5,  target2: -7 },
   { id: 110, mascotId: 1, rarity: 'Legendary', difficulty: 'Medium',    cost: 10, reward: 150, target1: 3,  target2: -3 },
   { id: 210, mascotId: 2, rarity: 'Legendary', difficulty: 'Medium',    cost: 10, reward: 140, target1: 8,  target2: -6 },
   { id: 310, mascotId: 3, rarity: 'Legendary', difficulty: 'Medium',    cost: 10, reward: 120, target1: 2,  target2: -1 },
-  { id: 410, mascotId: 4, rarity: 'Legendary', difficulty: 'Easy',      cost: 10, reward: 145, target1: 6,  target2: -3 },
+  { id: 410, mascotId: 4, rarity: 'Legendary', difficulty: 'Easy',      cost: 10, reward: 130, target1: 5,  target2: -3 },
 ];
 
 // Ticket tier drop weights per EP level (Betting Tickets G8:O31; identical for
