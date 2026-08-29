@@ -4,7 +4,7 @@ import { Game, FLAG } from '../src/engine.js';
 import { collectProbability, oddsLabel } from '../src/odds.js';
 import { BOT_LEVELS, botTakeTurn } from '../src/bot.js';
 import {
-  MASCOTS, TICKETS, SPELLS, CONFIG, START_STEP, NEWS_TABLE,
+  MASCOTS, TICKETS, SPELLS, CONFIG, ROGUE, START_STEP, NEWS_TABLE,
   epLevelFor, ticketById, spellById, SPELL_TYPES,
 } from '../src/data.js';
 
@@ -420,6 +420,94 @@ test('oddsLabel buckets probabilities', () => {
 
 test('mascot display order is Mousey, Wolf, Flixy, Bizarro', () => {
   assert.deepEqual(MASCOTS.map((m) => m.name), ['Mousey', 'Wolf', 'Flixy', 'Bizarro']);
+});
+
+test('roguelike: starts with a 2-mascot choice; everything scopes to the roster', () => {
+  const g = new Game({ mode: 'rogue', seed: 3 });
+  assert.ok(g.rogue);
+  assert.equal(g.activeMascots.length, 0);
+  assert.equal(g.pendingChoice.length, 2);
+  assert.notEqual(g.pendingChoice[0], g.pendingChoice[1]);
+  assert.equal(g.roll().length, 0); // rolling is blocked until the choice is made
+  assert.equal(g.chooseMascot(99).ok, false);
+  const pick = g.pendingChoice[0];
+  assert.ok(g.chooseMascot(pick).ok);
+  assert.deepEqual(g.activeMascots, [pick]);
+  for (const id of g.players[0].tickets) assert.equal(Math.floor(id / 100), pick);
+  for (const id of g.players[0].spells) assert.equal(Math.floor(id / 100), pick);
+  const rolls = g.roll().filter((e) => e.type === 'roll');
+  assert.equal(rolls.length, 1);
+  assert.equal(rolls[0].mascotId, pick);
+});
+
+test('roguelike: checkpoints end the run or grow the roster', () => {
+  const g = new Game({ mode: 'rogue', seed: 4 });
+  g.chooseMascot(g.pendingChoice[0]);
+  g.roll();
+  g.roll();
+  g.players[0].ep = ROGUE.targets[3] - 1;
+  g.roll();
+  assert.ok(g.over);
+  assert.equal(g.winner, false);
+  assert.deepEqual(g.failedCheckpoint, { round: 3, target: ROGUE.targets[3] });
+
+  const g2 = new Game({ mode: 'rogue', seed: 4 });
+  const firstPick = g2.pendingChoice[0];
+  g2.chooseMascot(firstPick);
+  g2.roll();
+  g2.roll();
+  g2.players[0].ep = ROGUE.targets[3] + 50;
+  g2.roll();
+  assert.ok(!g2.over);
+  assert.equal(g2.pendingChoice.length, 2);
+  assert.ok(!g2.pendingChoice.includes(firstPick));
+  g2.chooseMascot(g2.pendingChoice[1]);
+  assert.equal(g2.activeMascots.length, 2);
+  const counts = {};
+  for (const id of g2.players[0].tickets) {
+    const m = Math.floor(id / 100);
+    counts[m] = (counts[m] || 0) + 1;
+  }
+  assert.deepEqual(Object.values(counts).sort(), [2, 2]); // even 2/2 shop split
+});
+
+test('roguelike: three-mascot shop is 1 each plus 1 random repeat', () => {
+  for (let seed = 0; seed < 15; seed++) {
+    const g = new Game({ mode: 'rogue', seed });
+    g.activeMascots = [1, 3, 4];
+    g.pendingChoice = null;
+    g.refreshTickets(0, { free: true });
+    const counts = { 1: 0, 3: 0, 4: 0 };
+    for (const id of g.players[0].tickets) counts[Math.floor(id / 100)] += 1;
+    assert.equal(counts[1] + counts[3] + counts[4], 4);
+    for (const c of Object.values(counts)) assert.ok(c >= 1 && c <= 2, `seed ${seed}: ${JSON.stringify(counts)}`);
+  }
+});
+
+test('roguelike: benched mascots make no news; victory after round 15', () => {
+  const g = new Game({ mode: 'rogue', seed: 8 });
+  g.chooseMascot(g.pendingChoice[0]);
+  const active = g.activeMascots[0];
+  let acc = 0;
+  let rngValue = null;
+  for (const row of NEWS_TABLE) {
+    if (row.mascotId !== active) { rngValue = (acc + 0.5) / 100; break; }
+    acc += row.weight;
+  }
+  g.rng = () => rngValue;
+  const ev = [];
+  g.drawNews(ev);
+  assert.equal(g.news.length, 0, 'inactive-mascot draw must be suppressed');
+  assert.equal(ev.length, 0);
+
+  const g2 = new Game({ mode: 'rogue', seed: 8 });
+  g2.chooseMascot(g2.pendingChoice[0]);
+  g2.activeMascots = MASCOTS.map((m) => m.id);
+  g2.round = 14;
+  g2.players[0].ep = ROGUE.targets[15] + 5;
+  g2.roll();
+  assert.ok(g2.over);
+  assert.equal(g2.winner, true);
 });
 
 test('bots at every level play legal games to completion', () => {

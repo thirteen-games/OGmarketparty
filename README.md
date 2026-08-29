@@ -24,6 +24,9 @@ Then visit <http://localhost:8642>.
 - **2 Players** — hotseat; first to 1000 EP wins.
 - **vs Bot** — battle 🐣 Rookie Randy, 🐂 Billy Bull, or 🐻 Baldy Bear; the bot
   takes its turn automatically when you hit Roll.
+- **Roguelike** — 15 rounds with EP checkpoints at rounds 3/6/9/12 (75/250/500/800;
+  miss one and the run ends) and a 1250 EP victory target. Start with one mascot
+  of your choice and draft a new one at each cleared checkpoint.
 
 ## How a round works
 

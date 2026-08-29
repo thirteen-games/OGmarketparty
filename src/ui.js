@@ -2,7 +2,7 @@
 
 import { Game, FLAG } from './engine.js';
 import {
-  MASCOTS, CONFIG, BOARD_MIN, BOARD_MAX,
+  MASCOTS, CONFIG, ROGUE, BOARD_MIN, BOARD_MAX,
   TICKETS, SPELLS, EP_LEVELS, NEWS_TABLE, NEWS_EMOJI,
   TICKET_TIER_WEIGHTS, SPELL_TYPE_WEIGHTS, PAYOUT_RATIOS,
   mascotById, ticketById, spellById,
@@ -42,6 +42,7 @@ export class UI {
             <button class="btn btn-primary" data-mode="1">1 Player &mdash; ${CONFIG.onePlayerRounds} rounds, chase ${CONFIG.onePlayerGoal} EP</button>
             <button class="btn btn-primary" data-mode="2">2 Players &mdash; first to ${CONFIG.twoPlayerGoal} EP</button>
             <button class="btn btn-primary" id="vs-bot-btn">🤖 Play vs Bot &mdash; first to ${CONFIG.twoPlayerGoal} EP</button>
+            <button class="btn btn-primary" id="rogue-btn">🗺️ Roguelike &mdash; survive the checkpoints</button>
             <button class="btn" id="tutorial-btn">📖 Tutorial</button>
             <button class="btn" id="leaderboard-btn">🏆 Leaderboard</button>
           </div>
@@ -62,6 +63,7 @@ export class UI {
     });
     $('#tutorial-btn', this.root)?.addEventListener('click', () => this.showTutorial());
     $('#vs-bot-btn', this.root)?.addEventListener('click', () => this.showBotPicker());
+    $('#rogue-btn', this.root)?.addEventListener('click', () => this.newGame('rogue'));
     $('#leaderboard-btn', this.root)?.addEventListener('click', () => {
       this.modal(`<h2>🏆 Leaderboard</h2>${this.leaderboardHtml()}`);
     });
@@ -101,7 +103,9 @@ export class UI {
     this.resultsDismissed = false;
     this.log(botLevel
       ? `New game vs ${botName(botLevel)}! Make some Bets, then Roll — your opponent moves when you do.`
-      : `New ${mode}-player game. Make some Bets, then Roll!`);
+      : mode === 'rogue'
+        ? `Roguelike run started! Hit every checkpoint or the run ends. Win with ${ROGUE.targets[ROGUE.rounds]} EP after round ${ROGUE.rounds}.`
+        : `New ${mode}-player game. Make some Bets, then Roll!`);
     this.renderGame();
     (async () => {
       await this.showRoundBanner(1);
@@ -141,7 +145,8 @@ export class UI {
         </div>
       </main>
       <div class="targeting-banner" id="targeting-banner" hidden></div>
-      ${g.over && !this.resultsDismissed ? this.renderGameOver() : ''}`;
+      ${g.over && !this.resultsDismissed ? this.renderGameOver() : ''}
+      ${!g.over && g.pendingChoice ? this.renderMascotChoice() : ''}`;
 
     $('#roll-btn', this.root)?.addEventListener('click', () => this.doRoll());
     $('#skip-btn', this.root)?.addEventListener('click', () => this.requestSkip?.());
@@ -152,6 +157,15 @@ export class UI {
     $('#close-results', this.root)?.addEventListener('click', () => {
       this.resultsDismissed = true;
       this.root.querySelector('.overlay')?.remove();
+    });
+    this.root.querySelectorAll('.choice-pick').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = Number(btn.dataset.mascot);
+        const res = this.game.chooseMascot(id);
+        if (!res.ok) return this.toast(res.reason);
+        this.log(`🗺️ ${mascotById(id).name} joins the run!`, 'news');
+        this.renderGame();
+      });
     });
     $('#tutorial-btn', this.root)?.addEventListener('click', () => this.showTutorial());
     $('#restart-btn', this.root).addEventListener('click', () => this.renderStart());
@@ -168,16 +182,58 @@ export class UI {
     window.scrollTo(0, scrollY); // don't jump the page on re-render (e.g. buying a bet)
   }
 
+  // The next unpassed checkpoint of a roguelike run.
+  rogueTarget() {
+    for (const r of Object.keys(ROGUE.targets).map(Number).sort((a, b) => a - b)) {
+      if (r > this.game.round) return { round: r, ep: ROGUE.targets[r] };
+    }
+    return null;
+  }
+
+  renderMascotChoice() {
+    const g = this.game;
+    const first = g.activeMascots.length === 0;
+    const pill = (r) => `<span class="${r > 0 ? 'pos' : 'neg'}">${r > 0 ? '+' : ''}${r}</span>`;
+    const cards = g.pendingChoice.map((id) => {
+      const m = mascotById(id);
+      const up = m.rolls.filter((r) => r > 0).sort((a, b) => a - b).map(pill).join('');
+      const down = m.rolls.filter((r) => r <= 0).sort((a, b) => b - a).map(pill).join('');
+      return `
+        <div class="choice-card" style="--mc:${m.color}">
+          <div class="bets-head">${mascotSvg(m.id, 40)}<b>${m.name}</b><span class="class-tag">${m.className}</span></div>
+          <div class="geek-rolls">${up}</div>
+          <div class="geek-rolls">${down}</div>
+          <button class="btn btn-primary choice-pick" data-mascot="${id}">Choose ${m.name}</button>
+        </div>`;
+    }).join('');
+    return `
+      <div class="overlay">
+        <div class="overlay-card wide">
+          <h2>${first ? '🗺️ Choose your starting mascot!' : '🎉 A new mascot joins the run!'}</h2>
+          <p class="hint">${
+            first ? 'Your run begins with a single mascot on the board — study their die.'
+            : g.pendingChoice.length > 1 ? 'Checkpoint cleared! Pick one of these two to add to your board.'
+            : 'Checkpoint cleared! Only one mascot remains — welcome them aboard.'
+          }</p>
+          <div class="choice-cards">${cards}</div>
+        </div>
+      </div>`;
+  }
+
   renderRollPanel() {
     const g = this.game;
     const rolled = g.round > 0;
+    const target = g.rogue ? this.rogueTarget() : null;
     return `
       <section class="roll-panel">
         <div class="roll-head">
           <div class="round-info">${
-            g.mode === 1
-              ? `Round <b>${Math.min(g.round + 1, CONFIG.onePlayerRounds)}</b> / ${CONFIG.onePlayerRounds}`
-              : `Round <b>${g.round + 1}</b> &middot; first to ${CONFIG.twoPlayerGoal} EP`
+            g.rogue
+              ? `Round <b>${Math.min(g.round + 1, ROGUE.rounds)}</b> / ${ROGUE.rounds}${
+                  target ? ` &middot; 🎯 <b>${target.ep}</b> EP by round ${target.round}` : ''}`
+              : g.mode === 1
+                ? `Round <b>${Math.min(g.round + 1, CONFIG.onePlayerRounds)}</b> / ${CONFIG.onePlayerRounds}`
+                : `Round <b>${g.round + 1}</b> &middot; first to ${CONFIG.twoPlayerGoal} EP`
           }</div>
           <div class="roll-actions">
             <button class="btn btn-tiny" id="skip-btn" hidden>⏭ Skip</button>
@@ -190,6 +246,14 @@ export class UI {
           ${MASCOTS.map((m) => {
             const last = g.lastRolls[m.id];
             const alert = g.news.find((a) => a.mascotId === m.id);
+            if (!g.isActive(m.id)) {
+              return `
+                <div class="die-slot locked" data-mascot="${m.id}" style="--mc:${m.color}" title="${m.name} hasn't joined the run yet">
+                  <span class="die-mascot">${mascotSvg(m.id, 54)}</span>
+                  <div class="die-col"><div class="d10"><span class="die-num">🔒</span></div>
+                  <div class="die-result">&mdash;</div></div>
+                </div>`;
+            }
             return `
               <div class="die-slot ${alert ? 'alert' : ''}" data-mascot="${m.id}" style="--mc:${m.color}"
                 ${alert ? `title="${alert.newsType}! ${m.name} can only move ${alert.direction > 0 ? 'Up' : 'Down'}"` : ''}>
@@ -228,6 +292,16 @@ export class UI {
 
   renderLaneHead(mascot) {
     const g = this.game;
+    if (!g.isActive(mascot.id)) {
+      return `
+        <div class="lane-label locked" style="--mc:${mascot.color}">
+          ${mascotSvg(mascot.id, 40)}
+          <div class="lane-title">
+            <b>${mascot.name}</b><span class="class-tag">${mascot.className}</span>
+            <div class="lane-sub">🔒 joins later</div>
+          </div>
+        </div>`;
+    }
     const step = g.steps[mascot.id];
     const last = g.lastRolls[mascot.id];
     const flag = g.flags[mascot.id];
@@ -249,9 +323,10 @@ export class UI {
   // Vertical lane column, high steps at the top — like the prototype board.
   renderLane(mascot) {
     const g = this.game;
-    const step = g.steps[mascot.id];
+    const locked = !g.isActive(mascot.id);
+    const step = locked ? null : g.steps[mascot.id];
     const from = g.lastFrom[mascot.id];
-    const roll = g.lastRolls[mascot.id];
+    const roll = locked ? 0 : g.lastRolls[mascot.id];
     const cells = [];
     for (let s = BOARD_MAX; s >= BOARD_MIN; s--) {
       const here = s === step;
@@ -279,7 +354,7 @@ export class UI {
         </div>`);
     }
     return `
-      <div class="lane" data-mascot="${mascot.id}" style="--mc:${mascot.color}">
+      <div class="lane ${locked ? 'locked' : ''}" data-mascot="${mascot.id}" style="--mc:${mascot.color}">
         <div class="track">${cells.join('')}</div>
       </div>`;
   }
@@ -378,6 +453,7 @@ export class UI {
 
   renderTicketCard(p, id, slot) {
     const g = this.game;
+    if (!id) return '<div class="card ticket empty-card"></div>';
     const t = ticketById(id);
     const m = mascotById(t.mascotId);
     const sold = g.players[p].ticketSold[slot];
@@ -404,6 +480,7 @@ export class UI {
 
   renderSpellCard(p, id, slot) {
     const g = this.game;
+    if (!id) return '<div class="card spell empty-card"></div>';
     const s = spellById(id);
     const m = mascotById(s.mascotId);
     const sold = g.players[p].spellSold[slot];
@@ -575,8 +652,19 @@ export class UI {
     }
 
     const newsEvents = tail.filter((e) => e.type === 'news');
+    const checkpoint = tail.find((e) => e.type === 'checkpoint');
     for (const e of tail) {
       if (e.type === 'news' || e.type === 'newsEnd') this.log(e.message, 'news');
+      if (e.type === 'checkpoint') {
+        this.log(e.passed
+          ? `✅ Checkpoint round ${e.round}: ${e.ep} / ${e.target} EP — passed!`
+          : `💥 Checkpoint round ${e.round}: ${e.ep} / ${e.target} EP — run over.`, e.passed ? 'good' : 'news');
+      }
+    }
+
+    // A cleared (non-final) checkpoint gets its own moment before the next round.
+    if (checkpoint && checkpoint.passed && !checkpoint.final && !this.skipRequested) {
+      await this.showCheckpointPopup(checkpoint);
     }
 
     // Between-round sequence: round banner, then news popups, then coin gain.
@@ -620,6 +708,21 @@ export class UI {
     document.body.appendChild(overlay);
     const dismissed = new Promise((resolve) => overlay.addEventListener('click', resolve));
     const waits = [sleep(2400), dismissed];
+    if (this.skipPromise) waits.push(this.skipPromise);
+    return Promise.race(waits).then(() => overlay.remove());
+  }
+
+  showCheckpointPopup(e) {
+    const overlay = document.createElement('div');
+    overlay.className = 'news-popup';
+    overlay.innerHTML = `
+      <div class="news-card checkpoint-card">
+        <h2>✅ CHECKPOINT PASSED!</h2>
+        <p>Round ${e.round}: <b>${e.ep}</b> / ${e.target} EP — the run continues!</p>
+      </div>`;
+    document.body.appendChild(overlay);
+    const dismissed = new Promise((resolve) => overlay.addEventListener('click', resolve));
+    const waits = [sleep(2000), dismissed];
     if (this.skipPromise) waits.push(this.skipPromise);
     return Promise.race(waits).then(() => overlay.remove());
   }
@@ -793,7 +896,17 @@ export class UI {
   renderGameOver() {
     const g = this.game;
     let headline, detail, leaderboard = '';
-    if (g.mode === 1) {
+    if (g.rogue) {
+      const ep = g.players[0].ep;
+      if (g.winner) {
+        headline = '👑 Run complete — you win!';
+        detail = `You cleared every checkpoint and finished all ${ROGUE.rounds} rounds with <b>${ep} EP</b> (target: ${ROGUE.targets[ROGUE.rounds]}).`;
+      } else {
+        const f = g.failedCheckpoint;
+        headline = '💥 Run over!';
+        detail = `You needed <b>${f.target} EP</b> by round ${f.round} — you finished it with <b>${ep}</b>. Better luck next run!`;
+      }
+    } else if (g.mode === 1) {
       const ep = g.players[0].ep;
       headline = g.winner ? '🎉 A leaderboard score!' : 'Good game!';
       detail = g.winner
@@ -934,9 +1047,11 @@ export class UI {
         </ul>
         <table class="stats-table"><tr><th>Level</th><th>EP in bank</th></tr>${rows}</table>
         <p class="hint">Careful: spending EP on spells can drop your Level (and your score).
-        ${this.game?.mode === 1
-          ? `Score ${CONFIG.onePlayerGoal}+ in ${CONFIG.onePlayerRounds} rounds to make the leaderboard.`
-          : `First player to ${CONFIG.twoPlayerGoal} EP wins.`}</p>`);
+        ${this.game?.rogue
+          ? `Checkpoints: ${Object.entries(ROGUE.targets).map(([r, ep]) => `${ep} by round ${r}`).join(', ')} — the last one wins the run.`
+          : this.game?.mode === 1
+            ? `Score ${CONFIG.onePlayerGoal}+ in ${CONFIG.onePlayerRounds} rounds to make the leaderboard.`
+            : `First player to ${CONFIG.twoPlayerGoal} EP wins.`}</p>`);
     } else if (topic === 'spells') {
       this.modal(`
         <h2>✨ Spells</h2>

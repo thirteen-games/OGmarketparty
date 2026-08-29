@@ -3,7 +3,7 @@
 // lookup tables (see data.js).
 
 import {
-  BOARD_MIN, BOARD_MAX, START_STEP, CONFIG,
+  BOARD_MIN, BOARD_MAX, START_STEP, CONFIG, ROGUE,
   MASCOTS, TICKETS, SPELLS, TICKET_TIER_WEIGHTS, SPELL_TYPE_WEIGHTS,
   NEWS_TABLE, SPELL_TYPES,
   mascotById, ticketById, spellById, epLevelFor,
@@ -37,7 +37,10 @@ function newPlayer() {
 
 export class Game {
   constructor({ mode = 1, seed } = {}) {
-    if (mode !== 1 && mode !== 2) throw new Error('mode must be 1 or 2');
+    // Roguelike is single-player with a growing mascot roster and checkpoints.
+    this.rogue = mode === 'rogue';
+    if (this.rogue) mode = 1;
+    if (mode !== 1 && mode !== 2) throw new Error('mode must be 1, 2, or "rogue"');
     this.rng = makeRng(seed);
     this.mode = mode;
     this.round = 0;
@@ -56,23 +59,70 @@ export class Game {
       this.lastFrom[m.id] = START_STEP;
       this.flags[m.id] = FLAG.NONE;
     }
+    // Roguelike: no mascots yet — the run starts by choosing one of two.
+    this.activeMascots = this.rogue ? [] : MASCOTS.map((m) => m.id);
+    this.pendingChoice = null;
+    this.failedCheckpoint = null;
+
     // A news draw happens before round 1 too — before the shops fill, so the
     // spell pool can exclude alert-redundant offers.
     this.startEvents = [];
-    this.drawNews(this.startEvents);
+    if (this.rogue) {
+      this.pendingChoice = this.pickChoice();
+    } else {
+      this.drawNews(this.startEvents);
+      for (let p = 0; p < this.players.length; p++) {
+        this.refreshTickets(p, { free: true });
+        this.refreshSpells(p);
+      }
+    }
+  }
+
+  // --- Roguelike roster ------------------------------------------------------
+
+  activeList() {
+    return MASCOTS.filter((m) => this.activeMascots.includes(m.id));
+  }
+
+  isActive(mascotId) {
+    return this.activeMascots.includes(mascotId);
+  }
+
+  // Up to two random mascots not yet in the game.
+  pickChoice() {
+    const pool = MASCOTS.map((m) => m.id).filter((id) => !this.isActive(id));
+    if (pool.length <= 2) return pool;
+    const first = pool.splice(Math.floor(this.rng() * pool.length), 1)[0];
+    const second = pool[Math.floor(this.rng() * pool.length)];
+    return [first, second];
+  }
+
+  chooseMascot(mascotId) {
+    if (!this.pendingChoice || !this.pendingChoice.includes(mascotId)) {
+      return { ok: false, reason: 'Not one of the offered mascots' };
+    }
+    this.activeMascots.push(mascotId);
+    this.pendingChoice = null;
     for (let p = 0; p < this.players.length; p++) {
       this.refreshTickets(p, { free: true });
       this.refreshSpells(p);
     }
+    return { ok: true };
   }
 
   playerLevel(p) {
     return epLevelFor(this.players[p].ep);
   }
 
-  // Rolls left in the game: finite only in 1P mode.
+  totalRounds() {
+    if (this.rogue) return ROGUE.rounds;
+    return this.mode === 1 ? CONFIG.onePlayerRounds : Infinity;
+  }
+
+  // Rolls left in the game: finite only in single-player modes.
   roundsLeft() {
-    return this.mode === 1 ? Math.max(0, CONFIG.onePlayerRounds - this.round) : Infinity;
+    const total = this.totalRounds();
+    return total === Infinity ? Infinity : Math.max(0, total - this.round);
   }
 
   // True when an alert starting now would still be running at the final roll.
@@ -81,13 +131,11 @@ export class Game {
   }
 
   // Horizon for live ticket odds: a 4-roll window, shrinking near the end
-  // of a 1P game when fewer rolls remain.
+  // of a single-player game when fewer rolls remain.
   oddsHorizon() {
     const window = 4;
-    if (this.mode === 1) {
-      return Math.max(1, Math.min(window, CONFIG.onePlayerRounds - this.round));
-    }
-    return window;
+    const left = this.roundsLeft();
+    return left === Infinity ? window : Math.max(1, Math.min(window, left));
   }
 
   // --- Shops -------------------------------------------------------------
@@ -115,8 +163,20 @@ export class Game {
       player.refreshesThisRound += 1;
     }
     const level = this.playerLevel(p);
-    // One independent tier draw per mascot (VBA GameSimRefreshCardShop).
-    player.tickets = MASCOTS.map((m) => m.id * 100 + this.drawTicketTier(level));
+    // Four offers split evenly among the active mascots (all four in normal
+    // play; fewer in roguelike, where leftovers go to random active mascots).
+    const ids = this.activeMascots;
+    const slots = [];
+    for (const id of ids) {
+      for (let i = 0; i < Math.floor(4 / ids.length); i++) slots.push(id);
+    }
+    const extras = [...ids];
+    while (slots.length < 4 && extras.length) {
+      slots.push(extras.splice(Math.floor(this.rng() * extras.length), 1)[0]);
+    }
+    slots.sort((a, b) => ids.indexOf(a) - ids.indexOf(b));
+    // One independent tier draw per slot (VBA GameSimRefreshCardShop).
+    player.tickets = slots.map((id) => id * 100 + this.drawTicketTier(level));
     player.ticketSold = [false, false, false, false];
     return { ok: true };
   }
@@ -132,6 +192,8 @@ export class Game {
         // the draw (the prototype offered them but refused the cast). Freeze
         // is likewise pointless solo — it only stops your own collections.
         if (this.mode === 1 && (s.targetsOpponent || s.type === SPELL_TYPES.FREEZE)) return false;
+        // Roguelike: no spells for mascots that aren't in the game yet.
+        if (!this.isActive(s.mascotId)) return false;
         // A direction spell that matches an active alert is redundant — e.g.
         // "Flixy can only move Up" during a Flixy Oil Strike.
         const alert = this.news.find((a) => a.mascotId === s.mascotId);
@@ -146,9 +208,18 @@ export class Game {
   refreshSpells(p) {
     const player = this.players[p];
     const pool = this.spellPool(p);
+    if (!pool.length) {
+      player.spells = [null, null];
+      player.spellSold = [true, true];
+      return;
+    }
     const first = weightedPick(this.rng, pool);
     let second = weightedPick(this.rng, pool);
-    while (second === first) second = weightedPick(this.rng, pool); // VBA RefreshSpell: must differ
+    // VBA RefreshSpell: the two offers must differ — when the pool has more
+    // than one option (a lone-mascot roguelike round at level 1 may not).
+    if (new Set(pool.map((e) => e.value)).size > 1) {
+      while (second === first) second = weightedPick(this.rng, pool);
+    }
     player.spells = [first, second];
     player.spellSold = [false, false];
   }
@@ -285,11 +356,11 @@ export class Game {
 
   // Resolve one round. Returns a list of events for the UI/log.
   roll() {
-    if (this.over) return [];
+    if (this.over || this.pendingChoice) return [];
     const events = [];
     this.round += 1;
 
-    for (const mascot of MASCOTS) {
+    for (const mascot of this.activeList()) {
       const from = this.steps[mascot.id];
       const flag = this.flags[mascot.id]; // captured before the roll consumes it
       const rollValue = this.rollForMascot(mascot);
@@ -341,6 +412,26 @@ export class Game {
   }
 
   checkGameOver(events) {
+    if (this.rogue) {
+      const target = ROGUE.targets[this.round];
+      if (target !== undefined) {
+        const ep = this.players[0].ep;
+        const passed = ep >= target;
+        const final = this.round === ROGUE.rounds;
+        events.push({ type: 'checkpoint', round: this.round, target, ep, passed, final });
+        if (!passed) {
+          this.over = true;
+          this.winner = false;
+          this.failedCheckpoint = { round: this.round, target };
+        } else if (final) {
+          this.over = true;
+          this.winner = true;
+        } else if (this.activeMascots.length < MASCOTS.length) {
+          this.pendingChoice = this.pickChoice(); // a new mascot joins the run
+        }
+      }
+      return;
+    }
     if (this.mode === 1) {
       if (this.round >= CONFIG.onePlayerRounds) {
         this.over = true;
@@ -371,6 +462,7 @@ export class Game {
       if (r < acc) { row = entry; break; }
     }
     if (!row) return; // remaining probability: no alert this round
+    if (!this.isActive(row.mascotId)) return; // roguelike: benched mascots make no news
     if (this.news.some((a) => a.mascotId === row.mascotId)) return; // wasted draw
     this.news.push({ mascotId: row.mascotId, direction: row.direction, newsType: row.newsType, count: 1 });
     this.flags[row.mascotId] = row.direction;

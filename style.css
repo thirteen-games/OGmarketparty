@@ -404,6 +404,23 @@ main {
 .bot-hint { color: #eaf7ff !important; font-size: 0.78rem; }
 .bot-picker .bot-pick { text-align: left; }
 
+/* Roguelike */
+.lane.locked, .lane-label.locked { filter: grayscale(0.85) brightness(0.6); }
+.die-slot.locked { filter: grayscale(0.85) brightness(0.75); }
+.die-slot.locked .die-num { font-size: 1.1rem; }
+.choice-cards { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+.choice-card {
+  flex: 1; min-width: 220px; max-width: 300px;
+  background: var(--panel2); border: 3px solid var(--mc); border-radius: 12px;
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.choice-card .geek-rolls { justify-content: center; padding: 4px 8px; }
+.choice-card .choice-pick { margin: 8px 10px 12px; }
+.checkpoint-card { background: #b8f5c9; border-color: #1e8a4c; }
+.checkpoint-card h2 { color: #1e8a4c !important; }
+.checkpoint-card p { color: #14532d !important; }
+.card.empty-card { visibility: hidden; }
+
 /* Leaderboard */
 .lb-save { display: flex; gap: 8px; justify-content: center; margin: 12px 0; }
 .lb-save input {
