@@ -173,11 +173,12 @@ main {
 .chips { display: flex; gap: 2px; margin-left: auto; }
 .chip {
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.85rem; font-weight: 500; color: #1b2440;
+  font-size: 1.1rem; font-weight: 600; color: #1b2440;
   font-variant-numeric: tabular-nums;
-  -webkit-font-smoothing: antialiased;
-  min-width: 28px; padding: 0 5px; border-radius: 10px; line-height: 1.2;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.35);
+  height: 25px; min-width: 38px; padding: 0 7px;
+  border-radius: 13px; line-height: 1;
+  border: 1.5px solid rgba(0, 0, 0, 0.45);
+  z-index: 2;
 }
 .chip.p0 { background: var(--accent); } /* matches the ⭐ EP gold */
 .chip.p1 { background: var(--p2); color: #fff; }
