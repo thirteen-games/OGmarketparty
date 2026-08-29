@@ -96,38 +96,38 @@ export const MASCOTS_PER_GAME = 4;
 // `difficulty` is the designer's original hand-written label, kept for
 // reference only — the game now computes live odds instead (see odds.js).
 export const TICKETS = [
-  { id: 101, mascotId: 1, rarity: 'Common',    difficulty: 'Medium',    cost: 1,  reward: 11,  target1: 1,  target2: null },
-  { id: 201, mascotId: 2, rarity: 'Common',    difficulty: 'Medium',    cost: 1,  reward: 12,  target1: -1, target2: null },
-  { id: 301, mascotId: 3, rarity: 'Common',    difficulty: 'Very Hard', cost: 1,  reward: 34,  target1: -1, target2: null },
-  { id: 401, mascotId: 4, rarity: 'Common',    difficulty: 'Medium',    cost: 1,  reward: 10,  target1: 1,  target2: null },
-  { id: 102, mascotId: 1, rarity: 'Common',    difficulty: 'Medium',    cost: 2,  reward: 24,  target1: -1, target2: null },
-  { id: 202, mascotId: 2, rarity: 'Common',    difficulty: 'Medium',    cost: 2,  reward: 21,  target1: 1,  target2: null },
-  { id: 302, mascotId: 3, rarity: 'Common',    difficulty: 'Very Easy', cost: 2,  reward: 17,  target1: 1,  target2: null },
-  { id: 402, mascotId: 4, rarity: 'Common',    difficulty: 'Medium',    cost: 2,  reward: 26,  target1: -1, target2: null },
-  { id: 103, mascotId: 1, rarity: 'Rare',      difficulty: 'Hard',      cost: 3,  reward: 50,  target1: -2, target2: null },
-  { id: 203, mascotId: 2, rarity: 'Rare',      difficulty: 'Medium',    cost: 3,  reward: 47,  target1: 5,  target2: null },
-  { id: 303, mascotId: 3, rarity: 'Rare',      difficulty: 'Medium',    cost: 3,  reward: 32,  target1: 2,  target2: null },
-  { id: 403, mascotId: 4, rarity: 'Rare',      difficulty: 'Medium',    cost: 3,  reward: 52,  target1: -3, target2: null },
-  { id: 104, mascotId: 1, rarity: 'Epic',      difficulty: 'Very Hard', cost: 4,  reward: 80,  target1: 2,  target2: null },
-  { id: 204, mascotId: 2, rarity: 'Epic',      difficulty: 'Very Easy', cost: 4,  reward: 80,  target1: -4, target2: null },
-  { id: 304, mascotId: 3, rarity: 'Epic',      difficulty: 'Easy',      cost: 4,  reward: 60,  target1: 3,  target2: null },
-  { id: 404, mascotId: 4, rarity: 'Epic',      difficulty: 'Medium',    cost: 4,  reward: 75,  target1: 4,  target2: null },
-  { id: 105, mascotId: 1, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 95,  target1: 4,  target2: -4 },
-  { id: 205, mascotId: 2, rarity: 'Epic',      difficulty: 'Medium',    cost: 5,  reward: 85,  target1: 10, target2: -8 },
-  { id: 305, mascotId: 3, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 88,  target1: 4,  target2: -1 },
-  { id: 405, mascotId: 4, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 85,  target1: 7,  target2: -6 },
+  { id: 101, mascotId: 1, rarity: 'Common',    difficulty: 'Medium',    cost: 1,  reward: 12,  target1: 1,  target2: null },
+  { id: 201, mascotId: 2, rarity: 'Common',    difficulty: 'Medium',    cost: 1,  reward: 13,  target1: -1, target2: null },
+  { id: 301, mascotId: 3, rarity: 'Common',    difficulty: 'Very Hard', cost: 1,  reward: 28,  target1: -1, target2: null },
+  { id: 401, mascotId: 4, rarity: 'Common',    difficulty: 'Medium',    cost: 1,  reward: 11,  target1: 1,  target2: null },
+  { id: 102, mascotId: 1, rarity: 'Common',    difficulty: 'Medium',    cost: 2,  reward: 26,  target1: -1, target2: null },
+  { id: 202, mascotId: 2, rarity: 'Common',    difficulty: 'Medium',    cost: 2,  reward: 24,  target1: 1,  target2: null },
+  { id: 302, mascotId: 3, rarity: 'Common',    difficulty: 'Very Easy', cost: 2,  reward: 20,  target1: 1,  target2: null },
+  { id: 402, mascotId: 4, rarity: 'Common',    difficulty: 'Medium',    cost: 2,  reward: 29,  target1: -1, target2: null },
+  { id: 103, mascotId: 1, rarity: 'Rare',      difficulty: 'Hard',      cost: 3,  reward: 52,  target1: -2, target2: null },
+  { id: 203, mascotId: 2, rarity: 'Rare',      difficulty: 'Medium',    cost: 3,  reward: 48,  target1: 5,  target2: null },
+  { id: 303, mascotId: 3, rarity: 'Rare',      difficulty: 'Medium',    cost: 3,  reward: 36,  target1: 2,  target2: null },
+  { id: 403, mascotId: 4, rarity: 'Rare',      difficulty: 'Medium',    cost: 3,  reward: 56,  target1: -3, target2: null },
+  { id: 104, mascotId: 1, rarity: 'Epic',      difficulty: 'Very Hard', cost: 4,  reward: 78,  target1: 2,  target2: null },
+  { id: 204, mascotId: 2, rarity: 'Epic',      difficulty: 'Very Easy', cost: 4,  reward: 77,  target1: -4, target2: null },
+  { id: 304, mascotId: 3, rarity: 'Epic',      difficulty: 'Easy',      cost: 4,  reward: 69,  target1: 3,  target2: null },
+  { id: 404, mascotId: 4, rarity: 'Epic',      difficulty: 'Medium',    cost: 4,  reward: 71,  target1: 4,  target2: null },
+  { id: 105, mascotId: 1, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 85,  target1: 4,  target2: -4 },
+  { id: 205, mascotId: 2, rarity: 'Epic',      difficulty: 'Medium',    cost: 5,  reward: 74,  target1: 10, target2: -8 },
+  { id: 305, mascotId: 3, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 78,  target1: 4,  target2: -1 },
+  { id: 405, mascotId: 4, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 73,  target1: 7,  target2: -6 },
   // Lev's tickets: rewards priced so each tier's expected EP matches the
   // average of the other mascots' tickets at that tier (4-roll odds).
-  { id: 501, mascotId: 5, rarity: 'Common',    difficulty: 'Very Easy', cost: 1,  reward: 10,  target1: -1, target2: null },
-  { id: 502, mascotId: 5, rarity: 'Common',    difficulty: 'Easy',      cost: 2,  reward: 25,  target1: 1,  target2: null },
-  { id: 503, mascotId: 5, rarity: 'Rare',      difficulty: 'Easy',      cost: 3,  reward: 48,  target1: -5, target2: null },
-  { id: 504, mascotId: 5, rarity: 'Epic',      difficulty: 'Medium',    cost: 4,  reward: 100, target1: 5,  target2: null },
-  { id: 505, mascotId: 5, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 80,  target1: 8,  target2: -8 },
-  { id: 510, mascotId: 5, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 200, target1: 8,  target2: -10 },
-  { id: 110, mascotId: 1, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 210, target1: 4,  target2: -4 },
-  { id: 210, mascotId: 2, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 230, target1: 12, target2: -10 },
-  { id: 310, mascotId: 3, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 235, target1: 4,  target2: -2 },
-  { id: 410, mascotId: 4, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 215, target1: 9,  target2: -6 },
+  { id: 501, mascotId: 5, rarity: 'Common',    difficulty: 'Very Easy', cost: 1,  reward: 11,  target1: -1, target2: null },
+  { id: 502, mascotId: 5, rarity: 'Common',    difficulty: 'Easy',      cost: 2,  reward: 28,  target1: 1,  target2: null },
+  { id: 503, mascotId: 5, rarity: 'Rare',      difficulty: 'Easy',      cost: 3,  reward: 49,  target1: -5, target2: null },
+  { id: 504, mascotId: 5, rarity: 'Epic',      difficulty: 'Medium',    cost: 4,  reward: 88, target1: 5,  target2: null },
+  { id: 505, mascotId: 5, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 72,  target1: 8,  target2: -8 },
+  { id: 510, mascotId: 5, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 216, target1: 8,  target2: -10 },
+  { id: 110, mascotId: 1, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 227, target1: 4,  target2: -4 },
+  { id: 210, mascotId: 2, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 246, target1: 12, target2: -10 },
+  { id: 310, mascotId: 3, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 253, target1: 4,  target2: -2 },
+  { id: 410, mascotId: 4, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 229, target1: 9,  target2: -6 },
 ];
 
 // Ticket tier drop weights per EP level (Betting Tickets G8:O31; identical for
@@ -146,7 +146,7 @@ export const TICKET_TIER_WEIGHTS = {
 // Payout multiplier by ticket cost (from the prototype's "Drop Rates and
 // more info" Stats Geek box). Informational: higher-cost tickets pay
 // proportionally more EP per coin.
-export const PAYOUT_RATIOS = { 1: 1.0, 2: 1.1, 3: 1.2, 4: 1.35, 5: 1.5, 10: 1.8 };
+export const PAYOUT_RATIOS = { 1: 1.0, 2: 1.1, 3: 1.2, 4: 1.35, 5: 1.5, 10: 2.0 };
 
 // Spells (Game simulation Table9, BG10:BK41). id = mascotId*100 + (50 + type).
 // type: 1 double, 2 halve (opponent), 3 move closer, 4 steal (opponent),

@@ -60,12 +60,13 @@ test('ticket data is complete: 5 mascots x 6 tiers', () => {
 test('buying a ticket places EP at mascot step + offsets and charges coins', () => {
   const g = new Game({ mode: 1, seed: 42 });
   const p = g.players[0];
-  p.tickets[0] = 105; // Mousey epic: +4 and -4, cost 5, reward 95
+  p.tickets[0] = 105; // Mousey epic: +4 and -4, cost 5
+  const reward = ticketById(105).reward;
   const res = g.buyTicket(0, 0);
   assert.ok(res.ok);
   assert.equal(p.coins, CONFIG.startingCoins - 5);
-  assert.equal(p.board[1][54], 95);
-  assert.equal(p.board[1][46], 95);
+  assert.equal(p.board[1][54], reward);
+  assert.equal(p.board[1][46], reward);
   // one purchase per slot per round
   const again = g.buyTicket(0, 0);
   assert.equal(again.ok, false);
