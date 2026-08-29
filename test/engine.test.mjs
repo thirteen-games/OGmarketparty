@@ -285,6 +285,18 @@ test('news draw activates an alert and wastes same-mascot draws', () => {
   assert.equal(g.news.length, 0);
 });
 
+test('spell shop never offers a spell redundant with an active alert', () => {
+  for (let seed = 0; seed < 30; seed++) {
+    const g = new Game({ mode: 2, seed });
+    g.news = [{ mascotId: 4, direction: 1, newsType: 'Oil Strike', count: 1 }];
+    g.players[0].ep = 600; // level 5, where up/down spells are common
+    for (let i = 0; i < 5; i++) {
+      g.refreshSpells(0);
+      assert.ok(!g.players[0].spells.includes(455), `seed ${seed}: offered Flixy-up during a Flixy Oil Strike`);
+    }
+  }
+});
+
 test('alerts last 3 rolls then expire', () => {
   const g = new Game({ mode: 1, seed: 1 });
   g.news = [{ mascotId: 3, direction: -1, newsType: 'Earthquake', count: 1 }];

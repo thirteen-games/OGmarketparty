@@ -56,13 +56,14 @@ export class Game {
       this.lastFrom[m.id] = START_STEP;
       this.flags[m.id] = FLAG.NONE;
     }
+    // A news draw happens before round 1 too — before the shops fill, so the
+    // spell pool can exclude alert-redundant offers.
+    this.startEvents = [];
+    this.drawNews(this.startEvents);
     for (let p = 0; p < this.players.length; p++) {
       this.refreshTickets(p, { free: true });
       this.refreshSpells(p);
     }
-    // A news draw happens before round 1 too.
-    this.startEvents = [];
-    this.drawNews(this.startEvents);
   }
 
   playerLevel(p) {
@@ -114,9 +115,21 @@ export class Game {
     const level = this.playerLevel(p);
     return SPELLS
       .map((s) => ({ value: s.id, weight: SPELL_TYPE_WEIGHTS[s.type][level - 1] }))
-      // Opponent-targeting spells are useless in solo mode; keep them out of
-      // the draw (the prototype offered them but refused the cast).
-      .filter((e) => e.weight > 0 && !(this.mode === 1 && spellById(e.value).targetsOpponent));
+      .filter((e) => {
+        if (e.weight <= 0) return false;
+        const s = spellById(e.value);
+        // Opponent-targeting spells are useless in solo mode; keep them out of
+        // the draw (the prototype offered them but refused the cast).
+        if (this.mode === 1 && s.targetsOpponent) return false;
+        // A direction spell that matches an active alert is redundant — e.g.
+        // "Flixy can only move Up" during a Flixy Oil Strike.
+        const alert = this.news.find((a) => a.mascotId === s.mascotId);
+        if (alert && (
+          (s.type === SPELL_TYPES.UP && alert.direction === 1) ||
+          (s.type === SPELL_TYPES.DOWN && alert.direction === -1)
+        )) return false;
+        return true;
+      });
   }
 
   refreshSpells(p) {
@@ -297,11 +310,12 @@ export class Game {
     this.checkGameOver(events);
     if (!this.over) {
       this.incrementCoins();
+      // News first, so the fresh shop can exclude alert-redundant spells.
+      this.updateNews(events);
       for (let p = 0; p < this.players.length; p++) {
         this.refreshTickets(p, { free: true });
         this.refreshSpells(p);
       }
-      this.updateNews(events);
     }
     return events;
   }
