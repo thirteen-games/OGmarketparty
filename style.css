@@ -286,7 +286,7 @@ main {
 }
 /* Betting tickets are painted in their mascot's color, like the prototype */
 .card.ticket { background: var(--mc); color: #fff; border-color: color-mix(in srgb, var(--mc) 70%, #000); }
-.card.spell { background: #23252b; color: #fff; border-color: #000; } /* black spell cards */
+.card.spell { background: var(--mc); color: #fff; border-color: color-mix(in srgb, var(--mc) 70%, #000); }
 .card-head {
   display: flex; align-items: center; gap: 6px; padding: 6px 8px;
   background: rgba(0,0,0,0.22); font-weight: 700; font-size: 0.85rem;
