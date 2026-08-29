@@ -90,10 +90,15 @@ export class UI {
     return p === 1 && this.botLevel ? botName(this.botLevel) : PLAYER_NAMES[p];
   }
 
-  // Mascots shown on the board: the whole roster in roguelike (locked until
-  // drafted), just the fielded four in classic modes.
-  laneMascots() {
-    return this.game.rogue ? MASCOTS : this.game.activeList();
+  // The board always shows 4 lane slots. Roguelike fills them left to right
+  // in draft order, with anonymous "?" slots for mascots yet to join (their
+  // identity is unknown until drafted); classic modes show the fielded four.
+  laneSlots() {
+    const g = this.game;
+    if (!g.rogue) return g.activeList();
+    const slots = g.activeMascots.map((id) => mascotById(id));
+    while (slots.length < 4) slots.push(null);
+    return slots;
   }
 
   newGame(mode, botLevel = null) {
@@ -141,7 +146,7 @@ export class UI {
       </header>
       <main>
         <section class="board" id="board">
-          <div class="board-heads">${this.laneMascots().map((m) => this.renderLaneHead(m)).join('')}</div>
+          <div class="board-heads">${this.laneSlots().map((m) => this.renderLaneHead(m)).join('')}</div>
           <div class="board-tracks">${this.renderBoard()}</div>
         </section>
         <div class="side">
@@ -239,25 +244,16 @@ export class UI {
   }
 
   showSpellUnlockPopup(slotCount) {
-    const overlay = document.createElement('div');
-    overlay.className = 'news-popup';
-    overlay.innerHTML = slotCount === 1
-      ? `<div class="news-card unlock-card">
-          <h2>✨ SPELLS UNLOCKED!</h2>
-          <p>With two mascots on the board you can now cast <b>one Spell per round</b>.
-          Spells cost <b>EP</b> instead of Coins — double a bounty on the board, or drag one
-          closer to its mascot.</p>
-          <p>The shop grows too: a <b>3rd ticket slot</b> opens and <b>Epic tickets</b> can
-          now drop!</p>
-        </div>`
-      : `<div class="news-card unlock-card">
-          <h2>✨ SECOND SPELL SLOT!</h2>
-          <p>Your growing roster earns you <b>two Spell offers every round</b> from here on —
-          plus a <b>4th ticket slot</b> and 👑 <b>Legendary tickets</b> in the shop!</p>
-        </div>`;
-    document.body.appendChild(overlay);
-    const dismissed = new Promise((resolve) => overlay.addEventListener('click', resolve));
-    return Promise.race([sleep(3200), dismissed]).then(() => overlay.remove());
+    return this.showAcknowledgePopup('unlock-card', slotCount === 1
+      ? `<h2>✨ SPELLS UNLOCKED!</h2>
+        <p>With two mascots on the board you can now cast <b>one Spell per round</b>.
+        Spells cost <b>EP</b> instead of Coins — double a bounty on the board, or drag one
+        closer to its mascot.</p>
+        <p>The shop grows too: a <b>3rd ticket slot</b> opens and <b>Epic tickets</b> can
+        now drop!</p>`
+      : `<h2>✨ SECOND SPELL SLOT!</h2>
+        <p>Your growing roster earns you <b>two Spell offers every round</b> from here on —
+        plus a <b>4th ticket slot</b> and 👑 <b>Legendary tickets</b> in the shop!</p>`);
   }
 
   renderRollPanel() {
@@ -283,17 +279,17 @@ export class UI {
           </div>
         </div>
         <div class="dice-row">
-          ${this.laneMascots().map((m) => {
-            const last = g.lastRolls[m.id];
-            const alert = g.news.find((a) => a.mascotId === m.id);
-            if (!g.isActive(m.id)) {
+          ${this.laneSlots().map((m) => {
+            if (!m) {
               return `
-                <div class="die-slot locked" data-mascot="${m.id}" style="--mc:${m.color}" title="${m.name} hasn't joined the run yet">
-                  <span class="die-mascot">${mascotSvg(m.id, 54)}</span>
-                  <div class="die-col"><div class="d10"><span class="die-num">🔒</span></div>
+                <div class="die-slot mystery" title="A mystery mascot joins later">
+                  <span class="mystery-q">?</span>
+                  <div class="die-col"><div class="d10"><span class="die-num">?</span></div>
                   <div class="die-result">&mdash;</div></div>
                 </div>`;
             }
+            const last = g.lastRolls[m.id];
+            const alert = g.news.find((a) => a.mascotId === m.id);
             return `
               <div class="die-slot ${alert ? 'alert' : ''}" data-mascot="${m.id}" style="--mc:${m.color}"
                 ${alert ? `title="${alert.newsType}! ${m.name} can only move ${alert.direction > 0 ? 'Up' : 'Down'}"` : ''}>
@@ -327,17 +323,17 @@ export class UI {
   // --- Board -----------------------------------------------------------------
 
   renderBoard() {
-    return this.laneMascots().map((m) => this.renderLane(m)).join('');
+    return this.laneSlots().map((m, i) => this.renderLane(m, i)).join('');
   }
 
   renderLaneHead(mascot) {
     const g = this.game;
-    if (!g.isActive(mascot.id)) {
+    if (!mascot) {
       return `
-        <div class="lane-label locked" style="--mc:${mascot.color}">
-          ${mascotSvg(mascot.id, 40)}
+        <div class="lane-label mystery">
+          <span class="mystery-q">?</span>
           <div class="lane-title">
-            <b>${mascot.name}</b><span class="class-tag">${mascot.className}</span>
+            <b>???</b>
             <div class="lane-sub">🔒 joins later</div>
           </div>
         </div>`;
@@ -361,12 +357,14 @@ export class UI {
   }
 
   // Vertical lane column, high steps at the top — like the prototype board.
-  renderLane(mascot) {
+  renderLane(mascot, laneIndex = 0) {
     const g = this.game;
-    const locked = !g.isActive(mascot.id);
-    const step = locked ? null : g.steps[mascot.id];
+    if (!mascot) {
+      return `<div class="lane mystery" data-mystery="${laneIndex}"><div class="mystery-fill">?</div></div>`;
+    }
+    const step = g.steps[mascot.id];
     const from = g.lastFrom[mascot.id];
-    const roll = locked ? 0 : g.lastRolls[mascot.id];
+    const roll = g.lastRolls[mascot.id];
     const cells = [];
     for (let s = BOARD_MAX; s >= BOARD_MIN; s--) {
       const here = s === step;
@@ -394,7 +392,7 @@ export class UI {
         </div>`);
     }
     return `
-      <div class="lane ${locked ? 'locked' : ''}" data-mascot="${mascot.id}" style="--mc:${mascot.color}">
+      <div class="lane" data-mascot="${mascot.id}" style="--mc:${mascot.color}">
         <div class="track">${cells.join('')}</div>
       </div>`;
   }
@@ -452,7 +450,7 @@ export class UI {
     const lane = this.root.querySelector(`.lane[data-mascot="${mascotId}"]`);
     if (!lane) return;
     lane.outerHTML = this.renderLane(mascot);
-    const idx = this.laneMascots().findIndex((m) => m.id === mascotId);
+    const idx = this.laneSlots().findIndex((m) => m && m.id === mascotId);
     const head = this.root.querySelectorAll('.board-heads .lane-label')[idx];
     if (head) head.outerHTML = this.renderLaneHead(mascot);
     this.root.querySelectorAll('.board-heads .lane-label')[idx]
@@ -745,41 +743,47 @@ export class UI {
     return Promise.race(waits).then(() => banner.remove());
   }
 
-  showNewsPopup(e) {
-    const m = mascotById(e.mascotId);
+  // A popup card that stays until acknowledged: click anywhere (or the
+  // button) to dismiss. A roll-skip request also clears it.
+  showAcknowledgePopup(cardClass, innerHtml) {
     const overlay = document.createElement('div');
     overlay.className = 'news-popup';
     overlay.innerHTML = `
-      <div class="news-card">
-        <span class="news-tri"><svg viewBox="0 0 100 100">
-          <path d="M50 6 L97 90 L3 90 Z" fill="#ffd21f" stroke="#1b2440" stroke-width="7" stroke-linejoin="round"/>
-          <text x="50" y="78" text-anchor="middle" font-size="56" font-weight="900" fill="#1b2440">!</text>
-        </svg></span>
-        ${mascotSvg(m.id, 76)}
-        <h2>${NEWS_EMOJI[e.newsType]} ${e.newsType.toUpperCase()}!</h2>
-        <p>${m.name} can only move <b>${e.direction > 0 ? 'UP' : 'DOWN'}</b> ${
-          this.game.alertOutlastsGame() ? 'until the game ends' : `for the next ${CONFIG.newsDurationRolls} rolls`}!</p>
+      <div class="news-card ${cardClass}">
+        ${innerHtml}
+        <button class="btn btn-primary popup-ok">Got it!</button>
       </div>`;
     document.body.appendChild(overlay);
-    const dismissed = new Promise((resolve) => overlay.addEventListener('click', resolve));
-    const waits = [sleep(2400), dismissed];
-    if (this.skipPromise) waits.push(this.skipPromise);
-    return Promise.race(waits).then(() => overlay.remove());
+    return new Promise((resolve) => {
+      let done = false;
+      const dismiss = () => {
+        if (done) return;
+        done = true;
+        overlay.remove();
+        resolve();
+      };
+      overlay.addEventListener('click', dismiss); // anywhere on screen, card included
+      if (this.skipPromise) this.skipPromise.then(dismiss);
+    });
+  }
+
+  showNewsPopup(e) {
+    const m = mascotById(e.mascotId);
+    return this.showAcknowledgePopup('', `
+      <span class="news-tri"><svg viewBox="0 0 100 100">
+        <path d="M50 6 L97 90 L3 90 Z" fill="#ffd21f" stroke="#1b2440" stroke-width="7" stroke-linejoin="round"/>
+        <text x="50" y="78" text-anchor="middle" font-size="56" font-weight="900" fill="#1b2440">!</text>
+      </svg></span>
+      ${mascotSvg(m.id, 76)}
+      <h2>${NEWS_EMOJI[e.newsType]} ${e.newsType.toUpperCase()}!</h2>
+      <p>${m.name} can only move <b>${e.direction > 0 ? 'UP' : 'DOWN'}</b> ${
+        this.game.alertOutlastsGame() ? 'until the game ends' : `for the next ${CONFIG.newsDurationRolls} rolls`}!</p>`);
   }
 
   showCheckpointPopup(e) {
-    const overlay = document.createElement('div');
-    overlay.className = 'news-popup';
-    overlay.innerHTML = `
-      <div class="news-card checkpoint-card">
-        <h2>✅ CHECKPOINT PASSED!</h2>
-        <p>Round ${e.round}: <b>${e.ep}</b> / ${e.target} EP — the run continues!</p>
-      </div>`;
-    document.body.appendChild(overlay);
-    const dismissed = new Promise((resolve) => overlay.addEventListener('click', resolve));
-    const waits = [sleep(2000), dismissed];
-    if (this.skipPromise) waits.push(this.skipPromise);
-    return Promise.race(waits).then(() => overlay.remove());
+    return this.showAcknowledgePopup('checkpoint-card', `
+      <h2>✅ CHECKPOINT PASSED!</h2>
+      <p>Round ${e.round}: <b>${e.ep}</b> / ${e.target} EP — the run continues!</p>`);
   }
 
   // Coins fly from the Roll button to each player's coin bank, then the
@@ -1145,7 +1149,7 @@ export class UI {
 
   showAllBets() {
     const horizon = this.game.oddsHorizon();
-    const sections = this.laneMascots().map((m) => {
+    const sections = this.game.activeList().map((m) => {
       const rows = TICKETS.filter((t) => t.mascotId === m.id)
         .sort((a, b) => a.cost - b.cost)
         .map((t) => {
