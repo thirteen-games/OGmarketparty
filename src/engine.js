@@ -4,7 +4,7 @@
 
 import {
   BOARD_MIN, BOARD_MAX, START_STEP, CONFIG, ROGUE,
-  MASCOTS, TICKETS, SPELLS, TICKET_TIER_WEIGHTS, SPELL_TYPE_WEIGHTS,
+  MASCOTS, MASCOTS_PER_GAME, TICKETS, SPELLS, TICKET_TIER_WEIGHTS, SPELL_TYPE_WEIGHTS,
   NEWS_TABLE, SPELL_TYPES,
   mascotById, ticketById, spellById, epLevelFor,
 } from './data.js';
@@ -60,7 +60,18 @@ export class Game {
       this.flags[m.id] = FLAG.NONE;
     }
     // Roguelike: no mascots yet — the run starts by choosing one of two.
-    this.activeMascots = this.rogue ? [] : MASCOTS.map((m) => m.id);
+    // Classic modes: field MASCOTS_PER_GAME of the roster at random.
+    if (this.rogue) {
+      this.activeMascots = [];
+    } else {
+      const pool = MASCOTS.map((m) => m.id);
+      this.activeMascots = [];
+      while (this.activeMascots.length < Math.min(MASCOTS_PER_GAME, pool.length + this.activeMascots.length)) {
+        this.activeMascots.push(pool.splice(Math.floor(this.rng() * pool.length), 1)[0]);
+      }
+      const order = (id) => MASCOTS.findIndex((m) => m.id === id);
+      this.activeMascots.sort((a, b) => order(a) - order(b));
+    }
     this.pendingChoice = null;
     this.failedCheckpoint = null;
 
@@ -468,7 +479,7 @@ export class Game {
         } else if (final) {
           this.over = true;
           this.winner = true;
-        } else if (this.activeMascots.length < MASCOTS.length) {
+        } else if (this.activeMascots.length < MASCOTS_PER_GAME) {
           this.pendingChoice = this.pickChoice(); // a new mascot joins the run
         }
       }

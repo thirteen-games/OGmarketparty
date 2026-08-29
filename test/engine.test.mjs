@@ -18,10 +18,21 @@ test('new game starts with prototype defaults', () => {
     assert.equal(p.spells.length, 2);
     assert.notEqual(p.spells[0], p.spells[1]);
   }
-  // one ticket offer per mascot, in mascot order
-  p1offers: for (let i = 0; i < 4; i++) {
-    assert.equal(Math.floor(g.players[0].tickets[i] / 100), MASCOTS[i].id);
+  // classic modes field 4 of the 5 mascots, in display order
+  assert.equal(g.activeMascots.length, 4);
+  const order = (id) => MASCOTS.findIndex((m) => m.id === id);
+  assert.deepEqual([...g.activeMascots].sort((a, b) => order(a) - order(b)), g.activeMascots);
+  // one ticket offer per fielded mascot, in roster order
+  for (let i = 0; i < 4; i++) {
+    assert.equal(Math.floor(g.players[0].tickets[i] / 100), g.activeMascots[i]);
   }
+  // different seeds bench different mascots
+  const benched = new Set();
+  for (let seed = 0; seed < 30; seed++) {
+    const gg = new Game({ mode: 1, seed });
+    for (const m of MASCOTS) if (!gg.isActive(m.id)) benched.add(m.id);
+  }
+  assert.ok(benched.size >= 4, `expected varied benching, saw ${[...benched]}`);
 });
 
 test('EP level thresholds match the workbook', () => {
@@ -38,8 +49,8 @@ test('every mascot has exactly 10 equally likely rolls', () => {
   for (const m of MASCOTS) assert.equal(m.rolls.length, 10);
 });
 
-test('ticket data is complete: 4 mascots x 6 tiers', () => {
-  assert.equal(TICKETS.length, 24);
+test('ticket data is complete: 5 mascots x 6 tiers', () => {
+  assert.equal(TICKETS.length, 30);
   for (const t of TICKETS) {
     assert.ok(t.cost > 0 && t.reward > 0);
     assert.equal(Math.floor(t.id / 100), t.mascotId);
@@ -105,6 +116,7 @@ test('frozen mascot does not move or collect', () => {
 test('up-only flag forces a positive roll and is reported on the event', () => {
   for (let seed = 0; seed < 25; seed++) {
     const g = new Game({ mode: 1, seed });
+    g.activeMascots = [1, 2, 3, 4]; // pin the roster: this test drives Bizarro
     g.flags[2] = FLAG.UP;
     const events = g.roll();
     assert.ok(g.lastRolls[2] > 0, `seed ${seed} rolled ${g.lastRolls[2]}`);
@@ -270,13 +282,15 @@ test('alerts report "until the game ends" late in a 1P game', () => {
 
 test('news table matches spec: weights per mascot, 65% total', () => {
   const w = (id, dir) => NEWS_TABLE.find((r) => r.mascotId === id && r.direction === dir).weight;
-  assert.deepEqual([w(1, 1), w(2, 1), w(3, 1), w(4, 1)], [8, 10, 5, 12]); // Oil Strike
-  assert.deepEqual([w(1, -1), w(2, -1), w(3, -1), w(4, -1)], [8, 7, 5, 10]); // Earthquake
-  assert.equal(NEWS_TABLE.reduce((s, r) => s + r.weight, 0), 65);
+  assert.deepEqual([w(1, 1), w(2, 1), w(3, 1), w(4, 1), w(5, 1)], [8, 10, 5, 12, 8]); // Oil Strike
+  assert.deepEqual([w(1, -1), w(2, -1), w(3, -1), w(4, -1), w(5, -1)], [8, 7, 5, 10, 7]); // Earthquake
+  // only fielded mascots can fire, so a 4-of-5 game stays near the original 65%
+  assert.equal(NEWS_TABLE.reduce((s, r) => s + r.weight, 0), 80);
 });
 
 test('news draw activates an alert and wastes same-mascot draws', () => {
   const g = new Game({ mode: 1, seed: 1 });
+  g.activeMascots = [1, 2, 3, 4]; // pin the roster for deterministic draws
   g.news = []; // clear any game-start alert
   for (const m of MASCOTS) g.flags[m.id] = FLAG.NONE;
   // r*100 = 1 -> first row: Mousey Oil Strike (weight 8)
@@ -359,6 +373,7 @@ test('a game can start with an alert already active', () => {
 
 test('board steps stay within 0..100', () => {
   const g = new Game({ mode: 1, seed: 4 });
+  g.activeMascots = [1, 2, 3, 4]; // pin the roster: this test drives Bizarro
   g.steps[2] = 99;
   g.rollForMascot = (m) => (m.id === 2 ? 10 : 0);
   g.roll();
@@ -419,7 +434,7 @@ test('oddsLabel buckets probabilities', () => {
 });
 
 test('mascot display order is Mousey, Wolf, Flixy, Bizarro', () => {
-  assert.deepEqual(MASCOTS.map((m) => m.name), ['Mousey', 'Wolf', 'Flixy', 'Bizarro']);
+  assert.deepEqual(MASCOTS.map((m) => m.name), ['Mousey', 'Wolf', 'Flixy', 'Bizarro', 'Lev']);
 });
 
 test('roguelike: starts with a 2-mascot choice; everything scopes to the roster', () => {

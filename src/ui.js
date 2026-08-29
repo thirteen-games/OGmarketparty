@@ -90,6 +90,12 @@ export class UI {
     return p === 1 && this.botLevel ? botName(this.botLevel) : PLAYER_NAMES[p];
   }
 
+  // Mascots shown on the board: the whole roster in roguelike (locked until
+  // drafted), just the fielded four in classic modes.
+  laneMascots() {
+    return this.game.rogue ? MASCOTS : this.game.activeList();
+  }
+
   newGame(mode, botLevel = null) {
     this.botLevel = botLevel;
     this.game = new Game({ mode });
@@ -135,7 +141,7 @@ export class UI {
       </header>
       <main>
         <section class="board" id="board">
-          <div class="board-heads">${MASCOTS.map((m) => this.renderLaneHead(m)).join('')}</div>
+          <div class="board-heads">${this.laneMascots().map((m) => this.renderLaneHead(m)).join('')}</div>
           <div class="board-tracks">${this.renderBoard()}</div>
         </section>
         <div class="side">
@@ -277,7 +283,7 @@ export class UI {
           </div>
         </div>
         <div class="dice-row">
-          ${MASCOTS.map((m) => {
+          ${this.laneMascots().map((m) => {
             const last = g.lastRolls[m.id];
             const alert = g.news.find((a) => a.mascotId === m.id);
             if (!g.isActive(m.id)) {
@@ -321,7 +327,7 @@ export class UI {
   // --- Board -----------------------------------------------------------------
 
   renderBoard() {
-    return MASCOTS.map((m) => this.renderLane(m)).join('');
+    return this.laneMascots().map((m) => this.renderLane(m)).join('');
   }
 
   renderLaneHead(mascot) {
@@ -446,7 +452,7 @@ export class UI {
     const lane = this.root.querySelector(`.lane[data-mascot="${mascotId}"]`);
     if (!lane) return;
     lane.outerHTML = this.renderLane(mascot);
-    const idx = MASCOTS.findIndex((m) => m.id === mascotId);
+    const idx = this.laneMascots().findIndex((m) => m.id === mascotId);
     const head = this.root.querySelectorAll('.board-heads .lane-label')[idx];
     if (head) head.outerHTML = this.renderLaneHead(mascot);
     this.root.querySelectorAll('.board-heads .lane-label')[idx]
@@ -489,9 +495,10 @@ export class UI {
     const g = this.game;
     if (!id) {
       if (g.rogue) {
-        return `<div class="card ticket locked-slot">
-          <div class="locked-msg">🔒 Unlocks when your ${slot === 2 ? '2nd' : '3rd'} mascot joins the run</div>
-        </div>`;
+        const msg = slot < 2
+          ? '🔒 Waiting for your first mascot…'
+          : `🔒 Unlocks when your ${slot === 2 ? '2nd' : '3rd'} mascot joins the run`;
+        return `<div class="card ticket locked-slot"><div class="locked-msg">${msg}</div></div>`;
       }
       return '<div class="card ticket empty-card"></div>';
     }
@@ -1114,8 +1121,12 @@ export class UI {
             These affect the mascot itself, so <i>both</i> players feel it.</li>
         </ul>`);
     } else if (topic === 'news') {
-      const totalPct = NEWS_TABLE.reduce((s, r) => s + r.weight, 0);
-      const rows = MASCOTS.map((m) => {
+      // Only mascots in the current game can make news.
+      const fielded = this.game.activeList();
+      const totalPct = NEWS_TABLE
+        .filter((r) => this.game.isActive(r.mascotId))
+        .reduce((s, r) => s + r.weight, 0);
+      const rows = fielded.map((m) => {
         const up = NEWS_TABLE.find((r) => r.mascotId === m.id && r.direction === 1).weight;
         const down = NEWS_TABLE.find((r) => r.mascotId === m.id && r.direction === -1).weight;
         return `<tr><td>${m.name}</td><td>${up}%</td><td>${down}%</td></tr>`;
@@ -1134,7 +1145,7 @@ export class UI {
 
   showAllBets() {
     const horizon = this.game.oddsHorizon();
-    const sections = MASCOTS.map((m) => {
+    const sections = this.laneMascots().map((m) => {
       const rows = TICKETS.filter((t) => t.mascotId === m.id)
         .sort((a, b) => a.cost - b.cost)
         .map((t) => {

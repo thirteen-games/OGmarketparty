@@ -74,7 +74,21 @@ export const MASCOTS = [
     color: '#d63430', // red lane
     epMoveSteps: 6,
   },
+  {
+    id: 5,
+    name: 'Lev',
+    sector: 'Entertainment',
+    className: 'Diver',
+    // Leans down, but surges hard when he swims up (40% up, avg swing 5.6).
+    rolls: [10, 8, 5, 3, -2, -3, -4, -5, -7, -9],
+    color: '#2b7fc2', // ocean-blue lane
+    epMoveSteps: 6,
+  },
 ];
+
+// Games field 4 mascots at a time: all four in the prototype's classic modes
+// (chosen randomly from the roster of 5), drafted one at a time in roguelike.
+export const MASCOTS_PER_GAME = 4;
 
 // Betting tickets (Betting Tickets Table797, S28:AJ51).
 // id = mascotId*100 + tier. target offsets are relative to the mascot's step
@@ -102,6 +116,14 @@ export const TICKETS = [
   { id: 205, mascotId: 2, rarity: 'Epic',      difficulty: 'Medium',    cost: 5,  reward: 85,  target1: 10, target2: -8 },
   { id: 305, mascotId: 3, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 80,  target1: 4,  target2: -1 },
   { id: 405, mascotId: 4, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 85,  target1: 7,  target2: -6 },
+  // Lev's tickets: rewards priced so each tier's expected EP matches the
+  // average of the other mascots' tickets at that tier (4-roll odds).
+  { id: 501, mascotId: 5, rarity: 'Common',    difficulty: 'Very Easy', cost: 1,  reward: 11,  target1: -1, target2: null },
+  { id: 502, mascotId: 5, rarity: 'Common',    difficulty: 'Easy',      cost: 2,  reward: 25,  target1: 1,  target2: null },
+  { id: 503, mascotId: 5, rarity: 'Rare',      difficulty: 'Easy',      cost: 3,  reward: 46,  target1: -5, target2: null },
+  { id: 504, mascotId: 5, rarity: 'Epic',      difficulty: 'Medium',    cost: 4,  reward: 88,  target1: 5,  target2: null },
+  { id: 505, mascotId: 5, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 80,  target1: 8,  target2: -8 },
+  { id: 510, mascotId: 5, rarity: 'Legendary', difficulty: 'Medium',    cost: 10, reward: 135, target1: 5,  target2: -7 },
   { id: 110, mascotId: 1, rarity: 'Legendary', difficulty: 'Medium',    cost: 10, reward: 150, target1: 3,  target2: -3 },
   { id: 210, mascotId: 2, rarity: 'Legendary', difficulty: 'Medium',    cost: 10, reward: 140, target1: 8,  target2: -6 },
   { id: 310, mascotId: 3, rarity: 'Legendary', difficulty: 'Medium',    cost: 10, reward: 120, target1: 2,  target2: -1 },
@@ -141,13 +163,14 @@ export const SPELL_TYPES = {
 
 // Per-spell costs (Table9 BK column).
 const SPELL_COSTS = {
-  151: 10, 251: 10, 351: 10, 451: 10,
-  152: 20, 252: 20, 352: 20, 452: 20,
-  153: 15, 253: 15, 353: 15, 453: 15,
-  154: 50, 254: 50, 354: 50, 454: 50,
-  155: 25, 255: 20, 355: 10, 455: 20,
-  156: 25, 256: 30, 356: 30, 456: 30,
-  157: 20, 257: 20, 357: 20, 457: 20,
+  151: 10, 251: 10, 351: 10, 451: 10, 551: 10,
+  152: 20, 252: 20, 352: 20, 452: 20, 552: 20,
+  153: 15, 253: 15, 353: 15, 453: 15, 553: 15,
+  154: 50, 254: 50, 354: 50, 454: 50, 554: 50,
+  // Up-only is a huge swing for a mascot that rarely rises — price it high.
+  155: 25, 255: 20, 355: 10, 455: 20, 555: 30,
+  156: 25, 256: 30, 356: 30, 456: 30, 556: 10,
+  157: 20, 257: 20, 357: 20, 457: 20, 557: 20,
 };
 
 export const SPELLS = [];
@@ -206,6 +229,10 @@ export const NEWS_TABLE = [
   { mascotId: 2, direction: -1, weight: 7,  newsType: 'Earthquake' },
   { mascotId: 3, direction: -1, weight: 5,  newsType: 'Earthquake' },
   { mascotId: 4, direction: -1, weight: 10, newsType: 'Earthquake' },
+  // Lev's rows: draws for mascots not in the current game are suppressed, so
+  // with 4 of 5 mascots fielded the effective alert rate stays near 65%.
+  { mascotId: 5, direction: 1,  weight: 8,  newsType: 'Oil Strike' },
+  { mascotId: 5, direction: -1, weight: 7,  newsType: 'Earthquake' },
 ];
 export const NEWS_EMOJI = { 'Oil Strike': '🛢️', Earthquake: '🌍' };
 

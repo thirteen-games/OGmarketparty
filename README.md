@@ -3,9 +3,11 @@
 Bet on the mascots. Collect the EP. Throw the best party on the Street. 🎲
 
 A browser port of the original Excel prototype (`MP Proto V1.0 for Claude.xlsm`).
-Four stock-market mascots random-walk a 0–100 track; players buy betting
+Stock-market mascots random-walk a 0–100 track; players buy betting
 tickets that drop EP bounties on board steps, cast spells to tilt the odds,
-and bank EP when a mascot lands on or passes their bounties.
+and bank EP when a mascot lands on or passes their bounties. The roster holds
+five mascots — Mousey, Wolf, Flixy, Bizarro, and Lev the fish — with four
+fielded per game (chosen at random in classic modes, drafted in roguelike).
 
 ## Play
 
