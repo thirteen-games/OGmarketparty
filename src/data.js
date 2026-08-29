@@ -123,11 +123,11 @@ export const TICKETS = [
   { id: 503, mascotId: 5, rarity: 'Rare',      difficulty: 'Easy',      cost: 3,  reward: 48,  target1: -5, target2: null },
   { id: 504, mascotId: 5, rarity: 'Epic',      difficulty: 'Medium',    cost: 4,  reward: 100, target1: 5,  target2: null },
   { id: 505, mascotId: 5, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 80,  target1: 8,  target2: -8 },
-  { id: 510, mascotId: 5, rarity: 'Legendary', difficulty: 'Medium',    cost: 10, reward: 135, target1: 5,  target2: -7 },
-  { id: 110, mascotId: 1, rarity: 'Legendary', difficulty: 'Medium',    cost: 10, reward: 150, target1: 3,  target2: -3 },
-  { id: 210, mascotId: 2, rarity: 'Legendary', difficulty: 'Medium',    cost: 10, reward: 140, target1: 8,  target2: -6 },
-  { id: 310, mascotId: 3, rarity: 'Legendary', difficulty: 'Medium',    cost: 10, reward: 120, target1: 2,  target2: -1 },
-  { id: 410, mascotId: 4, rarity: 'Legendary', difficulty: 'Easy',      cost: 10, reward: 130, target1: 5,  target2: -3 },
+  { id: 510, mascotId: 5, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 200, target1: 8,  target2: -10 },
+  { id: 110, mascotId: 1, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 210, target1: 4,  target2: -4 },
+  { id: 210, mascotId: 2, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 230, target1: 12, target2: -10 },
+  { id: 310, mascotId: 3, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 235, target1: 4,  target2: -2 },
+  { id: 410, mascotId: 4, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 215, target1: 9,  target2: -6 },
 ];
 
 // Ticket tier drop weights per EP level (Betting Tickets G8:O31; identical for
@@ -146,7 +146,7 @@ export const TICKET_TIER_WEIGHTS = {
 // Payout multiplier by ticket cost (from the prototype's "Drop Rates and
 // more info" Stats Geek box). Informational: higher-cost tickets pay
 // proportionally more EP per coin.
-export const PAYOUT_RATIOS = { 1: 1.0, 2: 1.1, 3: 1.2, 4: 1.35, 5: 1.5, 10: 1.65 };
+export const PAYOUT_RATIOS = { 1: 1.0, 2: 1.1, 3: 1.2, 4: 1.35, 5: 1.5, 10: 1.8 };
 
 // Spells (Game simulation Table9, BG10:BK41). id = mascotId*100 + (50 + type).
 // type: 1 double, 2 halve (opponent), 3 move closer, 4 steal (opponent),
