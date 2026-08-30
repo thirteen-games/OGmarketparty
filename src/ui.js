@@ -92,7 +92,9 @@ export class UI {
     $('#vs-bot-btn', this.root)?.addEventListener('click', () => this.showBotPicker());
     $('#rogue-btn', this.root)?.addEventListener('click', () => this.newGame('rogue'));
     $('#leaderboard-btn', this.root)?.addEventListener('click', () => {
-      this.modal(`<h2>🏆 Leaderboard</h2>${this.leaderboardHtml()}`);
+      this.modal(`<h2>🏆 Leaderboard</h2>
+        <h3>🎯 Classic</h3>${this.leaderboardHtml()}
+        <h3>🗺️ Roguelike</h3>${this.leaderboardHtml(null, true)}`);
     });
   }
 
@@ -221,7 +223,7 @@ export class UI {
     $('#restart-btn', this.root).addEventListener('click', () => this.renderStart());
     $('#lb-save-btn', this.root)?.addEventListener('click', () => {
       const name = $('#lb-name', this.root)?.value.trim() || 'Anonymous';
-      this.lastScoreIndex = this.saveScore(name.slice(0, 16), this.game.players[0].ep);
+      this.lastScoreIndex = this.saveScore(name.slice(0, 16), this.game.players[0].ep, this.game.rogue);
       this.scoreSaved = true;
       this.renderGame();
     });
@@ -1082,6 +1084,14 @@ export class UI {
       if (g.winner) {
         headline = '👑 Run complete — you win!';
         detail = `You cleared every checkpoint and finished all ${ROGUE.rounds} rounds with <b>${ep} Gold</b> (target: ${ROGUE.targets[ROGUE.rounds]}).`;
+        leaderboard = `
+          ${this.scoreSaved ? '' : `
+            <div class="lb-save">
+              <input id="lb-name" maxlength="16" placeholder="Your name">
+              <button class="btn btn-primary" id="lb-save-btn">Save run</button>
+            </div>`}
+          <h3>🗺️ Roguelike Leaderboard</h3>
+          ${this.leaderboardHtml(this.lastScoreIndex, true)}`;
       } else {
         const f = g.failedCheckpoint;
         headline = '💥 Run over!';
@@ -1123,29 +1133,33 @@ export class UI {
 
   // --- Leaderboard (local, per browser) ----------------------------------------
 
-  loadLeaderboard() {
+  loadLeaderboard(rogue = false) {
     try {
-      return JSON.parse(localStorage.getItem('mp-leaderboard') || '[]');
+      return JSON.parse(localStorage.getItem(rogue ? 'mp-leaderboard-rogue' : 'mp-leaderboard') || '[]');
     } catch {
       return [];
     }
   }
 
-  saveScore(name, ep) {
+  saveScore(name, ep, rogue = false) {
     const entry = { name, ep, date: new Date().toISOString().slice(0, 10) };
-    const list = this.loadLeaderboard();
+    const list = this.loadLeaderboard(rogue);
     list.push(entry);
     list.sort((a, b) => b.ep - a.ep);
     const top = list.slice(0, 10);
     try {
-      localStorage.setItem('mp-leaderboard', JSON.stringify(top));
+      localStorage.setItem(rogue ? 'mp-leaderboard-rogue' : 'mp-leaderboard', JSON.stringify(top));
     } catch { /* private mode etc. — the table just won't persist */ }
     return top.indexOf(entry); // -1 if the score didn't crack the top 10
   }
 
-  leaderboardHtml(highlight = null) {
-    const list = this.loadLeaderboard();
-    if (!list.length) return '<p class="hint">No scores yet — finish a 1 player game!</p>';
+  leaderboardHtml(highlight = null, rogue = false) {
+    const list = this.loadLeaderboard(rogue);
+    if (!list.length) {
+      return rogue
+        ? '<p class="hint">No winning runs yet — survive all 15 rounds of a roguelike!</p>'
+        : '<p class="hint">No scores yet — finish a 1 player game!</p>';
+    }
     return `
       <table class="stats-table lb-table">
         <tr><th>#</th><th>Name</th><th>Gold</th><th>Date</th></tr>
