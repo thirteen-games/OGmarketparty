@@ -1033,6 +1033,9 @@ export class UI {
     const setFinal = () => {
       num.textContent = e.roll > 0 ? `+${e.roll}` : `${e.roll}`;
       result.textContent = this.upDown(e.roll);
+      // The chart ticks the moment the die lands, so it reads like a live feed.
+      const chart = slot.querySelector('.die-chart');
+      if (chart) chart.innerHTML = this.sparkline(this.game.history[e.mascotId]);
     };
     if (this.skipRequested) return setFinal();
     // Under an alert (or a cast spell), only spin through the possible faces.
