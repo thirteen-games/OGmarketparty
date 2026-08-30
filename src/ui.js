@@ -830,7 +830,7 @@ export class UI {
     const sx = rollRect.left + rollRect.width / 2;
     const sy = rollRect.top + rollRect.height / 2;
     return Promise.all(g.players.map(async (player, p) => {
-      const gain = g.lastDollarGain?.[p] ?? 0;
+      const gain = g.lastCoinGain?.[p] ?? 0;
       const coinEl = this.root.querySelector(`.player-panel[data-player="${p}"] [data-info="coins"] b`);
       if (!gain || !coinEl) return;
       const t = coinEl.getBoundingClientRect();
@@ -1121,7 +1121,7 @@ export class UI {
         <h2>💵 The Dollar Bank</h2>
         <ul class="info-list">
           <li>Dollars buy <b>Betting Tickets</b>.</li>
-          <li>You start with <b>${CONFIG.startingDollars}</b> and get <b>+${CONFIG.coinsPerRound}</b> after every roll.</li>
+          <li>You start with <b>${CONFIG.startingCoins}</b> and get <b>+${CONFIG.coinsPerRound}</b> after every roll.</li>
           <li><b>Interest:</b> each round you also earn 1 extra Dollar per ${CONFIG.interestDivisor} you're holding
             (max +${CONFIG.maxInterest}) — saving up pays off.</li>
           <li>Refreshing your ticket offers costs <b>${CONFIG.refreshCostFirst} Dollar</b> the first time each round,
