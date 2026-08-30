@@ -87,6 +87,17 @@ export const MASCOTS = [
     color: '#2b7fc2', // ocean-blue lane
     epMoveSteps: 6,
   },
+  {
+    id: 6,
+    name: 'Joey',
+    sector: 'Entertainment',
+    className: 'Jumper',
+    // Grinds down most rolls, then leaps: 40% up averaging +6.5 (never less
+    // than +6), 60% down averaging -4. Slight +0.2 drift, avg |move| 5.0.
+    rolls: [7, 7, 6, 6, -3, -3, -3, -5, -5, -5],
+    color: '#8b5a2b', // kangaroo-brown lane
+    epMoveSteps: 5,
+  },
 ];
 
 // Games field 4 mascots at a time: all four in the prototype's classic modes
@@ -127,6 +138,15 @@ export const TICKETS = [
   { id: 504, mascotId: 5, rarity: 'Super Rare', difficulty: 'Medium',    cost: 4,  reward: 88, target1: 5,  target2: null },
   { id: 505, mascotId: 5, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 80,  target1: 8,  target2: -8 },
   { id: 510, mascotId: 5, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 205, target1: 7,  target2: -9 },
+  // Joey's tickets: parity-priced on the ratio curve from his die's 4-roll
+  // odds (balance-sim pipeline). Legendary +7/-6 rounded up from parity 195
+  // to hold the 200 floor.
+  { id: 601, mascotId: 6, rarity: 'Common',    difficulty: 'Easy',      cost: 1,  reward: 12,  target1: -2, target2: null },
+  { id: 602, mascotId: 6, rarity: 'Common',    difficulty: 'Easy',      cost: 2,  reward: 26,  target1: 1,  target2: null },
+  { id: 603, mascotId: 6, rarity: 'Rare',      difficulty: 'Easy',      cost: 3,  reward: 53,  target1: -5, target2: null },
+  { id: 604, mascotId: 6, rarity: 'Super Rare', difficulty: 'Medium',    cost: 4,  reward: 83,  target1: 6,  target2: null },
+  { id: 605, mascotId: 6, rarity: 'Epic',      difficulty: 'Very Easy', cost: 5,  reward: 81,  target1: 9,  target2: -5 },
+  { id: 610, mascotId: 6, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 200, target1: 7,  target2: -6 },
   { id: 110, mascotId: 1, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 200, target1: 3,  target2: -3 },
   { id: 210, mascotId: 2, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 247, target1: 11, target2: -9 },
   { id: 310, mascotId: 3, rarity: 'Legendary', difficulty: 'Hard',      cost: 10, reward: 219, target1: 4,  target2: -1 },
@@ -166,14 +186,15 @@ export const SPELL_TYPES = {
 
 // Per-spell costs (Table9 BK column).
 const SPELL_COSTS = {
-  151: 10, 251: 10, 351: 10, 451: 10, 551: 10,
-  152: 20, 252: 20, 352: 20, 452: 20, 552: 20,
-  153: 15, 253: 15, 353: 15, 453: 15, 553: 15,
-  154: 50, 254: 50, 354: 50, 454: 50, 554: 50,
+  151: 10, 251: 10, 351: 10, 451: 10, 551: 10, 651: 10,
+  152: 20, 252: 20, 352: 20, 452: 20, 552: 20, 652: 20,
+  153: 15, 253: 15, 353: 15, 453: 15, 553: 15, 653: 15,
+  154: 50, 254: 50, 354: 50, 454: 50, 554: 50, 654: 50,
   // Up-only is a huge swing for a mascot that rarely rises — price it high.
-  155: 25, 255: 20, 355: 10, 455: 20, 555: 30,
-  156: 25, 256: 30, 356: 30, 456: 30, 556: 10,
-  157: 20, 257: 20, 357: 20, 457: 20, 557: 20,
+  // (Joey's forced up is a guaranteed +6 or +7 — nearly as strong as Lev's.)
+  155: 25, 255: 20, 355: 10, 455: 20, 555: 30, 655: 30,
+  156: 25, 256: 30, 356: 30, 456: 30, 556: 10, 656: 25,
+  157: 20, 257: 20, 357: 20, 457: 20, 557: 20, 657: 20,
 };
 
 export const SPELLS = [];
@@ -236,6 +257,8 @@ export const NEWS_TABLE = [
   // with 4 of 5 mascots fielded the effective alert rate stays near 65%.
   { mascotId: 5, direction: 1,  weight: 8,  newsType: 'Oil Strike' },
   { mascotId: 5, direction: -1, weight: 7,  newsType: 'Earthquake' },
+  { mascotId: 6, direction: 1,  weight: 8,  newsType: 'Oil Strike' },
+  { mascotId: 6, direction: -1, weight: 7,  newsType: 'Earthquake' },
 ];
 export const NEWS_EMOJI = { 'Oil Strike': '🛢️', Earthquake: '🌍' };
 

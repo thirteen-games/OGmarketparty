@@ -49,8 +49,8 @@ test('every mascot has exactly 10 equally likely rolls', () => {
   for (const m of MASCOTS) assert.equal(m.rolls.length, 10);
 });
 
-test('ticket data is complete: 5 mascots x 6 tiers', () => {
-  assert.equal(TICKETS.length, 30);
+test('ticket data is complete: 6 mascots x 6 tiers', () => {
+  assert.equal(TICKETS.length, 36);
   for (const t of TICKETS) {
     assert.ok(t.cost > 0 && t.reward > 0);
     assert.equal(Math.floor(t.id / 100), t.mascotId);
@@ -96,6 +96,7 @@ test('mascot collects EP it passes over, exclusive of start, inclusive of end', 
 
 test('downward moves collect too', () => {
   const g = new Game({ mode: 1, seed: 3 });
+  g.activeMascots = [1, 2, 3, 4]; // pin the roster: the test rolls mascot 2
   const p = g.players[0];
   p.board[2] = { 44: 25, 50: 5 };
   g.rollForMascot = (m) => (m.id === 2 ? -6 : 0);
@@ -283,10 +284,10 @@ test('alerts report "until the game ends" late in a 1P game', () => {
 
 test('news table matches spec: weights per mascot, 65% total', () => {
   const w = (id, dir) => NEWS_TABLE.find((r) => r.mascotId === id && r.direction === dir).weight;
-  assert.deepEqual([w(1, 1), w(2, 1), w(3, 1), w(4, 1), w(5, 1)], [8, 10, 5, 12, 8]); // Oil Strike
-  assert.deepEqual([w(1, -1), w(2, -1), w(3, -1), w(4, -1), w(5, -1)], [8, 7, 5, 10, 7]); // Earthquake
-  // only fielded mascots can fire, so a 4-of-5 game stays near the original 65%
-  assert.equal(NEWS_TABLE.reduce((s, r) => s + r.weight, 0), 80);
+  assert.deepEqual([w(1, 1), w(2, 1), w(3, 1), w(4, 1), w(5, 1), w(6, 1)], [8, 10, 5, 12, 8, 8]); // Oil Strike
+  assert.deepEqual([w(1, -1), w(2, -1), w(3, -1), w(4, -1), w(5, -1), w(6, -1)], [8, 7, 5, 10, 7, 7]); // Earthquake
+  // only fielded mascots can fire, so a 4-of-6 game stays near the original 65%
+  assert.equal(NEWS_TABLE.reduce((s, r) => s + r.weight, 0), 95);
 });
 
 test('news draw activates an alert and wastes same-mascot draws', () => {
@@ -435,7 +436,7 @@ test('oddsLabel buckets probabilities', () => {
 });
 
 test('mascot display order is Mousey, Wolf, Flixy, Bizarro', () => {
-  assert.deepEqual(MASCOTS.map((m) => m.name), ['Mousey', 'Wolf', 'Flixy', 'Bizarro', 'Lev']);
+  assert.deepEqual(MASCOTS.map((m) => m.name), ['Mousey', 'Wolf', 'Flixy', 'Bizarro', 'Lev', 'Joey']);
 });
 
 test('roguelike: starts with a 2-mascot choice; everything scopes to the roster', () => {

@@ -8,6 +8,7 @@ export function mascotSvg(mascotId, size = 40) {
     3: wolf,
     4: flixy,
     5: lev,
+    6: joey,
   };
   return svgs[mascotId](size);
 }
@@ -66,6 +67,21 @@ function lev(s) {
     <path d="M44 40 Q50 46 44 52" stroke="#1f6396" stroke-width="2.5" fill="none" stroke-linecap="round"/>
     <circle cx="93" cy="30" r="3" fill="#a8d4f0"/>
     <circle cx="97" cy="20" r="2" fill="#a8d4f0"/>
+  </svg>`;
+}
+
+function joey(s) {
+  return `<svg viewBox="0 0 100 100" width="${s}" height="${s}" aria-label="Joey">
+    <path d="M30 34 Q20 8 32 4 Q42 12 40 32 Z" fill="#8b5a2b"/>
+    <path d="M70 34 Q80 8 68 4 Q58 12 60 32 Z" fill="#8b5a2b"/>
+    <path d="M32 30 Q26 12 33 9 Q39 16 38 30 Z" fill="#d9a96b"/>
+    <path d="M68 30 Q74 12 67 9 Q61 16 62 30 Z" fill="#d9a96b"/>
+    <circle cx="50" cy="56" r="32" fill="#8b5a2b"/>
+    <ellipse cx="50" cy="70" rx="18" ry="14" fill="#d9a96b"/>
+    <circle cx="39" cy="48" r="5" fill="#22252b"/><circle cx="61" cy="48" r="5" fill="#22252b"/>
+    <circle cx="40.5" cy="46.5" r="1.6" fill="#fff"/><circle cx="62.5" cy="46.5" r="1.6" fill="#fff"/>
+    <ellipse cx="50" cy="60" rx="6.5" ry="5" fill="#5a3a1a"/>
+    <path d="M43 72 Q50 78 57 72" stroke="#5a3a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
   </svg>`;
 }
 
