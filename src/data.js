@@ -128,7 +128,7 @@ export const TICKETS = [
   { id: 404, mascotId: 4, rarity: 'Super Rare', difficulty: 'Medium',    cost: 4,  reward: 71,  target1: 4,  target2: null },
   { id: 105, mascotId: 1, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 95,  target1: 4,  target2: -4 },
   { id: 205, mascotId: 2, rarity: 'Epic',      difficulty: 'Medium',    cost: 5,  reward: 85,  target1: 10, target2: -8 },
-  { id: 305, mascotId: 3, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 88,  target1: 4,  target2: -1 },
+  { id: 305, mascotId: 3, rarity: 'Epic',      difficulty: 'Very Easy', cost: 5,  reward: 72,  target1: 2,  target2: -2 },
   { id: 405, mascotId: 4, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 85,  target1: 7,  target2: -6 },
   // Lev's tickets: rewards priced so each tier's expected EP matches the
   // average of the other mascots' tickets at that tier (4-roll odds).
