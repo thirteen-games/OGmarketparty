@@ -41,11 +41,35 @@ export class UI {
           <div class="start-mascots">${MASCOTS.map((m) => mascotSvg(m.id, 72)).join('')}</div>
           <h1>Market Party</h1>
           <p class="tagline">Bet on the mascots. Collect the Gold. Throw the best party on the Street.</p>
-          <div class="start-buttons">
-            <button class="btn btn-primary" data-mode="1">1 Player &mdash; ${CONFIG.onePlayerRounds} rounds, chase ${CONFIG.onePlayerGoal} Gold</button>
-            <button class="btn btn-primary" data-mode="2">2 Players &mdash; first to ${CONFIG.twoPlayerGoal} Gold</button>
-            <button class="btn btn-primary" id="vs-bot-btn">🤖 Play vs Bot &mdash; first to ${CONFIG.twoPlayerGoal} Gold</button>
-            <button class="btn btn-primary" id="rogue-btn">🗺️ Roguelike &mdash; survive the checkpoints</button>
+          <div class="mode-grid">
+            <div class="mode-col">
+              <div class="mode-col-title">1 Player</div>
+              <button class="mode-tile tile-solo" data-mode="1">
+                <span class="tile-emoji">🎯</span>
+                <span class="tile-name">Classic</span>
+                <span class="tile-sub">${CONFIG.onePlayerRounds} rounds &middot; chase ${CONFIG.onePlayerGoal} Gold</span>
+              </button>
+              <button class="mode-tile tile-rogue" id="rogue-btn">
+                <span class="tile-emoji">🗺️</span>
+                <span class="tile-name">Roguelike</span>
+                <span class="tile-sub">draft mascots &middot; survive the checkpoints</span>
+              </button>
+            </div>
+            <div class="mode-col">
+              <div class="mode-col-title">2 Players</div>
+              <button class="mode-tile tile-duel" data-mode="2">
+                <span class="tile-emoji">⚔️</span>
+                <span class="tile-name">Hotseat</span>
+                <span class="tile-sub">first to ${CONFIG.twoPlayerGoal} Gold wins</span>
+              </button>
+              <button class="mode-tile tile-bot" id="vs-bot-btn">
+                <span class="tile-emoji">🤖</span>
+                <span class="tile-name">Vs Bot</span>
+                <span class="tile-sub">take on Randy, Billy, or Baldy</span>
+              </button>
+            </div>
+          </div>
+          <div class="start-utility">
             <button class="btn" id="tutorial-btn">📖 Tutorial</button>
             <button class="btn" id="leaderboard-btn">🏆 Leaderboard</button>
           </div>
