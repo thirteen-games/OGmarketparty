@@ -537,6 +537,29 @@ test('roguelike: three-mascot shop is 1 each plus 1 random repeat', () => {
   }
 });
 
+test('roguelike: stretch bonus pays 7 coins before interest', () => {
+  const bonusSpec = ROGUE.bonuses[3];
+  const setup = (ep) => {
+    const g = new Game({ mode: 'rogue', seed: 12 });
+    g.chooseMascot(g.pendingChoice[0]);
+    g.roll();
+    g.roll();
+    g.players[0].ep = ep;
+    g.players[0].coins = 10;
+    return g;
+  };
+  // over the stretch target: +7 lands before interest (floor(17/5)=3, not floor(10/5)=2)
+  const g1 = setup(bonusSpec.over + 5);
+  const events = g1.roll();
+  assert.ok(events.some((e) => e.type === 'bonus' && e.round === 3 && e.coins === bonusSpec.coins));
+  assert.equal(g1.players[0].coins, 10 + 7 + CONFIG.coinsPerRound + Math.floor((10 + 7) / 5));
+  // at/below the stretch target (but past the gate): no bonus
+  const g2 = setup(bonusSpec.over);
+  const events2 = g2.roll();
+  assert.ok(!events2.some((e) => e.type === 'bonus'));
+  assert.equal(g2.players[0].coins, 10 + CONFIG.coinsPerRound + 2);
+});
+
 test('roguelike: benched mascots make no news; victory after round 15', () => {
   const g = new Game({ mode: 'rogue', seed: 8 });
   g.chooseMascot(g.pendingChoice[0]);

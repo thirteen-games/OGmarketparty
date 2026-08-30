@@ -447,6 +447,9 @@ main {
   border-radius: 8px; padding: 6px 12px; display: inline-block;
 }
 .news-card.unlock-card { background: #e9d8ff; border-color: #7a3fa8; }
+.news-card.bonus-card { background: #ffe9b3; border-color: #b8860b; }
+.bonus-card h2 { color: #8a5a00 !important; }
+.bonus-card p { color: #5c3d00 !important; }
 .unlock-card h2 { color: #7a3fa8 !important; }
 .unlock-card p { color: #46246b !important; }
 

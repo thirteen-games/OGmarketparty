@@ -20,11 +20,14 @@ export const CONFIG = {
 };
 
 // Roguelike mode: checkpoint EP targets by round (miss one and the run ends),
-// plus the victory target after the final round. Calibrated by simulation so
-// steady play clears the early gates and the win takes a strong run.
+// plus the victory target after the final round. Early gates also carry a
+// Coin bonus for beating a stretch score, granted BEFORE income/interest so
+// it compounds. Tuned by simulation across four player archetypes
+// (max-spend / saver / half-spend / hybrid) to win rates within 3 points.
 export const ROGUE = {
   rounds: 15,
-  targets: { 3: 30, 6: 150, 9: 450, 12: 1000, 15: 1650 },
+  targets: { 3: 40, 6: 225, 9: 500, 12: 1000, 15: 1500 },
+  bonuses: { 3: { over: 80, coins: 7 }, 6: { over: 400, coins: 7 } },
 };
 
 // EP level thresholds (Game simulation DN11:DO15). Level = highest row <= banked EP.

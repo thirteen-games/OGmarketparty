@@ -476,11 +476,20 @@ export class Game {
           this.over = true;
           this.winner = false;
           this.failedCheckpoint = { round: this.round, target };
-        } else if (final) {
-          this.over = true;
-          this.winner = true;
-        } else if (this.activeMascots.length < MASCOTS_PER_GAME) {
-          this.pendingChoice = this.pickChoice(); // a new mascot joins the run
+        } else {
+          if (final) {
+            this.over = true;
+            this.winner = true;
+          } else if (this.activeMascots.length < MASCOTS_PER_GAME) {
+            this.pendingChoice = this.pickChoice(); // a new mascot joins the run
+          }
+          // Stretch-score Coin bonus, granted here — before incrementCoins —
+          // so it counts toward this round's interest.
+          const bonus = ROGUE.bonuses[this.round];
+          if (bonus && !this.over && ep > bonus.over) {
+            this.players[0].coins += bonus.coins;
+            events.push({ type: 'bonus', round: this.round, coins: bonus.coins, threshold: bonus.over, ep });
+          }
         }
       }
       return;

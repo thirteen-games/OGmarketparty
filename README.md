@@ -26,10 +26,12 @@ Then visit <http://localhost:8642>.
 - **2 Players** — hotseat; first to 1000 EP wins.
 - **vs Bot** — battle 🐣 Rookie Randy, 🐂 Billy Bull, or 🐻 Baldy Bear; the bot
   takes its turn automatically when you hit Roll.
-- **Roguelike** — 15 rounds with EP checkpoints at rounds 3/6/9/12 (30/150/450/1000;
-  miss one and the run ends) and a 1650 EP victory target. Start with one mascot,
-  two ticket slots, and no spells - draft mascots at cleared checkpoints to grow
-  the shop (slots, Super Rare/Epic and Legendary drops) and unlock spells.
+- **Roguelike** — 15 rounds with EP checkpoints at rounds 3/6/9/12 (40/225/500/1000;
+  miss one and the run ends) and a 1500 EP victory target. Stretch bonuses pay
+  +7 Coins (before interest) for clearing round 3 with 80+ and round 6 with 400+.
+  Start with one mascot, two ticket slots, and no spells - draft mascots at
+  cleared checkpoints to grow the shop (slots, Super Rare/Epic and Legendary
+  drops) and unlock spells.
 
 ## How a round works
 

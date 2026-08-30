@@ -266,7 +266,10 @@ export class UI {
           <div class="round-info">${
             g.rogue
               ? `Round <b>${Math.min(g.round + 1, ROGUE.rounds)}</b> / ${ROGUE.rounds}${
-                  target ? ` &middot; 🎯 <b>${target.ep}</b> EP by round ${target.round}` : ''}`
+                  target ? ` &middot; 🎯 <b>${target.ep}</b> EP by round ${target.round}` : ''}${
+                  target && ROGUE.bonuses[target.round]
+                    ? ` &middot; 💰 +${ROGUE.bonuses[target.round].coins}🪙 if over ${ROGUE.bonuses[target.round].over}`
+                    : ''}`
               : g.mode === 1
                 ? `Round <b>${Math.min(g.round + 1, CONFIG.onePlayerRounds)}</b> / ${CONFIG.onePlayerRounds}`
                 : `Round <b>${g.round + 1}</b> &middot; first to ${CONFIG.twoPlayerGoal} EP`
@@ -706,6 +709,7 @@ export class UI {
 
     const newsEvents = tail.filter((e) => e.type === 'news');
     const checkpoint = tail.find((e) => e.type === 'checkpoint');
+    const bonus = tail.find((e) => e.type === 'bonus');
     for (const e of tail) {
       if (e.type === 'news' || e.type === 'newsEnd') this.log(e.message, 'news');
       if (e.type === 'checkpoint') {
@@ -713,11 +717,20 @@ export class UI {
           ? `✅ Checkpoint round ${e.round}: ${e.ep} / ${e.target} EP — passed!`
           : `💥 Checkpoint round ${e.round}: ${e.ep} / ${e.target} EP — run over.`, e.passed ? 'good' : 'news');
       }
+      if (e.type === 'bonus') {
+        this.log(`💰 Bonus! +${e.coins} Coins for passing round ${e.round} with over ${e.threshold} EP.`, 'good');
+      }
     }
 
     // A cleared (non-final) checkpoint gets its own moment before the next round.
     if (checkpoint && checkpoint.passed && !checkpoint.final && !this.skipRequested) {
       await this.showCheckpointPopup(checkpoint);
+    }
+    if (bonus && !this.skipRequested) {
+      await this.showAcknowledgePopup('bonus-card', `
+        <h2>💰 COIN BONUS!</h2>
+        <p>You cleared round ${bonus.round} with <b>${bonus.ep} EP</b> — over the ${bonus.threshold} stretch
+        target. <b>+${bonus.coins} Coins</b>, banked before this round's interest!</p>`);
     }
 
     // Between-round sequence: round banner, then news popups, then coin gain.
@@ -1107,7 +1120,8 @@ export class UI {
         <table class="stats-table"><tr><th>Level</th><th>EP in bank</th></tr>${rows}</table>
         <p class="hint">Careful: spending EP on spells can drop your Level (and your score).
         ${this.game?.rogue
-          ? `Checkpoints: ${Object.entries(ROGUE.targets).map(([r, ep]) => `${ep} by round ${r}`).join(', ')} — the last one wins the run.`
+          ? `Checkpoints: ${Object.entries(ROGUE.targets).map(([r, ep]) => `${ep} by round ${r}`).join(', ')} — the last one wins the run.
+            Stretch bonuses: ${Object.entries(ROGUE.bonuses).map(([r, b]) => `+${b.coins} Coins for over ${b.over} EP at round ${r}`).join(', ')} (paid before interest).`
           : this.game?.mode === 1
             ? `Score ${CONFIG.onePlayerGoal}+ in ${CONFIG.onePlayerRounds} rounds to make the leaderboard.`
             : `First player to ${CONFIG.twoPlayerGoal} EP wins.`}</p>`);
