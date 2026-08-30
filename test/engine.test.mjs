@@ -512,6 +512,14 @@ test('roguelike: slots and spells grow with the roster; rarity unlocks by round'
   }
 });
 
+test('roguelike: rolls come in draft order, matching the board lanes', () => {
+  const g = new Game({ mode: 'rogue', seed: 7 });
+  g.chooseMascot(g.pendingChoice[0]);
+  g.activeMascots = [6, 2, 5]; // deliberately out of display order
+  const rolls = g.roll().filter((e) => e.type === 'roll').map((e) => e.mascotId);
+  assert.deepEqual(rolls, [6, 2, 5]);
+});
+
 test('roguelike: checkpoints end the run or grow the roster', () => {
   const g = new Game({ mode: 'rogue', seed: 4 });
   g.chooseMascot(g.pendingChoice[0]);

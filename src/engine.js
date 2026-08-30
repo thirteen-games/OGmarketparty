@@ -95,7 +95,11 @@ export class Game {
 
   // --- Roguelike roster ------------------------------------------------------
 
+  // Fielded mascots in board order: draft order in roguelike (matching the
+  // lane slots), roster display order in classic modes. Rolls iterate this
+  // list, so dice always land left to right across the board.
   activeList() {
+    if (this.rogue) return this.activeMascots.map((id) => mascotById(id));
     return MASCOTS.filter((m) => this.activeMascots.includes(m.id));
   }
 
