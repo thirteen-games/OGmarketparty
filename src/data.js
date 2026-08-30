@@ -20,16 +20,18 @@ export const CONFIG = {
 };
 
 // Roguelike mode: checkpoint EP targets by round (miss one and the run ends),
-// plus the victory target after the final round. Early gates also carry a
-// Coin bonus for beating a stretch score, granted BEFORE income/interest so
-// it compounds. Tuned by simulation across four player archetypes
-// (max-spend / saver / half-spend / hybrid); with the round-based rarity
-// unlocks (Super Rare R4 / Epic R7 / Legendary R10) these land at
-// 68/67/67/74% win rates.
+// plus the victory target after the final round. The round-3 gate also
+// carries a Coin bonus for beating a stretch score, granted BEFORE income/
+// interest so it compounds. (An R6 bonus at 400 was removed: sims showed it
+// propped early-spend styles by 10+ points while savers never touched it.)
+// Tuned by simulation across four player archetypes (max-spend / saver /
+// half-spend / hybrid); with the round-based rarity unlocks (Super Rare R4 /
+// Epic R7 / Legendary R10) these land at 70/66/66/75% win rates, with
+// spend-then-save the deliberate winner.
 export const ROGUE = {
   rounds: 15,
   targets: { 3: 40, 6: 200, 9: 400, 12: 900, 15: 1400 },
-  bonuses: { 3: { over: 80, coins: 7 }, 6: { over: 400, coins: 7 } },
+  bonuses: { 3: { over: 80, coins: 7 } },
 };
 
 // EP level thresholds (Game simulation DN11:DO15). Level = highest row <= banked EP.

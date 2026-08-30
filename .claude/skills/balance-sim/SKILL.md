@@ -41,7 +41,8 @@ import the game's own engine, so they can never drift from real rules).
   EV-sound spell casting (direction spells cast only when the forced roll's
   expected collection beats a natural roll's by more than the cost). The
   locked-in config (round-based rarity unlocks SR R4 / Epic R7 / Legendary
-  R10; gates 40/200/400/900/1400) sims at 80/66/66/82% win rates —
+  R10; gates 40/200/400/900/1400, single +7 bonus at R3/80+) sims at
+  70/66/66/75% win rates —
   spend-then-save is deliberately the winningest strategy; treat a spread
   wider than ~10-15 points as a strategy imbalance. 400-run rates carry
   ±3 points of noise; use paired-seed A/B runs before attributing small

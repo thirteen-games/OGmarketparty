@@ -28,7 +28,7 @@ Then visit <http://localhost:8642>.
   takes its turn automatically when you hit Roll.
 - **Roguelike** — 15 rounds with Gold checkpoints at rounds 3/6/9/12 (40/225/500/1000;
   miss one and the run ends) and a 1500 Gold victory target. Stretch bonuses pay
-  +7 Dollars (before interest) for clearing round 3 with 80+ and round 6 with 400+.
+  +7 Dollars (before interest) for clearing round 3 with 80+ Gold.
   Start with one mascot, two ticket slots, and no spells - draft mascots at
   cleared checkpoints to grow the shop (slots, Super Rare/Epic and Legendary
   drops) and unlock spells.
