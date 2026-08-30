@@ -2,7 +2,7 @@
 
 import { Game, FLAG } from './engine.js';
 import {
-  MASCOTS, CONFIG, ROGUE, BOARD_MIN, BOARD_MAX,
+  MASCOTS, CONFIG, ROGUE, BOARD_MIN, BOARD_MAX, START_STEP,
   TICKETS, SPELLS, EP_LEVELS, NEWS_TABLE, NEWS_EMOJI,
   TICKET_TIER_WEIGHTS, SPELL_TYPE_WEIGHTS, PAYOUT_RATIOS,
   mascotById, ticketById, spellById,
@@ -294,6 +294,29 @@ export class UI {
       can now appear in the shop. 10 Dollars a piece, and the fattest payouts in the game.</p>`);
   }
 
+  // Tiny market-style chart of a mascot's step history: green above the
+  // step-50 start line, red below, dashed reference at 50 — like a day chart
+  // anchored at the open.
+  sparkline(history) {
+    const W = 132, H = 30, P = 3;
+    const data = (history ?? [START_STEP]).slice(-20);
+    const lo = Math.min(...data, START_STEP) - 1;
+    const hi = Math.max(...data, START_STEP) + 1;
+    const x = (i) => (data.length > 1 ? P + (i * (W - 2 * P)) / (data.length - 1) : W - P);
+    const y = (v) => P + ((hi - v) * (H - 2 * P)) / (hi - lo);
+    let segs = '';
+    for (let i = 1; i < data.length; i++) {
+      const up = data[i] >= START_STEP;
+      segs += `<line x1="${x(i - 1).toFixed(1)}" y1="${y(data[i - 1]).toFixed(1)}" x2="${x(i).toFixed(1)}" y2="${y(data[i]).toFixed(1)}" stroke="${up ? '#1e8a4c' : '#d63430'}" stroke-width="2" stroke-linecap="round"/>`;
+    }
+    const lastV = data[data.length - 1];
+    const dot = `<circle cx="${x(data.length - 1).toFixed(1)}" cy="${y(lastV).toFixed(1)}" r="2.6" fill="${lastV >= START_STEP ? '#1e8a4c' : '#d63430'}"/>`;
+    const ref = y(START_STEP).toFixed(1);
+    return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+      <line x1="0" y1="${ref}" x2="${W}" y2="${ref}" stroke="#8a93a8" stroke-width="1" stroke-dasharray="3 3"/>
+      ${segs}${dot}</svg>`;
+  }
+
   renderRollPanel() {
     const g = this.game;
     const target = g.rogue ? this.rogueTarget() : null;
@@ -324,9 +347,12 @@ export class UI {
             if (!m) {
               return `
                 <div class="die-slot mystery" title="A mystery mascot joins later">
-                  <span class="mystery-q">?</span>
-                  <div class="die-col"><div class="d10"><span class="die-num">?</span></div>
-                  <div class="die-result">&mdash;</div></div>
+                  <div class="die-top">
+                    <span class="mystery-q">?</span>
+                    <div class="die-col"><div class="d10"><span class="die-num">?</span></div>
+                    <div class="die-result">&mdash;</div></div>
+                  </div>
+                  <div class="die-chart"></div>
                 </div>`;
             }
             const last = g.lastRolls[m.id];
@@ -339,11 +365,14 @@ export class UI {
                     <path d="M50 6 L97 90 L3 90 Z" fill="#ffd21f" stroke="#1b2440" stroke-width="7" stroke-linejoin="round"/>
                     <text x="50" y="78" text-anchor="middle" font-size="56" font-weight="900" fill="#1b2440">!</text>
                   </svg></span>` : ''}
-                <span class="die-mascot">${mascotSvg(m.id, 54)}</span>
-                <div class="die-col">
-                  <div class="d10"><span class="die-num">${rolled ? (last > 0 ? `+${last}` : last) : '?'}</span></div>
-                  <div class="die-result">${alert ? `${alert.direction > 0 ? '⬆ UP' : '⬇ DOWN'} ONLY` : rolled ? this.upDown(last) : '&mdash;'}</div>
+                <div class="die-top">
+                  <span class="die-mascot">${mascotSvg(m.id, 54)}</span>
+                  <div class="die-col">
+                    <div class="d10"><span class="die-num">${rolled ? (last > 0 ? `+${last}` : last) : '?'}</span></div>
+                    <div class="die-result">${alert ? `${alert.direction > 0 ? '⬆ UP' : '⬇ DOWN'} ONLY` : ''}</div>
+                  </div>
                 </div>
+                <div class="die-chart" title="${m.name}'s run so far — now on step ${g.steps[m.id]}">${this.sparkline(g.history[m.id])}</div>
               </div>`;
           }).join('')}
         </div>

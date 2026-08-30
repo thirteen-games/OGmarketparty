@@ -50,6 +50,7 @@ export class Game {
     this.lastRolls = {}; // mascotId -> last roll value
     this.lastFrom = {};  // mascotId -> step before the last roll (for the trail)
     this.rolledOnce = {}; // mascotId -> has taken at least one roll (a fresh draft hasn't)
+    this.history = {};    // mascotId -> step after each of its rolls (starts at START_STEP)
     this.flags = {};    // mascotId -> FLAG
     this.news = [];     // active alerts: {mascotId, direction, newsType, count}
     this.players = [newPlayer()];
@@ -59,6 +60,7 @@ export class Game {
       this.lastRolls[m.id] = 0;
       this.lastFrom[m.id] = START_STEP;
       this.rolledOnce[m.id] = false;
+      this.history[m.id] = [START_STEP];
       this.flags[m.id] = FLAG.NONE;
     }
     // Roguelike: no mascots yet — the run starts by choosing one of two.
@@ -426,6 +428,7 @@ export class Game {
       this.lastRolls[mascot.id] = rollValue;
       this.lastFrom[mascot.id] = from;
       this.rolledOnce[mascot.id] = true;
+      this.history[mascot.id].push(to);
       events.push({ type: 'roll', mascotId: mascot.id, roll: rollValue, from, to, flag });
 
       // Collect EP on every step the mascot passed over or landed on
