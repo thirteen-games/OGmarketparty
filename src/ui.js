@@ -883,6 +883,20 @@ export class UI {
     if (!g.rogue || !target) return Promise.resolve();
     const bonus = ROGUE.bonuses[target.round];
     const final = target.round === ROGUE.rounds;
+    const ep = g.players[0].ep;
+    // A hot run can already be past the tranche's checkpoint — celebrate it
+    // and point at what actually matters next instead of a stale demand.
+    if (ep >= target.ep) {
+      const later = Object.keys(ROGUE.targets).map(Number).filter((r) => r > target.round);
+      const nextRound = later.length ? Math.min(...later) : null;
+      return this.showAcknowledgePopup('tranche-card', `
+        <h2>🎯 ${final ? 'FINAL STRETCH!' : `ROUNDS ${g.round + 1}–${target.round}`}</h2>
+        <p>You're sitting on <b>${ep} Gold</b> — the ${final ? 'victory target' : `round-${target.round} checkpoint`}
+        of ${target.ep} is already banked! 🔥</p>
+        ${nextRound
+          ? `<p>Eyes ahead: <b>${ROGUE.targets[nextRound]} Gold</b> by round ${nextRound}.</p>`
+          : '<p>Play out the run and take the win! 🏆</p>'}`);
+    }
     return this.showAcknowledgePopup('tranche-card', `
       <h2>🎯 ${final ? 'FINAL STRETCH!' : `ROUNDS ${g.round + 1}–${target.round}`}</h2>
       <p>${final ? 'Win the run with' : 'Reach'} <b>${target.ep} Gold</b> by the end of
