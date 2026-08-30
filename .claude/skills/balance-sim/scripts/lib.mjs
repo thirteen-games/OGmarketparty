@@ -103,9 +103,18 @@ export function castSensibleSpells(g, p = 0) {
       const best = instant.reduce((a, b) => (b.ep > a.ep ? b : a), { ep: 0, step: null });
       if (best.ep > spell.cost) g.castSpell(p, slot, best.step);
     } else if (spell.type === SPELL_TYPES.UP || spell.type === SPELL_TYPES.DOWN) {
+      // True next-roll EV: what the forced roll collects minus what a natural
+      // roll would have collected anyway. Spells cost score, so the edge must
+      // beat the cost or the cast is a net loss on average.
       const dir = spell.type === SPELL_TYPES.UP ? 1 : -1;
-      const net = chips.reduce((s, x) => s + Math.sign(x.step - pos) * dir * x.ep, 0);
-      if (net >= spell.cost * 2) g.castSpell(p, slot);
+      const collectFor = (faces) => faces.reduce((sum, f) => {
+        const to = Math.max(0, Math.min(100, pos + f));
+        return sum + chips.reduce((cs, x) =>
+          cs + ((f > 0 ? x.step > pos && x.step <= to : x.step < pos && x.step >= to) ? x.ep : 0), 0);
+      }, 0) / faces.length;
+      const forced = m.rolls.filter((r) => (dir > 0 ? r > 0 : r < 0));
+      const edge = collectFor(forced) - collectFor(m.rolls);
+      if (edge > spell.cost) g.castSpell(p, slot);
     }
   }
 }

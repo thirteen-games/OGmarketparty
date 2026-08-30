@@ -38,11 +38,14 @@ import the game's own engine, so they can never drift from real rules).
 - **Archetypes**: gate calibration simulates four coin strategies
   (max-spend, 5s-saver, half-spend, spend-then-save-after-round-5), each with
   alert-aware EV shopping, dead-ticket avoidance, bad-shop refreshes, and
-  EV-justified spell casting. The locked-in config (round-based rarity
-  unlocks SR R4 / Epic R7 / Legendary R10; gates 40/200/400/900/1400) was
-  tuned to win rates of 68/67/67/74% — spend-then-save is deliberately the
-  winningest strategy; treat a spread wider than ~8-10 points as a strategy
-  imbalance.
+  EV-sound spell casting (direction spells cast only when the forced roll's
+  expected collection beats a natural roll's by more than the cost). The
+  locked-in config (round-based rarity unlocks SR R4 / Epic R7 / Legendary
+  R10; gates 40/200/400/900/1400) sims at 80/66/66/82% win rates —
+  spend-then-save is deliberately the winningest strategy; treat a spread
+  wider than ~10-15 points as a strategy imbalance. 400-run rates carry
+  ±3 points of noise; use paired-seed A/B runs before attributing small
+  shifts to a change.
   Real humans score below these idealized players.
 
 ## Tools

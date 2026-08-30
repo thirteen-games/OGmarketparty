@@ -167,10 +167,18 @@ function pickSpellPlay(game, spell, hard, horizon, constraintFor) {
     }
     case SPELL_TYPES.UP:
     case SPELL_TYPES.DOWN: {
+      // Cast only when the forced roll's expected collection beats a natural
+      // roll's by more than the spell costs — spells are paid in score.
       const dir = spell.type === SPELL_TYPES.UP ? 1 : -1;
-      const net = chipsOf(P).reduce(
-        (s, x) => s + Math.sign(x.step - pos) * dir * x.ep, 0);
-      return net >= spell.cost * 2 ? null : undefined;
+      const chips = chipsOf(P);
+      const collectFor = (faces) => faces.reduce((sum, f) => {
+        const to = Math.max(0, Math.min(100, pos + f));
+        return sum + chips.reduce((cs, x) =>
+          cs + ((f > 0 ? x.step > pos && x.step <= to : x.step < pos && x.step >= to) ? x.ep : 0), 0);
+      }, 0) / faces.length;
+      const forced = mascot.rolls.filter((r) => (dir > 0 ? r > 0 : r < 0));
+      const edge = collectFor(forced) - collectFor(mascot.rolls);
+      return edge > spell.cost ? null : undefined;
     }
     case SPELL_TYPES.FREEZE: {
       if (!hard) return undefined;
