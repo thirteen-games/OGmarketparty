@@ -325,10 +325,10 @@ export class Game {
   castSpell(p, slot, targetStep = null) {
     const player = this.players[p];
     if (this.over) return { ok: false, reason: 'Game is over' };
-    if (!player.spells[slot]) return { ok: false, reason: 'No Spell in that slot' };
-    if (player.spellSold[slot]) return { ok: false, reason: 'Already bought this Spell this round' };
+    if (!player.spells[slot]) return { ok: false, reason: 'No Manipulation in that slot' };
+    if (player.spellSold[slot]) return { ok: false, reason: 'Already executed this Manipulation this round' };
     const spell = spellById(player.spells[slot]);
-    if (player.ep < spell.cost) return { ok: false, reason: 'Not enough Gold to buy this Spell' };
+    if (player.ep < spell.cost) return { ok: false, reason: 'Not enough Gold for this Manipulation' };
 
     if (spell.needsTarget) {
       const targets = this.spellTargets(p, slot);

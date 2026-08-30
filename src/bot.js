@@ -60,7 +60,7 @@ function easyTurn(game) {
       if (!targets.length) continue;
       target = targets[Math.floor(game.rng() * targets.length)];
     }
-    if (game.castSpell(P, slot, target).ok) actions.push(`cast: ${spell.description}`);
+    if (game.castSpell(P, slot, target).ok) actions.push(`executed: ${spell.description}`);
   }
   return actions;
 }
@@ -123,7 +123,7 @@ function valueTurn(game, hard) {
     if (bot.spellSold[slot] || bot.ep < spell.cost) continue;
     const target = pickSpellPlay(game, spell, hard, horizon, constraintFor);
     if (target === undefined) continue;
-    if (game.castSpell(P, slot, target).ok) actions.push(`cast: ${spell.description}`);
+    if (game.castSpell(P, slot, target).ok) actions.push(`executed: ${spell.description}`);
   }
 
   return actions;

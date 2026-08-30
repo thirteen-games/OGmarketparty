@@ -4,7 +4,7 @@ Bet on the mascots. Collect the gold. Throw the best party on the Street. 🎲
 
 A browser port of the original Excel prototype (`MP Proto V1.0 for Claude.xlsm`).
 Stock-market mascots random-walk a 0–100 track; players buy betting
-tickets that drop Gold bounties on board steps, cast spells to tilt the odds,
+tickets that drop Gold bounties on board steps, execute market manipulations to tilt the odds,
 and bank Gold when a mascot lands on or passes their bounties. The roster holds
 five mascots — Mousey, Wolf, Flixy, Bizarro, and Lev the fish — with four
 fielded per game (chosen at random in classic modes, drafted in roguelike).
@@ -29,16 +29,16 @@ Then visit <http://localhost:8642>.
 - **Roguelike** — 15 rounds with Gold checkpoints at rounds 3/6/9/12 (40/225/500/1000;
   miss one and the run ends) and a 1500 Gold victory target. Stretch bonuses pay
   +7 Dollars (before interest) for clearing round 3 with 80+ Gold.
-  Start with one mascot, two ticket slots, and no spells - draft mascots at
+  Start with one mascot, two ticket slots, and no manipulations - draft mascots at
   cleared checkpoints to grow the shop (slots, Super Rare/Epic and Legendary
-  drops) and unlock spells.
+  drops) and unlock manipulations.
 
 ## How a round works
 
 1. **Bet** — spend Dollars on up to 4 Betting Tickets (one offer per mascot,
    refreshed each round; a manual refresh costs 2 Dollars). A ticket places its
    Gold reward on step(s) offset from the mascot's current position.
-2. **Cast** — spend banked Gold on up to 2 Spells: double a bounty, drag it
+2. **Execute** — spend banked Gold on up to 2 Manipulations: double a bounty, drag it
    closer, steal or halve an opponent's bounty, or force a mascot up, down,
    or frozen on the next roll.
 3. **Roll** — every mascot draws one of its 10 equally likely moves:
@@ -52,7 +52,7 @@ Then visit <http://localhost:8642>.
    3 rolls (40% chance per round when no news is active).
 
 Banked Gold raises your **Level** (1–5 at 0/30/80/200/500 Gold), which unlocks
-rarer, bigger tickets and spells in the shop.
+rarer, bigger tickets and manipulations in the shop.
 
 ## Repo layout
 

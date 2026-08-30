@@ -79,8 +79,8 @@ export class UI {
               <li>Four mascots random-walk a 0&ndash;100 track. Each has its own move style &mdash; Wolf grinds, Bizarro swings wild.</li>
               <li>Each round, spend <b>Dollars</b> on Betting Tickets. A ticket drops an <b>Gold bounty</b> on steps near its mascot.</li>
               <li>Hit <b>Roll</b>. When a mascot lands on or passes one of your bounties, you bank the Gold.</li>
-              <li>Spend banked Gold on <b>Spells</b> &mdash; double bounties, drag them closer, freeze a mascot, or raid your opponent.</li>
-              <li>Banked Gold raises your <b>Level</b>, unlocking rarer tickets and spells. Watch for <b>Mascot News</b>!</li>
+              <li>Spend banked Gold on <b>Manipulations</b> &mdash; double bounties, drag them closer, freeze a mascot, or raid your opponent.</li>
+              <li>Banked Gold raises your <b>Level</b>, unlocking rarer tickets and manipulations. Watch for <b>Mascot News</b>!</li>
             </ol>
           </details>
         </div>
@@ -208,8 +208,8 @@ export class UI {
         const slotsAfter = this.game.spellSlotCount();
         if (slotsAfter > slotsBefore) {
           this.log(slotsAfter === 1
-            ? '✨ Spells unlocked! Cast one per round for Gold.'
-            : '✨ Second Spell slot unlocked!', 'news');
+            ? '✨ Manipulations unlocked! Execute one per round for Gold.'
+            : '✨ Second Manipulation slot unlocked!', 'news');
           await this.showSpellUnlockPopup(slotsAfter);
         } else if (this.game.activeMascots.length === 4) {
           this.log('👑 Legendary tickets can now appear in the shop!', 'news');
@@ -267,8 +267,8 @@ export class UI {
             : 'Checkpoint cleared! Only one mascot remains — welcome them aboard.'
           }</p>
           ${unlocksSpell ? `<p class="unlock-note">✨ This draft also unlocks ${g.spellSlotCount() === 0
-            ? 'SPELLS & a 3rd ticket slot — and Super Rare tickets hit the shop this round'
-            : 'a 2nd Spell slot & a 4th ticket slot — and Epic tickets hit the shop this round'}!</p>`
+            ? 'MANIPULATIONS & a 3rd ticket slot — and Super Rare tickets hit the shop this round'
+            : 'a 2nd Manipulation slot & a 4th ticket slot — and Epic tickets hit the shop this round'}!</p>`
           : g.activeMascots.length === 3 ? `<p class="unlock-note">👑 Legendary tickets hit the shop this round!</p>` : ''}
           <div class="choice-cards">${cards}</div>
         </div>
@@ -277,14 +277,14 @@ export class UI {
 
   showSpellUnlockPopup(slotCount) {
     return this.showAcknowledgePopup('unlock-card', slotCount === 1
-      ? `<h2>✨ SPELLS UNLOCKED!</h2>
-        <p>With two mascots on the board you can now cast <b>one Spell per round</b>.
-        Spells cost <b>Gold</b> instead of Dollars — double a bounty on the board, or drag one
+      ? `<h2>✨ MANIPULATIONS UNLOCKED!</h2>
+        <p>With two mascots on the board you can now execute <b>one Manipulation per round</b>.
+        Manipulations cost <b>Gold</b> instead of Dollars — double a bounty on the board, or drag one
         closer to its mascot.</p>
         <p>The shop grows too: a <b>3rd ticket slot</b> opens and <b>Super Rare
         tickets</b> can now drop!</p>`
-      : `<h2>✨ SECOND SPELL SLOT!</h2>
-        <p>Your growing roster earns you <b>two Spell offers every round</b> from here on —
+      : `<h2>✨ SECOND MANIPULATION SLOT!</h2>
+        <p>Your growing roster earns you <b>two Manipulation offers every round</b> from here on —
         plus a <b>4th ticket slot</b> and ✨ <b>Epic tickets</b> in the shop!</p>`);
   }
 
@@ -559,7 +559,7 @@ export class UI {
             <div class="cards">${player.tickets.map((id, slot) => this.renderTicketCard(p, id, slot)).join('')}</div>
           </div>
           <div class="shop-row">
-            <div class="shop-title">Spells <span class="hint">(cost Gold)</span> <button class="btn btn-tiny info-click" data-info="spells" title="How Spells work">?</button></div>
+            <div class="shop-title">Manipulations <span class="hint">(cost Gold)</span> <button class="btn btn-tiny info-click" data-info="spells" title="How Manipulations work">?</button></div>
             <div class="cards">${player.spells.map((id, slot) => this.renderSpellCard(p, id, slot)).join('')}</div>
           </div>
         </div>
@@ -621,7 +621,7 @@ export class UI {
         <div class="card-body"><div class="spell-desc">${s.description}</div></div>
         ${sold
           ? '<div class="sold-tag">SOLD</div>'
-          : `<button class="btn btn-buy" data-action="cast-spell" data-player="${p}" data-slot="${slot}" ${!canAfford || g.over ? 'disabled' : ''}>Cast ${GOLD}${s.cost}</button>`}
+          : `<button class="btn btn-buy" data-action="cast-spell" data-player="${p}" data-slot="${slot}" ${!canAfford || g.over ? 'disabled' : ''}>Execute ${GOLD}${s.cost}</button>`}
       </div>`;
   }
 
@@ -647,7 +647,7 @@ export class UI {
         if (!spell.needsTarget) {
           const res = this.game.castSpell(p, slot);
           if (!res.ok) return this.toast(res.reason);
-          this.log(`${this.playerName(p)} cast: ${spell.description}.`);
+          this.log(`${this.playerName(p)} executed: ${spell.description}.`);
           this.renderGame();
         } else {
           const steps = this.game.spellTargets(p, slot);
@@ -710,7 +710,7 @@ export class UI {
           else if (res.stolen) detail = ` &mdash; stole ${GOLD}${res.stolen}!`;
           else if (res.movedTo !== undefined) detail = ` &mdash; moved to step ${res.movedTo}.`;
           else if (res.newValue !== undefined) detail = ` &mdash; step ${step} now ${GOLD}${res.newValue}.`;
-          this.log(`${this.playerName(player)} cast: ${spell.description}${detail}`);
+          this.log(`${this.playerName(player)} executed: ${spell.description}${detail}`);
         }
         this.renderGame();
       });
@@ -1221,13 +1221,13 @@ export class UI {
       this.modal(`
         <h2>${GOLD} Gold &amp; Levels</h2>
         <ul class="info-list">
-          <li>Gold bars are your <b>score</b> — and the currency for <b>Spells</b>.</li>
+          <li>Gold bars are your <b>score</b> — and the currency for <b>Manipulations</b>.</li>
           <li>Earn Gold when a mascot lands on or passes one of your bounties.</li>
           <li>Your banked Gold sets your <b>Level</b>, and higher levels unlock rarer,
-            bigger tickets and spells in the shop:</li>
+            bigger tickets and manipulations in the shop:</li>
         </ul>
         <table class="stats-table"><tr><th>Level</th><th>Gold in bank</th></tr>${rows}</table>
-        <p class="hint">Careful: spending Gold on spells can drop your Level (and your score).
+        <p class="hint">Careful: spending Gold on manipulations can drop your Level (and your score).
         ${this.game?.rogue
           ? `Checkpoints: ${Object.entries(ROGUE.targets).map(([r, ep]) => `${ep} by round ${r}`).join(', ')} — the last one wins the run.
             Stretch bonuses: ${Object.entries(ROGUE.bonuses).map(([r, b]) => `+${b.coins} Dollars for ${b.over}+ Gold at round ${r}`).join(', ')} (paid before interest).`
@@ -1236,9 +1236,9 @@ export class UI {
             : `First player to ${CONFIG.twoPlayerGoal} Gold wins.`}</p>`);
     } else if (topic === 'spells') {
       this.modal(`
-        <h2>✨ Spells</h2>
+        <h2>✨ Manipulations</h2>
         <ul class="info-list">
-          <li>You're offered 2 spells per round; casting costs <b>Gold</b>, not Dollars.</li>
+          <li>You're offered 2 manipulations per round; executing one costs <b>Gold</b>, not Dollars.</li>
           <li><b>Double</b> (10 Gold) — double one of your bounties, up to +50.</li>
           <li><b>Move closer</b> (15 Gold) — slide a bounty toward its mascot
             (Mousey/Wolf 2 steps, Flixy 4, Bizarro 6). If it reaches the mascot, collect instantly!</li>
@@ -1330,10 +1330,10 @@ export class UI {
         per Dollar. Buying higher-cost tickets is generally better:</p>
       <table class="stats-table"><tr><th>Cost</th><th>Payout ratio</th></tr>${payoutRows}</table>
       <p style="text-align:center"><button class="btn btn-primary" id="geek-all-bets">Show All Possible Bets</button></p>
-      <h3 class="geek-h3">Spells</h3>
-      <p class="hint">Two spell offers per round, paid in Gold. Drop rates by Gold Level:</p>
+      <h3 class="geek-h3">Manipulations</h3>
+      <p class="hint">Two manipulation offers per round, paid in Gold. Drop rates by Gold Level:</p>
       <table class="stats-table full">
-        <tr><th>Spell</th><th>Lvl 1</th><th>Lvl 2</th><th>Lvl 3</th><th>Lvl 4</th><th>Lvl 5</th></tr>
+        <tr><th>Manipulation</th><th>Lvl 1</th><th>Lvl 2</th><th>Lvl 3</th><th>Lvl 4</th><th>Lvl 5</th></tr>
         ${spellRows}
       </table>
       <p class="hint"><b>Gold Levels</b> — click your ${GOLD} Gold to see how Levels work.<br>

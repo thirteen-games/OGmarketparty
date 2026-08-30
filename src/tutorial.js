@@ -24,9 +24,9 @@ export const TUTORIAL_STEPS = [
   {
     title: 'Game Play',
     html: `This is meant to be a 2 player game, but can also be played in 1 player mode.
-      Each player has their own panel of Bets and Spells.<br><br>
+      Each player has their own panel of Bets and Manipulations.<br><br>
       Each round consists of 2 parts:<br>
-      <b>1.</b> First, each player can place <b>Bets</b> and cast <b>Spells</b>.<br>
+      <b>1.</b> First, each player can place <b>Bets</b> and execute <b>Manipulations</b>.<br>
       <b>2.</b> Then, each Mascot rolls its die and moves up or down the number of Steps
       they roll.`,
   },
@@ -42,7 +42,7 @@ export const TUTORIAL_STEPS = [
     title: 'Dollars and Gold',
     html: `You start the game with <b>10 Dollars</b> and <b>0 Gold</b>, shown in your bank.
       You start at Gold Level 1, which increases up to Level 5 as you gain Gold. As your Gold
-      Level increases, you are more likely to see better Bets and Spells in the shop.<br><br>
+      Level increases, you are more likely to see better Bets and Manipulations in the shop.<br><br>
       <i>Gamer Details — click  <b>Gold</b> in your bank to see the Gold required for each
       Level, and the 🤓 <b>Stats Geek</b> button for drop rates.</i>`,
   },
@@ -72,20 +72,20 @@ export const TUTORIAL_STEPS = [
       1 Dollar; after that they cost 2. The shop also refreshes for free after every roll.`,
   },
   {
-    title: 'Casting Spells',
-    html: `Each round, you have the opportunity to spend <b>Gold</b> to cast up to 2
-      <b>Spells</b>. Spells can help you win more Gold — and can also be used to play
+    title: 'Market Manipulations',
+    html: `Each round, you have the opportunity to spend <b>Gold</b> to execute up to 2
+      <b>Manipulations</b>. Manipulations can help you win more Gold — and can also be used to play
       defense against your opponent (Halve and Steal target the other player's bounties,
       so they only appear in 2 player games).<br><br>
-      <i>Gamer Details — the <b>?</b> next to the Spells shop lists every spell type, and
+      <i>Gamer Details — the <b>?</b> next to the Manipulations shop lists every type, and
       🤓 Stats Geek shows their drop rates.</i>`,
   },
   {
     title: 'The Roll',
-    html: `Once everyone is done placing Bets and casting Spells, click the yellow
+    html: `Once everyone is done placing Bets and executing Manipulations, click the yellow
       <b>ROLL</b> button. Each mascot's die spins and it moves up or down the Steps —
       hopefully winning your bets and collecting Gold for you!<br><br>
-      Then a new round begins: 4 new Bets and 2 new Spells appear in the shop, and Dollars
+      Then a new round begins: 4 new Bets and 2 new Manipulations appear in the shop, and Dollars
       are added to your bank. The more Dollars you hold, the more interest you earn each
       round.<br><br>
       <i>Gamer Details — click 💵 <b>Dollars</b> in your bank to see how Dollar income is
@@ -108,7 +108,7 @@ export const TUTORIAL_STEPS = [
       🛢️ <b>Oil Strike</b> — that mascot can only move <b>Up</b> for 3 rolls.<br>
       🌍 <b>Earthquake</b> — that mascot can only move <b>Down</b> for 3 rolls.<br><br>
       Several alerts can run at once, but each mascot can only have one. Use them to help
-      decide which Bets to place and Spells to buy!<br><br>
+      decide which Bets to place and Manipulations to execute!<br><br>
       <i>Gamer Details — click the yellow news banner at the top to see every alert and
       its odds.</i>`,
   },
