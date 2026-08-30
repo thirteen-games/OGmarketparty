@@ -44,28 +44,28 @@ export class UI {
           <div class="mode-grid">
             <div class="mode-col">
               <div class="mode-col-title">1 Player</div>
-              <button class="mode-tile tile-solo" data-mode="1">
-                <span class="tile-emoji">🎯</span>
-                <span class="tile-name">Classic</span>
-                <span class="tile-sub">${CONFIG.onePlayerRounds} rounds &middot; chase ${CONFIG.onePlayerGoal} Gold</span>
-              </button>
               <button class="mode-tile tile-rogue" id="rogue-btn">
                 <span class="tile-emoji">🗺️</span>
                 <span class="tile-name">Roguelike</span>
                 <span class="tile-sub">draft mascots &middot; survive the checkpoints</span>
               </button>
+              <button class="mode-tile tile-solo" data-mode="1">
+                <span class="tile-emoji">🎯</span>
+                <span class="tile-name">Classic</span>
+                <span class="tile-sub">${CONFIG.onePlayerRounds} rounds &middot; chase ${CONFIG.onePlayerGoal} Gold</span>
+              </button>
             </div>
             <div class="mode-col">
               <div class="mode-col-title">2 Players</div>
-              <button class="mode-tile tile-duel" data-mode="2">
-                <span class="tile-emoji">⚔️</span>
-                <span class="tile-name">Hotseat</span>
-                <span class="tile-sub">first to ${CONFIG.twoPlayerGoal} Gold wins</span>
-              </button>
               <button class="mode-tile tile-bot" id="vs-bot-btn">
                 <span class="tile-emoji">🤖</span>
                 <span class="tile-name">Vs Bot</span>
                 <span class="tile-sub">take on Randy, Billy, or Baldy</span>
+              </button>
+              <button class="mode-tile tile-duel" data-mode="2">
+                <span class="tile-emoji">⚔️</span>
+                <span class="tile-name">Hotseat</span>
+                <span class="tile-sub">first to ${CONFIG.twoPlayerGoal} Gold wins</span>
               </button>
             </div>
           </div>
