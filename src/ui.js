@@ -298,23 +298,30 @@ export class UI {
   // step-50 start line, red below, dashed reference at 50 — like a day chart
   // anchored at the open.
   sparkline(history) {
-    const W = 132, H = 30, P = 3;
+    const W = 132, H = 24, P = 3;
     const data = (history ?? [START_STEP]).slice(-20);
     const lo = Math.min(...data, START_STEP) - 1;
     const hi = Math.max(...data, START_STEP) + 1;
-    const x = (i) => (data.length > 1 ? P + (i * (W - 2 * P)) / (data.length - 1) : W - P);
+    // Each move spans at most 20% of the width: the chart fills in from the
+    // left over the first 5 moves, then scrunches to fit as more arrive.
+    const usable = W - 2 * P;
+    const step = data.length > 1 ? usable * Math.min(0.2, 1 / (data.length - 1)) : 0;
+    const x = (i) => P + i * step;
     const y = (v) => P + ((hi - v) * (H - 2 * P)) / (hi - lo);
     let segs = '';
+    let dots = '';
     for (let i = 1; i < data.length; i++) {
       const up = data[i] >= START_STEP;
       segs += `<line x1="${x(i - 1).toFixed(1)}" y1="${y(data[i - 1]).toFixed(1)}" x2="${x(i).toFixed(1)}" y2="${y(data[i]).toFixed(1)}" stroke="${up ? '#1e8a4c' : '#d63430'}" stroke-width="2" stroke-linecap="round"/>`;
     }
-    const lastV = data[data.length - 1];
-    const dot = `<circle cx="${x(data.length - 1).toFixed(1)}" cy="${y(lastV).toFixed(1)}" r="2.6" fill="${lastV >= START_STEP ? '#1e8a4c' : '#d63430'}"/>`;
+    for (let i = 0; i < data.length; i++) {
+      const isLast = i === data.length - 1;
+      dots += `<circle cx="${x(i).toFixed(1)}" cy="${y(data[i]).toFixed(1)}" r="${isLast ? 2.6 : 1.9}" fill="${data[i] >= START_STEP ? '#1e8a4c' : '#d63430'}"/>`;
+    }
     const ref = y(START_STEP).toFixed(1);
     return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
       <line x1="0" y1="${ref}" x2="${W}" y2="${ref}" stroke="#8a93a8" stroke-width="1" stroke-dasharray="3 3"/>
-      ${segs}${dot}</svg>`;
+      ${segs}${dots}</svg>`;
   }
 
   renderRollPanel() {
