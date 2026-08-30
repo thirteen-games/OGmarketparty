@@ -57,9 +57,11 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-tiny { padding: 2px 8px; font-size: 0.78rem; border-radius: 6px; box-shadow: none; }
 .btn-buy {
   width: 100%; border: none; border-radius: 0 0 10px 10px;
-  background: var(--green); color: #12300a; font-weight: 800; padding: 7px;
+  /* dark navy: the green 💵 bill and gold bar icons pop against it, and it
+     contrasts with every mascot's ticket color */
+  background: #1b2440; color: #fff; font-weight: 800; padding: 7px;
 }
-.btn-buy:hover:not(:disabled) { filter: brightness(1.1); }
+.btn-buy:hover:not(:disabled) { background: #2c3a63; }
 
 /* ---- Start screen ---- */
 .start-screen { display: grid; place-items: center; min-height: 100vh; padding: 24px; }
