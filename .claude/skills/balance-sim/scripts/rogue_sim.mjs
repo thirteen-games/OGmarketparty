@@ -25,8 +25,12 @@ if (gates) {
 if (args.includes('--no-gates')) for (const k of Object.keys(data.ROGUE.targets)) data.ROGUE.targets[k] = 0;
 const b3 = opt('bonus3', null);
 const b6 = opt('bonus6', null);
-if (b3 !== null) { if (Number(b3) === 0) delete data.ROGUE.bonuses[3]; else data.ROGUE.bonuses[3].over = Number(b3); }
-if (b6 !== null) { if (Number(b6) === 0) delete data.ROGUE.bonuses[6]; else data.ROGUE.bonuses[6].over = Number(b6); }
+const setBonus = (round, val) => {
+  if (Number(val) === 0) delete data.ROGUE.bonuses[round];
+  else data.ROGUE.bonuses[round] = { over: Number(val), coins: data.ROGUE.bonuses[round]?.coins ?? 7 };
+};
+if (b3 !== null) setBonus(3, b3);
+if (b6 !== null) setBonus(6, b6);
 
 console.log(`runs: ${N} | gates: ${JSON.stringify(data.ROGUE.targets)} | bonuses: ${JSON.stringify(data.ROGUE.bonuses)}\n`);
 

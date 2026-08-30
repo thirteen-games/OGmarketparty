@@ -142,8 +142,23 @@ export const ARCHETYPES = {
   'P1 max-spend': maxSpend,
   'P2 5s-saver': saver,
   'P3 half-spend': halfSpend,
-  'P4 spend->save': (g) => (g.round + 1 <= 5 ? maxSpend : saver)(g),
+  'P4 spend->save': spendSave,
 };
+
+// Spend rounds 1-5, then bank — but stay gate-aware: with an unmet
+// checkpoint at most two rounds out, open the wallet again. Dying rich
+// is still dying.
+function spendSave(g) {
+  const round = g.round + 1;
+  if (round <= 5) return maxSpend(g);
+  const next = Object.keys(data.ROGUE.targets).map(Number)
+    .filter((r) => r >= round).sort((x, y) => x - y)[0];
+  if (next !== undefined) {
+    const shortfall = data.ROGUE.targets[next] - g.players[0].ep;
+    if (shortfall > 0 && next - round < 2) return maxSpend(g);
+  }
+  return saver(g);
+}
 
 function maxSpend(g) {
   const p = g.players[0];
