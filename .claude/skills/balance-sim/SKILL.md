@@ -42,14 +42,14 @@ import the game's own engine, so they can never drift from real rules).
   the standing model per playtesting), dead-ticket avoidance, bad-shop
   refreshes, and EV-sound spell casting (direction spells cast only when the
   forced roll's expected collection beats a natural roll's by more than the
-  cost). The
+  cost). The spend-then-save archetype is also gate-aware: with an unmet
+  checkpoint at most two rounds out it reverts to max spending. The
   locked-in config (round-based rarity unlocks SR R4 / Epic R7 / Legendary
-  R10; gates 40/200/400/900/1400, single +7 bonus at R3/80+) sims at
-  70/66/66/75% win rates —
-  spend-then-save is deliberately the winningest strategy; treat a spread
-  wider than ~10-15 points as a strategy imbalance. 400-run rates carry
-  ±3 points of noise; use paired-seed A/B runs before attributing small
-  shifts to a change.
+  R10; gates 50/300/600/1000/1500, single +7 bonus at R3/80+) sims at
+  44/47/47/62% win rates — a deliberately hard ladder where gate-aware
+  spend-then-save is the clear winningest strategy and rigid styles lose
+  more than they win. 400-run rates carry ±3 points of noise; use
+  paired-seed A/B runs before attributing small shifts to a change.
   Real humans score below these idealized players.
 
 ## Tools

@@ -26,7 +26,7 @@ Then visit <http://localhost:8642>.
 - **2 Players** — hotseat; first to 1000 Gold wins.
 - **vs Bot** — battle 🐣 Rookie Randy, 🐂 Billy Bull, or 🐻 Baldy Bear; the bot
   takes its turn automatically when you hit Roll.
-- **Roguelike** — 15 rounds with Gold checkpoints at rounds 3/6/9/12 (40/225/500/1000;
+- **Roguelike** — 15 rounds with Gold checkpoints at rounds 3/6/9/12 (50/300/600/1000;
   miss one and the run ends) and a 1500 Gold victory target. Stretch bonuses pay
   +7 Dollars (before interest) for clearing round 3 with 80+ Gold.
   Start with one mascot, two ticket slots, and no manipulations - draft mascots at

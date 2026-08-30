@@ -25,12 +25,13 @@ export const CONFIG = {
 // interest so it compounds. (An R6 bonus at 400 was removed: sims showed it
 // propped early-spend styles by 10+ points while savers never touched it.)
 // Tuned by simulation across four player archetypes (max-spend / saver /
-// half-spend / hybrid); with the round-based rarity unlocks (Super Rare R4 /
-// Epic R7 / Legendary R10) these land at 70/66/66/75% win rates, with
-// spend-then-save the deliberate winner.
+// half-spend / gate-aware spend-then-save); with the round-based rarity
+// unlocks (Super Rare R4 / Epic R7 / Legendary R10) this deliberately hard
+// ladder sims at 44/47/47/62% win rates — flexible, gate-aware play is the
+// clear best strategy, and rigid styles lose more runs than they win.
 export const ROGUE = {
   rounds: 15,
-  targets: { 3: 40, 6: 200, 9: 400, 12: 900, 15: 1400 },
+  targets: { 3: 50, 6: 300, 9: 600, 12: 1000, 15: 1500 },
   bonuses: { 3: { over: 80, coins: 7 } },
 };
 
