@@ -1229,8 +1229,8 @@ export class UI {
           <li><b>Move closer</b> (15 Gold) — slide a bounty toward its mascot
             (Mousey/Wolf 2 steps, Flixy 4, Bizarro 6). If it reaches the mascot, collect instantly!</li>
           <li><b>Halve</b> (20 Gold) — halve an opponent's bounty, up to −50.</li>
-          <li><b>Steal</b> (50 Gold) — take up to 50 Gold off an opponent's bounty onto yours.</li>
-          <li><b>Up only / Down only / Freeze</b> (10–30 Gold) — control a mascot's next roll.
+          <li><b>Steal</b> (40 Gold) — take up to 50 Gold off an opponent's bounty onto yours.</li>
+          <li><b>Up only / Down only</b> (5–25 Gold) / <b>Freeze</b> (25 Gold) — control a mascot's next roll.
             These affect the mascot itself, so <i>both</i> players feel it. Freeze (like Halve
             and Steal) only appears in 2 player games.</li>
         </ul>`);
