@@ -37,9 +37,12 @@ import the game's own engine, so they can never drift from real rules).
   reward down. You cannot maximize both; that tradeoff is the user's call.
 - **Archetypes**: gate calibration simulates four coin strategies
   (max-spend, 5s-saver, half-spend, spend-then-save-after-round-5), each with
-  alert-aware EV shopping, dead-ticket avoidance, bad-shop refreshes, and
-  EV-sound spell casting (direction spells cast only when the forced roll's
-  expected collection beats a natural roll's by more than the cost). The
+  alert-aware EV shopping, alert-first fishing (while an alert is live they
+  spend bounded refreshes hunting an alerted-mascot offer before settling —
+  the standing model per playtesting), dead-ticket avoidance, bad-shop
+  refreshes, and EV-sound spell casting (direction spells cast only when the
+  forced roll's expected collection beats a natural roll's by more than the
+  cost). The
   locked-in config (round-based rarity unlocks SR R4 / Epic R7 / Legendary
   R10; gates 40/200/400/900/1400, single +7 bonus at R3/80+) sims at
   70/66/66/75% win rates —

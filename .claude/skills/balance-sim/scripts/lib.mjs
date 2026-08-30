@@ -62,7 +62,8 @@ export function ticketEV(g, t) {
 }
 
 // Live offers ranked by EV per coin, skipping alert-dead tickets — how a
-// player who reads the difficulty labels shops.
+// player who reads the difficulty labels shops. Aligned alert tickets are
+// near-certain payouts, so the EV sort naturally buys them first.
 export function rankedOffers(g, p = 0) {
   const player = g.players[p];
   return [0, 1, 2, 3]
@@ -71,6 +72,23 @@ export function rankedOffers(g, p = 0) {
     .filter((o) => !deadUnderAlert(g, o.t))
     .map((o) => ({ ...o, evc: ticketEV(g, o.t) / o.t.cost }))
     .sort((a, b) => b.evc - a.evc);
+}
+
+// Alert-first shopping (per playtesting): while an alert is live, fish the
+// shop with bounded refreshes for a live offer on an alerted mascot before
+// settling for the regular board. Returns the dollars spent fishing.
+export function alertFish(g, keepCoins = 2, maxFish = 2) {
+  const alerted = new Set(g.news.map((a) => a.mascotId));
+  if (!alerted.size) return 0;
+  let spent = 0;
+  for (let i = 0; i < maxFish; i++) {
+    if (rankedOffers(g).some((o) => alerted.has(o.t.mascotId))) break;
+    const cost = g.refreshCost(0);
+    if (g.players[0].coins - cost < keepCoins) break;
+    if (!g.refreshTickets(0).ok) break;
+    spent += cost;
+  }
+  return spent;
 }
 
 export function shopIsBad(g) {
@@ -129,6 +147,7 @@ export const ARCHETYPES = {
 
 function maxSpend(g) {
   const p = g.players[0];
+  alertFish(g, 2);
   for (let guard = 0; guard < 20; guard++) {
     let bought = false;
     for (const o of rankedOffers(g)) {
@@ -144,6 +163,7 @@ function saver(g) {
   const p = g.players[0];
   const round = g.round + 1;
   const floor = round > data.ROGUE.rounds - 3 ? 0 : Math.min(25, 5 * Math.ceil(round / 2));
+  alertFish(g, floor);
   if (shopIsBad(g) && p.coins - g.refreshCost(0) >= floor) g.refreshTickets(0);
   for (const o of rankedOffers(g)) {
     if (p.coins - o.t.cost >= floor) g.buyTicket(0, o.slot);
@@ -153,7 +173,8 @@ function saver(g) {
 function halfSpend(g) {
   const p = g.players[0];
   let budget = Math.floor(p.coins / 2);
-  if (shopIsBad(g) && g.refreshCost(0) <= budget) { budget -= g.refreshCost(0); g.refreshTickets(0); }
+  budget -= alertFish(g, p.coins - budget);
+  if (shopIsBad(g) && g.refreshCost(0) <= budget && budget > 0) { budget -= g.refreshCost(0); g.refreshTickets(0); }
   for (const o of rankedOffers(g)) {
     if (o.t.cost <= budget && g.buyTicket(0, o.slot).ok) budget -= o.t.cost;
   }
