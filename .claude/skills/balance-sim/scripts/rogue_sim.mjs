@@ -74,7 +74,7 @@ if (args.includes('--no-gates')) {
   console.log('WIN rate'.padEnd(15), '|', names.map((n) => pct(table[n].wins / N).padStart(14)).join(' |'));
   for (const r of [3, 6]) {
     if (!data.ROGUE.bonuses[r]) continue;
-    console.log(`bonus @R${r} >${data.ROGUE.bonuses[r].over}`.padEnd(15), '|',
+    console.log(`bonus @R${r} >=${data.ROGUE.bonuses[r].over}`.padEnd(15), '|',
       names.map((n) => pct(table[n].bonusCount[r] / N).padStart(14)).join(' |'));
   }
 }

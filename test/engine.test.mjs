@@ -549,13 +549,13 @@ test('roguelike: stretch bonus pays 7 coins before interest', () => {
     g.players[0].coins = 10;
     return g;
   };
-  // over the stretch target: +7 lands before interest (floor(17/5)=3, not floor(10/5)=2)
-  const g1 = setup(bonusSpec.over + 5);
+  // at the stretch target (inclusive): +7 lands before interest (floor(17/5)=3, not floor(10/5)=2)
+  const g1 = setup(bonusSpec.over);
   const events = g1.roll();
   assert.ok(events.some((e) => e.type === 'bonus' && e.round === 3 && e.coins === bonusSpec.coins));
   assert.equal(g1.players[0].coins, 10 + 7 + CONFIG.coinsPerRound + Math.floor((10 + 7) / 5));
-  // at/below the stretch target (but past the gate): no bonus
-  const g2 = setup(bonusSpec.over);
+  // below the stretch target (but past the gate): no bonus
+  const g2 = setup(bonusSpec.over - 1);
   const events2 = g2.roll();
   assert.ok(!events2.some((e) => e.type === 'bonus'));
   assert.equal(g2.players[0].coins, 10 + CONFIG.coinsPerRound + 2);

@@ -489,7 +489,7 @@ export class Game {
           // Stretch-score Coin bonus, granted here — before incrementCoins —
           // so it counts toward this round's interest.
           const bonus = ROGUE.bonuses[this.round];
-          if (bonus && !this.over && ep > bonus.over) {
+          if (bonus && !this.over && ep >= bonus.over) {
             this.players[0].coins += bonus.coins;
             events.push({ type: 'bonus', round: this.round, coins: bonus.coins, threshold: bonus.over, ep });
           }

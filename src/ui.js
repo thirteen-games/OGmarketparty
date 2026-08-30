@@ -295,7 +295,7 @@ export class UI {
               ? `Round <b>${Math.min(g.round + 1, ROGUE.rounds)}</b> / ${ROGUE.rounds}${
                   target ? ` &middot; 🎯 <b>${target.ep}</b> Gold by round ${target.round}` : ''}${
                   target && ROGUE.bonuses[target.round]
-                    ? ` &middot; 💰 +${ROGUE.bonuses[target.round].coins}💵 if over ${ROGUE.bonuses[target.round].over}`
+                    ? ` &middot; 💰 +${ROGUE.bonuses[target.round].coins}💵 if ${ROGUE.bonuses[target.round].over}+`
                     : ''}`
               : g.mode === 1
                 ? `Round <b>${Math.min(g.round + 1, CONFIG.onePlayerRounds)}</b> / ${CONFIG.onePlayerRounds}`
@@ -746,7 +746,7 @@ export class UI {
           : `💥 Checkpoint round ${e.round}: ${e.ep} / ${e.target} Gold — run over.`, e.passed ? 'good' : 'news');
       }
       if (e.type === 'bonus') {
-        this.log(`💰 Bonus! +${e.coins} Dollars for passing round ${e.round} with over ${e.threshold} Gold.`, 'good');
+        this.log(`💰 Bonus! +${e.coins} Dollars for passing round ${e.round} with ${e.threshold}+ Gold.`, 'good');
       }
     }
 
@@ -759,7 +759,7 @@ export class UI {
     if (bonus && !this.skipRequested) {
       await this.showAcknowledgePopup('bonus-card', `
         <h2>💰 COIN BONUS!</h2>
-        <p>You cleared round ${bonus.round} with <b>${bonus.ep} Gold</b> — over the ${bonus.threshold} stretch
+        <p>You cleared round ${bonus.round} with <b>${bonus.ep} Gold</b> — reaching the ${bonus.threshold} stretch
         target. <b>+${bonus.coins} Dollars</b>, banked before this round's interest!</p>`);
     }
 
@@ -841,7 +841,7 @@ export class UI {
       <h2>🎯 ${final ? 'FINAL STRETCH!' : `ROUNDS ${g.round + 1}–${target.round}`}</h2>
       <p>${final ? 'Win the run with' : 'Reach'} <b>${target.ep} Gold</b> by the end of
       round ${target.round}${final ? '' : ' — or the run ends'}.</p>
-      ${bonus ? `<p>💵 Stretch bonus: finish round ${target.round} with over <b>${bonus.over} Gold</b>
+      ${bonus ? `<p>💵 Stretch bonus: finish round ${target.round} with <b>${bonus.over}+ Gold</b>
         and earn <b>+${bonus.coins} Dollars</b> (paid before interest)!</p>` : ''}`);
   }
 
@@ -1167,7 +1167,7 @@ export class UI {
         <p class="hint">Careful: spending Gold on spells can drop your Level (and your score).
         ${this.game?.rogue
           ? `Checkpoints: ${Object.entries(ROGUE.targets).map(([r, ep]) => `${ep} by round ${r}`).join(', ')} — the last one wins the run.
-            Stretch bonuses: ${Object.entries(ROGUE.bonuses).map(([r, b]) => `+${b.coins} Dollars for over ${b.over} Gold at round ${r}`).join(', ')} (paid before interest).`
+            Stretch bonuses: ${Object.entries(ROGUE.bonuses).map(([r, b]) => `+${b.coins} Dollars for ${b.over}+ Gold at round ${r}`).join(', ')} (paid before interest).`
           : this.game?.mode === 1
             ? `Score ${CONFIG.onePlayerGoal}+ in ${CONFIG.onePlayerRounds} rounds to make the leaderboard.`
             : `First player to ${CONFIG.twoPlayerGoal} Gold wins.`}</p>`);
