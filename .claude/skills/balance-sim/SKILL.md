@@ -93,13 +93,13 @@ validate with gates on. 400 runs ≈ a couple of minutes; ±3% noise on rates.
 
 ## Known intentional deviations from parity
 
-- Ticket 110 (Mousey legendary, +3/−3): reward 200 vs parity 185 — "the best
-  bet in the game" by explicit user decision.
-- Tier-5 tickets sit at ratio ~1.7 (restored hand-tuned values); the declared
-  ratio column was updated to match.
+None at present. In the 2026-08-30 board redesign the user removed all
+special-cased rewards (including Mousey's old 200-vs-185 legendary and the
+200 legendary floor) — every ticket now sits at exact curve parity, and
+`price_tickets.mjs` should show all-zero diffs.
 
-If a parity chart shows other large diffs, ask before "fixing" — it may be a
-newer deliberate choice; check git log on `src/data.js` first.
+If a parity chart shows diffs, ask before "fixing" — it may be a newer
+deliberate choice; check git log on `src/data.js` first.
 
 ## Adding a mascot (pipeline order)
 

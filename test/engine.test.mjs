@@ -60,13 +60,13 @@ test('ticket data is complete: 6 mascots x 6 tiers', () => {
 test('buying a ticket places EP at mascot step + offsets and charges coins', () => {
   const g = new Game({ mode: 1, seed: 42 });
   const p = g.players[0];
-  p.tickets[0] = 105; // Mousey epic: +4 and -4, cost 5
+  p.tickets[0] = 105; // Mousey epic: +2 and -2, cost 5
   const reward = ticketById(105).reward;
   const res = g.buyTicket(0, 0);
   assert.ok(res.ok);
   assert.equal(p.coins, CONFIG.startingCoins - 5);
-  assert.equal(p.board[1][54], reward);
-  assert.equal(p.board[1][46], reward);
+  assert.equal(p.board[1][52], reward);
+  assert.equal(p.board[1][48], reward);
   // one purchase per slot per round
   const again = g.buyTicket(0, 0);
   assert.equal(again.ok, false);
@@ -611,7 +611,7 @@ test('no bot buys a ticket whose targets are all blocked by an alert', () => {
       g.news = [{ mascotId: 2, direction: -1, newsType: 'Earthquake', count: 1 }];
       g.flags[2] = FLAG.DOWN;
       const bot = g.players[1];
-      bot.tickets = [101, 301, 401, 202]; // 202 = Bizarro "Up 1": dead while Bizarro is Down-only
+      bot.tickets = [101, 301, 401, 201]; // 201 = Bizarro "Up 1": dead while Bizarro is Down-only
       bot.coins = 50;
       botTakeTurn(g, level);
       assert.equal(bot.ticketSold[3], false, `${level} seed ${seed} bought a dead ticket`);
