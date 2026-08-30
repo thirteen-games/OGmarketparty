@@ -175,12 +175,19 @@ main {
   display: flex; align-items: center; justify-content: center;
   font-size: 1rem; font-weight: 600; color: #1b2440;
   font-variant-numeric: tabular-nums;
-  height: 19px; min-width: 34px; padding: 0 6px;
-  border-radius: 10px; line-height: 1;
-  border: 1px solid rgba(0, 0, 0, 0.4);
+  height: 19px; min-width: 36px; padding: 0 8px;
+  line-height: 1;
+  /* gold-bar silhouette */
+  clip-path: polygon(12% 0, 88% 0, 100% 100%, 0 100%);
 }
-.chip.p0 { background: var(--accent); } /* matches the ⭐ EP gold */
-.chip.p1 { background: var(--p2); color: #fff; }
+.chip.p0 {
+  background: linear-gradient(180deg, #ffe98a 0%, #ffd21f 45%, #d9a800 100%);
+  box-shadow: inset 0 1px 0 #fff7cc;
+}
+.chip.p1 {
+  background: linear-gradient(180deg, #c5b0f7 0%, #9d7bf4 45%, #7a55d6 100%);
+  color: #fff;
+}
 .chip.targetable {
   cursor: pointer; outline: 2px solid #1b2440; animation: pulse 0.9s infinite alternate; z-index: 2;
 }
@@ -546,6 +553,13 @@ main {
   0% { transform: scale(1.8); color: var(--accent); }
   100% { transform: scale(1); }
 }
+
+/* inline gold-bar icon */
+.gold-icon { width: 1.15em; height: 0.72em; vertical-align: -0.02em; display: inline-block; }
+.fly-star .gold-icon { width: 26px; height: 16px; filter: drop-shadow(0 2px 3px rgba(27,36,64,0.5)); }
+.news-card.tranche-card { background: #d6ecff; border-color: #0b6aa8; }
+.tranche-card h2 { color: #0b6aa8 !important; }
+.tranche-card p { color: #123c5c !important; }
 
 .toast {
   position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%) translateY(10px);

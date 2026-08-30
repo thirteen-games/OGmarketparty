@@ -45,7 +45,7 @@ function easyTurn(game) {
       const t = ticketById(bot.tickets[slot]);
       if (badUnderAlert(game, t)) continue;
       if (game.buyTicket(P, slot).ok) {
-        actions.push(`bet 🪙${t.cost} on ${mascotById(t.mascotId).name}.`);
+        actions.push(`bet 💵${t.cost} on ${mascotById(t.mascotId).name}.`);
       }
     }
   }
@@ -79,7 +79,7 @@ function valueTurn(game, hard) {
     return a ? { direction: a.direction, rolls: CONFIG.newsDurationRolls - a.count + 1 } : null;
   };
 
-  // Expected EP from a ticket: each target pays independently.
+  // Expected Gold from a ticket: each target pays independently.
   const evOf = (ticketId) => {
     const t = ticketById(ticketId);
     const m = mascotById(t.mascotId);
@@ -91,32 +91,32 @@ function valueTurn(game, hard) {
 
   // Hard: refresh a weak shop once (first refresh is cheap).
   if (hard && !bot.ticketSold.some(Boolean)) {
-    const bestPerCoin = Math.max(...bot.tickets.filter(Boolean).map((id) => evOf(id) / ticketById(id).cost));
+    const bestPerDollar = Math.max(...bot.tickets.filter(Boolean).map((id) => evOf(id) / ticketById(id).cost));
     const cost = game.refreshCost(P);
-    if (bestPerCoin < 3 && bot.coins > cost + 3 && game.refreshTickets(P).ok) {
-      actions.push(`refreshed the shop for 🪙${cost}.`);
+    if (bestPerDollar < 3 && bot.coins > cost + 3 && game.refreshTickets(P).ok) {
+      actions.push(`refreshed the shop for 💵${cost}.`);
     }
   }
 
-  // Buy the best EP-per-coin tickets above a quality bar.
+  // Buy the best Gold-per-coin tickets above a quality bar.
   const bar = hard ? 3.5 : 3;
   const ranked = [0, 1, 2, 3]
     .filter((slot) => bot.tickets[slot])
     .map((slot) => {
       const t = ticketById(bot.tickets[slot]);
-      return { slot, t, perCoin: evOf(t.id) / t.cost };
+      return { slot, t, perDollar: evOf(t.id) / t.cost };
     })
-    .sort((a, b) => b.perCoin - a.perCoin);
-  for (const { slot, t, perCoin } of ranked) {
-    if (perCoin < bar) break;
+    .sort((a, b) => b.perDollar - a.perDollar);
+  for (const { slot, t, perDollar } of ranked) {
+    if (perDollar < bar) break;
     if (badUnderAlert(game, t)) continue;
     if (bot.coins < t.cost) continue;
     if (game.buyTicket(P, slot).ok) {
-      actions.push(`bet 🪙${t.cost} on ${mascotById(t.mascotId).name} (⭐${t.reward}).`);
+      actions.push(`bet 💵${t.cost} on ${mascotById(t.mascotId).name} (${t.reward}).`);
     }
   }
 
-  // Spells, only when the expected return beats the EP price.
+  // Spells, only when the expected return beats the Gold price.
   for (let slot = 0; slot < 2; slot++) {
     if (!bot.spells[slot]) continue;
     const spell = spellById(bot.spells[slot]);
@@ -174,7 +174,7 @@ function pickSpellPlay(game, spell, hard, horizon, constraintFor) {
     }
     case SPELL_TYPES.FREEZE: {
       if (!hard) return undefined;
-      // Freeze when the opponent has real EP right next to the mascot and we don't.
+      // Freeze when the opponent has real Gold right next to the mascot and we don't.
       const near = (playerIdx) =>
         chipsOf(playerIdx).filter((x) => Math.abs(x.step - pos) <= 2).reduce((s, x) => s + x.ep, 0);
       return near(0) >= 30 && near(0) > near(P) * 2 ? null : undefined;

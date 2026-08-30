@@ -194,10 +194,10 @@ for (const mascot of MASCOTS) {
 
 function spellDescription(type, mascot) {
   switch (type) {
-    case 51: return `Double EP (up to +50) on one ${mascot.name} Step`;
-    case 52: return `Halve EP (up to -50) on one opponent ${mascot.name} Step`;
-    case 53: return `Move EP ${mascot.epMoveSteps} Steps closer to ${mascot.name}`;
-    case 54: return `Steal up to 50 EP from one opponent ${mascot.name} Step`;
+    case 51: return `Double Gold (up to +50) on one ${mascot.name} Step`;
+    case 52: return `Halve Gold (up to -50) on one opponent ${mascot.name} Step`;
+    case 53: return `Move Gold ${mascot.epMoveSteps} Steps closer to ${mascot.name}`;
+    case 54: return `Steal up to 50 Gold from one opponent ${mascot.name} Step`;
     case 55: return `${mascot.name} can only move Up on the next roll`;
     case 56: return `${mascot.name} can only move Down on the next roll`;
     case 57: return `Freeze ${mascot.name} for one round`;

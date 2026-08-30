@@ -49,6 +49,7 @@ export class Game {
     this.steps = {};    // mascotId -> current step
     this.lastRolls = {}; // mascotId -> last roll value
     this.lastFrom = {};  // mascotId -> step before the last roll (for the trail)
+    this.rolledOnce = {}; // mascotId -> has taken at least one roll (a fresh draft hasn't)
     this.flags = {};    // mascotId -> FLAG
     this.news = [];     // active alerts: {mascotId, direction, newsType, count}
     this.players = [newPlayer()];
@@ -57,6 +58,7 @@ export class Game {
       this.steps[m.id] = START_STEP;
       this.lastRolls[m.id] = 0;
       this.lastFrom[m.id] = START_STEP;
+      this.rolledOnce[m.id] = false;
       this.flags[m.id] = FLAG.NONE;
     }
     // Roguelike: no mascots yet — the run starts by choosing one of two.
@@ -185,7 +187,7 @@ export class Game {
       player.refreshesThisRound = 0; // new round: the discount comes back
     } else {
       const cost = this.refreshCost(p);
-      if (player.coins < cost) return { ok: false, reason: 'Not enough Coins to refresh Bets' };
+      if (player.coins < cost) return { ok: false, reason: 'Not enough Dollars to refresh Bets' };
       player.coins -= cost;
       player.refreshesThisRound += 1;
     }
@@ -283,7 +285,7 @@ export class Game {
     if (!player.tickets[slot]) return { ok: false, reason: 'That ticket slot is locked' };
     if (player.ticketSold[slot]) return { ok: false, reason: 'Already bought this Bet this round' };
     const ticket = ticketById(player.tickets[slot]);
-    if (player.coins < ticket.cost) return { ok: false, reason: 'Not enough Coins to make this Bet' };
+    if (player.coins < ticket.cost) return { ok: false, reason: 'Not enough Dollars to make this Bet' };
     player.coins -= ticket.cost;
     player.ticketSold[slot] = true;
     const base = this.steps[ticket.mascotId];
@@ -318,15 +320,15 @@ export class Game {
     if (!player.spells[slot]) return { ok: false, reason: 'No Spell in that slot' };
     if (player.spellSold[slot]) return { ok: false, reason: 'Already bought this Spell this round' };
     const spell = spellById(player.spells[slot]);
-    if (player.ep < spell.cost) return { ok: false, reason: 'Not enough EP to buy this Spell' };
+    if (player.ep < spell.cost) return { ok: false, reason: 'Not enough Gold to buy this Spell' };
 
     if (spell.needsTarget) {
       const targets = this.spellTargets(p, slot);
       if (targets.length === 0) {
-        return { ok: false, reason: `No EP on any Steps for ${mascotById(spell.mascotId).name}` };
+        return { ok: false, reason: `No Gold on any Steps for ${mascotById(spell.mascotId).name}` };
       }
       if (!targets.includes(targetStep)) {
-        return { ok: false, reason: 'That Step has no EP, pick another please' };
+        return { ok: false, reason: 'That Step has no Gold, pick another please' };
       }
     }
 
@@ -421,6 +423,7 @@ export class Game {
       this.steps[mascot.id] = to;
       this.lastRolls[mascot.id] = rollValue;
       this.lastFrom[mascot.id] = from;
+      this.rolledOnce[mascot.id] = true;
       events.push({ type: 'roll', mascotId: mascot.id, roll: rollValue, from, to, flag });
 
       // Collect EP on every step the mascot passed over or landed on

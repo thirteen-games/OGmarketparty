@@ -18,8 +18,8 @@ export const TUTORIAL_STEPS = [
       and down a staircase, like stocks do in the real world. Some move larger amounts than
       others, and some are more likely to move up than others.<br><br>
       Each round, you make bets on the mascots' moves. When you win a bet, you collect
-      <b>EP (Equity Points)</b>. The goal of this game is to get <b>1000 EP</b> before your
-      opponent. In one player mode the goal is to get 1000 EP within 10 rounds.`,
+      <b>Gold bars</b>. The goal of this game is to get <b>1000 Gold</b> before your
+      opponent. In one player mode the goal is to get 1000 Gold within 10 rounds.`,
   },
   {
     title: 'Game Play',
@@ -39,11 +39,11 @@ export const TUTORIAL_STEPS = [
       to peek further up or down the staircase.`,
   },
   {
-    title: 'Coins and EP',
-    html: `You start the game with <b>10 Coins</b> and <b>0 EP</b>, shown in your bank.
-      You start at EP Level 1, which increases up to Level 5 as you gain EP. As your EP
+    title: 'Dollars and Gold',
+    html: `You start the game with <b>10 Dollars</b> and <b>0 Gold</b>, shown in your bank.
+      You start at Gold Level 1, which increases up to Level 5 as you gain Gold. As your Gold
       Level increases, you are more likely to see better Bets and Spells in the shop.<br><br>
-      <i>Gamer Details — click ⭐ <b>EP</b> in your bank to see the EP required for each
+      <i>Gamer Details — click  <b>Gold</b> in your bank to see the Gold required for each
       Level, and the 🤓 <b>Stats Geek</b> button for drop rates.</i>`,
   },
   {
@@ -57,24 +57,24 @@ export const TUTORIAL_STEPS = [
   {
     title: 'Reading a Ticket',
     html: `When you click a green <b>Bet</b> button, you are betting on that mascot to
-      reach a Step on the staircase — you pay Coins to hopefully win EP.<br><br>
-      • The <b>EP you can win</b> is at the top of the ticket.<br>
-      • Below it: the <b>Step(s)</b> the EP lands on — Up or Down from wherever the mascot
+      reach a Step on the staircase — you pay Dollars to hopefully win Gold.<br><br>
+      • The <b>Gold you can win</b> is at the top of the ticket.<br>
+      • Below it: the <b>Step(s)</b> the Gold lands on — Up or Down from wherever the mascot
       currently stands — plus a live difficulty rating.<br>
-      • The <b>Coin cost</b> is on the Bet button.<br>
-      • Some Bets place EP on <b>two Steps</b> at once!<br><br>
+      • The <b>Dollar cost</b> is on the Bet button.<br>
+      • Some Bets place Gold on <b>two Steps</b> at once!<br><br>
       <i>Gamer Details — to see every ticket in the game, click 📋 <b>All Bets</b>.</i>`,
   },
   {
     title: 'Seeing New Bets',
     html: `If you don't like any of the bets offered in the shop, you can press the
       <b>↻ Refresh</b> button to see 4 new bets. The first refresh each round costs
-      1 Coin; after that they cost 2. The shop also refreshes for free after every roll.`,
+      1 Dollar; after that they cost 2. The shop also refreshes for free after every roll.`,
   },
   {
     title: 'Casting Spells',
-    html: `Each round, you have the opportunity to spend <b>EP</b> to cast up to 2
-      <b>Spells</b>. Spells can help you win more EP — and can also be used to play
+    html: `Each round, you have the opportunity to spend <b>Gold</b> to cast up to 2
+      <b>Spells</b>. Spells can help you win more Gold — and can also be used to play
       defense against your opponent (Halve and Steal target the other player's bounties,
       so they only appear in 2 player games).<br><br>
       <i>Gamer Details — the <b>?</b> next to the Spells shop lists every spell type, and
@@ -84,18 +84,18 @@ export const TUTORIAL_STEPS = [
     title: 'The Roll',
     html: `Once everyone is done placing Bets and casting Spells, click the yellow
       <b>ROLL</b> button. Each mascot's die spins and it moves up or down the Steps —
-      hopefully winning your bets and collecting EP for you!<br><br>
-      Then a new round begins: 4 new Bets and 2 new Spells appear in the shop, and Coins
-      are added to your bank. The more Coins you hold, the more interest you earn each
+      hopefully winning your bets and collecting Gold for you!<br><br>
+      Then a new round begins: 4 new Bets and 2 new Spells appear in the shop, and Dollars
+      are added to your bank. The more Dollars you hold, the more interest you earn each
       round.<br><br>
-      <i>Gamer Details — click 🪙 <b>Coins</b> in your bank to see how Coin income is
+      <i>Gamer Details — click 💵 <b>Dollars</b> in your bank to see how Dollar income is
       calculated.</i>`,
   },
   {
-    title: 'Collecting EP',
-    html: `The EP you can win sits on the game board as a chip in that mascot's lane —
+    title: 'Collecting Gold',
+    html: `The Gold you can win sits on the game board as a chip in that mascot's lane —
       amber chips for Player 1, purple for Player 2.<br><br>
-      If the mascot <b>passes through or lands on</b> the Step with EP, the EP flies into
+      If the mascot <b>passes through or lands on</b> the Step with Gold, the Gold flies into
       your bank and comes off the board. Only that mascot can collect it — the others pass
       right by!<br><br>
       After each roll, an open circle marks the Step each mascot started from, with dots
@@ -115,9 +115,9 @@ export const TUTORIAL_STEPS = [
   {
     title: 'How Does The Game End?',
     html: `In <b>two player mode</b>, there is no limit to the number of rounds. The first
-      player to collect <b>1000 EP</b> is the winner. If either player reaches 1000 EP
-      mid-round, the round is played out and whoever has more EP after it wins.<br><br>
-      In <b>one player mode</b>, the game ends after 10 rounds. Collect at least 1000 EP
+      player to collect <b>1000 Gold</b> is the winner. If either player reaches 1000 Gold
+      mid-round, the round is played out and whoever has more Gold after it wins.<br><br>
+      In <b>one player mode</b>, the game ends after 10 rounds. Collect at least 1000 Gold
       to earn a spot on the leaderboard and show you are a Market Party master!<br><br>
       Now close this, place some Bets, and hit Roll. <b>Good luck!</b> 🎉`,
   },

@@ -17,6 +17,9 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const escapeHtml = (s) =>
   s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+// Inline gold-bar icon used wherever the old star appeared.
+const GOLD = '<svg class="gold-icon" viewBox="0 0 24 14" aria-label="gold"><polygon points="5,1 19,1 23,13 1,13" fill="#ffd21f" stroke="#a06d00" stroke-width="1.5"/><polygon points="7.5,3.5 16.5,3.5 18,6 6,6" fill="#fff3b0"/></svg>';
+
 const PLAYER_COLORS = ['var(--p1)', 'var(--p2)'];
 const PLAYER_NAMES = ['Player 1', 'Player 2'];
 
@@ -37,11 +40,11 @@ export class UI {
         <div class="start-card">
           <div class="start-mascots">${MASCOTS.map((m) => mascotSvg(m.id, 72)).join('')}</div>
           <h1>Market Party</h1>
-          <p class="tagline">Bet on the mascots. Collect the EP. Throw the best party on the Street.</p>
+          <p class="tagline">Bet on the mascots. Collect the Gold. Throw the best party on the Street.</p>
           <div class="start-buttons">
-            <button class="btn btn-primary" data-mode="1">1 Player &mdash; ${CONFIG.onePlayerRounds} rounds, chase ${CONFIG.onePlayerGoal} EP</button>
-            <button class="btn btn-primary" data-mode="2">2 Players &mdash; first to ${CONFIG.twoPlayerGoal} EP</button>
-            <button class="btn btn-primary" id="vs-bot-btn">🤖 Play vs Bot &mdash; first to ${CONFIG.twoPlayerGoal} EP</button>
+            <button class="btn btn-primary" data-mode="1">1 Player &mdash; ${CONFIG.onePlayerRounds} rounds, chase ${CONFIG.onePlayerGoal} Gold</button>
+            <button class="btn btn-primary" data-mode="2">2 Players &mdash; first to ${CONFIG.twoPlayerGoal} Gold</button>
+            <button class="btn btn-primary" id="vs-bot-btn">🤖 Play vs Bot &mdash; first to ${CONFIG.twoPlayerGoal} Gold</button>
             <button class="btn btn-primary" id="rogue-btn">🗺️ Roguelike &mdash; survive the checkpoints</button>
             <button class="btn" id="tutorial-btn">📖 Tutorial</button>
             <button class="btn" id="leaderboard-btn">🏆 Leaderboard</button>
@@ -50,10 +53,10 @@ export class UI {
             <summary>How to play</summary>
             <ol>
               <li>Four mascots random-walk a 0&ndash;100 track. Each has its own move style &mdash; Wolf grinds, Bizarro swings wild.</li>
-              <li>Each round, spend <b>Coins</b> on Betting Tickets. A ticket drops an <b>EP bounty</b> on steps near its mascot.</li>
-              <li>Hit <b>Roll</b>. When a mascot lands on or passes one of your bounties, you bank the EP.</li>
-              <li>Spend banked EP on <b>Spells</b> &mdash; double bounties, drag them closer, freeze a mascot, or raid your opponent.</li>
-              <li>Banked EP raises your <b>Level</b>, unlocking rarer tickets and spells. Watch for <b>Mascot News</b>!</li>
+              <li>Each round, spend <b>Dollars</b> on Betting Tickets. A ticket drops an <b>Gold bounty</b> on steps near its mascot.</li>
+              <li>Hit <b>Roll</b>. When a mascot lands on or passes one of your bounties, you bank the Gold.</li>
+              <li>Spend banked Gold on <b>Spells</b> &mdash; double bounties, drag them closer, freeze a mascot, or raid your opponent.</li>
+              <li>Banked Gold raises your <b>Level</b>, unlocking rarer tickets and spells. Watch for <b>Mascot News</b>!</li>
             </ol>
           </details>
         </div>
@@ -115,11 +118,12 @@ export class UI {
     this.log(botLevel
       ? `New game vs ${botName(botLevel)}! Make some Bets, then Roll — your opponent moves when you do.`
       : mode === 'rogue'
-        ? `Roguelike run started! Hit every checkpoint or the run ends. Win with ${ROGUE.targets[ROGUE.rounds]} EP after round ${ROGUE.rounds}.`
+        ? `Roguelike run started! Hit every checkpoint or the run ends. Win with ${ROGUE.targets[ROGUE.rounds]} Gold after round ${ROGUE.rounds}.`
         : `New ${mode}-player game. Make some Bets, then Roll!`);
     this.renderGame();
     (async () => {
       await this.showRoundBanner(1);
+      if (this.game.rogue) await this.showTrancheGoal();
       for (const e of this.game.startEvents) {
         if (e.type === 'news') {
           this.log(e.message, 'news');
@@ -180,7 +184,7 @@ export class UI {
         const slotsAfter = this.game.spellSlotCount();
         if (slotsAfter > slotsBefore) {
           this.log(slotsAfter === 1
-            ? '✨ Spells unlocked! Cast one per round for EP.'
+            ? '✨ Spells unlocked! Cast one per round for Gold.'
             : '✨ Second Spell slot unlocked!', 'news');
           await this.showSpellUnlockPopup(slotsAfter);
         }
@@ -247,7 +251,7 @@ export class UI {
     return this.showAcknowledgePopup('unlock-card', slotCount === 1
       ? `<h2>✨ SPELLS UNLOCKED!</h2>
         <p>With two mascots on the board you can now cast <b>one Spell per round</b>.
-        Spells cost <b>EP</b> instead of Coins — double a bounty on the board, or drag one
+        Spells cost <b>Gold</b> instead of Dollars — double a bounty on the board, or drag one
         closer to its mascot.</p>
         <p>The shop grows too: a <b>3rd ticket slot</b> opens and <b>Super Rare &amp; Epic
         tickets</b> can now drop!</p>`
@@ -258,7 +262,6 @@ export class UI {
 
   renderRollPanel() {
     const g = this.game;
-    const rolled = g.round > 0;
     const target = g.rogue ? this.rogueTarget() : null;
     return `
       <section class="roll-panel">
@@ -266,13 +269,13 @@ export class UI {
           <div class="round-info">${
             g.rogue
               ? `Round <b>${Math.min(g.round + 1, ROGUE.rounds)}</b> / ${ROGUE.rounds}${
-                  target ? ` &middot; 🎯 <b>${target.ep}</b> EP by round ${target.round}` : ''}${
+                  target ? ` &middot; 🎯 <b>${target.ep}</b> Gold by round ${target.round}` : ''}${
                   target && ROGUE.bonuses[target.round]
-                    ? ` &middot; 💰 +${ROGUE.bonuses[target.round].coins}🪙 if over ${ROGUE.bonuses[target.round].over}`
+                    ? ` &middot; 💰 +${ROGUE.bonuses[target.round].coins}💵 if over ${ROGUE.bonuses[target.round].over}`
                     : ''}`
               : g.mode === 1
                 ? `Round <b>${Math.min(g.round + 1, CONFIG.onePlayerRounds)}</b> / ${CONFIG.onePlayerRounds}`
-                : `Round <b>${g.round + 1}</b> &middot; first to ${CONFIG.twoPlayerGoal} EP`
+                : `Round <b>${g.round + 1}</b> &middot; first to ${CONFIG.twoPlayerGoal} Gold`
           }</div>
           <div class="roll-actions">
             <button class="btn btn-tiny" id="skip-btn" hidden>⏭ Skip</button>
@@ -283,6 +286,7 @@ export class UI {
         </div>
         <div class="dice-row">
           ${this.laneSlots().map((m) => {
+            const rolled = m && g.rolledOnce[m.id];
             if (!m) {
               return `
                 <div class="die-slot mystery" title="A mystery mascot joins later">
@@ -381,7 +385,7 @@ export class UI {
           const ep = player.board[mascot.id][s];
           return ep
             ? `<span class="chip p${p}" data-mascot="${mascot.id}" data-step="${s}" data-player="${p}"
-                title="${this.playerName(p)}: ${ep} EP on step ${s}">${ep}</span>`
+                title="${this.playerName(p)}: ${ep} Gold on step ${s}">${ep}</span>`
             : '';
         })
         .join('');
@@ -475,17 +479,17 @@ export class UI {
         <div class="player-head">
           <b>${this.playerName(p)}</b>
           ${isBot ? '<span class="hint bot-hint">plays when you Roll</span>' : ''}
-          <span class="stat info-click" data-info="coins" title="How the Coin bank works">🪙 <b>${player.coins}</b></span>
-          <span class="stat info-click" data-info="ep" title="How EP works">⭐ <b>${player.ep}</b> EP</span>
-          <span class="stat level info-click" data-info="ep" title="How EP Levels work">Level ${level}</span>
+          <span class="stat info-click" data-info="coins" title="How the Dollar bank works">💵 <b>${player.coins}</b></span>
+          <span class="stat info-click" data-info="ep" title="How Gold works">${GOLD} <b>${player.ep}</b> Gold</span>
+          <span class="stat level info-click" data-info="ep" title="How Gold Levels work">Level ${level}</span>
         </div>
         <div class="shop">
           <div class="shop-row">
-            <div class="shop-title">Betting Tickets <button class="btn btn-tiny" data-action="refresh" data-player="${p}" ${player.coins < g.refreshCost(p) || g.over ? 'disabled' : ''}>↻ Refresh (${g.refreshCost(p)}🪙)</button></div>
+            <div class="shop-title">Betting Tickets <button class="btn btn-tiny" data-action="refresh" data-player="${p}" ${player.coins < g.refreshCost(p) || g.over ? 'disabled' : ''}>↻ Refresh (${g.refreshCost(p)}💵)</button></div>
             <div class="cards">${player.tickets.map((id, slot) => this.renderTicketCard(p, id, slot)).join('')}</div>
           </div>
           <div class="shop-row">
-            <div class="shop-title">Spells <span class="hint">(cost EP)</span> <button class="btn btn-tiny info-click" data-info="spells" title="How Spells work">?</button></div>
+            <div class="shop-title">Spells <span class="hint">(cost Gold)</span> <button class="btn btn-tiny info-click" data-info="spells" title="How Spells work">?</button></div>
             <div class="cards">${player.spells.map((id, slot) => this.renderSpellCard(p, id, slot)).join('')}</div>
           </div>
         </div>
@@ -517,13 +521,13 @@ export class UI {
       <div class="card ticket rarity-${t.rarity.toLowerCase().replace(/\s+/g, '-')} ${sold ? 'sold' : ''}" style="--mc:${m.color}">
         <div class="card-head info-click" data-stats="${m.id}" title="See ${m.name}'s die">${mascotSvg(m.id, 26)}<span>${m.name}</span><span class="rarity">${t.rarity}</span></div>
         <div class="card-body">
-          <div class="reward">⭐ ${t.reward} EP</div>
+          <div class="reward">${GOLD} ${t.reward} Gold</div>
           <div class="targets">${spots}</div>
           <div class="difficulty">${oddsLabel(prob)}</div>
         </div>
         ${sold
           ? '<div class="sold-tag">SOLD</div>'
-          : `<button class="btn btn-buy" data-action="buy-ticket" data-player="${p}" data-slot="${slot}" ${!canAfford || g.over ? 'disabled' : ''}>Bet 🪙${t.cost}</button>`}
+          : `<button class="btn btn-buy" data-action="buy-ticket" data-player="${p}" data-slot="${slot}" ${!canAfford || g.over ? 'disabled' : ''}>Bet 💵${t.cost}</button>`}
       </div>`;
   }
 
@@ -547,7 +551,7 @@ export class UI {
         <div class="card-body"><div class="spell-desc">${s.description}</div></div>
         ${sold
           ? '<div class="sold-tag">SOLD</div>'
-          : `<button class="btn btn-buy" data-action="cast-spell" data-player="${p}" data-slot="${slot}" ${!canAfford || g.over ? 'disabled' : ''}>Cast ⭐${s.cost}</button>`}
+          : `<button class="btn btn-buy" data-action="cast-spell" data-player="${p}" data-slot="${slot}" ${!canAfford || g.over ? 'disabled' : ''}>Cast ${GOLD}${s.cost}</button>`}
       </div>`;
   }
 
@@ -560,7 +564,7 @@ export class UI {
         const res = this.game.buyTicket(p, slot);
         if (!res.ok) return this.toast(res.reason);
         const t = res.ticket;
-        this.log(`${this.playerName(p)} bet 🪙${t.cost} on ${mascotById(t.mascotId).name}: ⭐${t.reward} EP on step ${res.placed.map((x) => x.step).join(' & ')}.`);
+        this.log(`${this.playerName(p)} bet 💵${t.cost} on ${mascotById(t.mascotId).name}: ${GOLD}${t.reward} Gold on step ${res.placed.map((x) => x.step).join(' & ')}.`);
         this.renderGame();
       });
     });
@@ -578,7 +582,7 @@ export class UI {
         } else {
           const steps = this.game.spellTargets(p, slot);
           if (steps.length === 0) {
-            return this.toast(`No EP on any Steps for ${mascotById(spell.mascotId).name}`);
+            return this.toast(`No Gold on any Steps for ${mascotById(spell.mascotId).name}`);
           }
           this.targeting = { player: p, slot, spell, steps };
           this.renderGame();
@@ -593,7 +597,7 @@ export class UI {
         const cost = this.game.refreshCost(p);
         const res = this.game.refreshTickets(p);
         if (!res.ok) return this.toast(res.reason);
-        this.log(`${this.playerName(p)} refreshed their Bets for 🪙${cost}.`);
+        this.log(`${this.playerName(p)} refreshed their Bets for 💵${cost}.`);
         this.renderGame();
       });
     });
@@ -632,10 +636,10 @@ export class UI {
           this.toast(res.reason);
         } else {
           let detail = '';
-          if (res.collected) detail = ` &mdash; collected ⭐${res.collected} instantly!`;
-          else if (res.stolen) detail = ` &mdash; stole ⭐${res.stolen}!`;
+          if (res.collected) detail = ` &mdash; collected ${GOLD}${res.collected} instantly!`;
+          else if (res.stolen) detail = ` &mdash; stole ${GOLD}${res.stolen}!`;
           else if (res.movedTo !== undefined) detail = ` &mdash; moved to step ${res.movedTo}.`;
-          else if (res.newValue !== undefined) detail = ` &mdash; step ${step} now ⭐${res.newValue}.`;
+          else if (res.newValue !== undefined) detail = ` &mdash; step ${step} now ${GOLD}${res.newValue}.`;
           this.log(`${this.playerName(player)} cast: ${spell.description}${detail}`);
         }
         this.renderGame();
@@ -663,8 +667,8 @@ export class UI {
         this.renderGame();
         $('#roll-btn', this.root)?.setAttribute('disabled', '');
         this.highlightNewChips(1, before);
-        this.floatSpend(1, 'coins', coinsBefore - this.game.players[1].coins, '🪙');
-        this.floatSpend(1, 'ep', epBefore - this.game.players[1].ep, '⭐');
+        this.floatSpend(1, 'coins', coinsBefore - this.game.players[1].coins, '💵');
+        this.floatSpend(1, 'ep', epBefore - this.game.players[1].ep, GOLD);
         await sleep(1500);
       }
     }
@@ -702,7 +706,7 @@ export class UI {
         ]);
       }
       for (const c of collects) {
-        this.log(`💰 ${this.playerName(c.player)}: ${m.name} collected ⭐${c.amount} EP from step ${c.step}!`, 'good');
+        this.log(`💰 ${this.playerName(c.player)}: ${m.name} collected ${GOLD}${c.amount} Gold from step ${c.step}!`, 'good');
       }
       if (!this.skipRequested) await sleep(400);
     }
@@ -714,23 +718,25 @@ export class UI {
       if (e.type === 'news' || e.type === 'newsEnd') this.log(e.message, 'news');
       if (e.type === 'checkpoint') {
         this.log(e.passed
-          ? `✅ Checkpoint round ${e.round}: ${e.ep} / ${e.target} EP — passed!`
-          : `💥 Checkpoint round ${e.round}: ${e.ep} / ${e.target} EP — run over.`, e.passed ? 'good' : 'news');
+          ? `✅ Checkpoint round ${e.round}: ${e.ep} / ${e.target} Gold — passed!`
+          : `💥 Checkpoint round ${e.round}: ${e.ep} / ${e.target} Gold — run over.`, e.passed ? 'good' : 'news');
       }
       if (e.type === 'bonus') {
-        this.log(`💰 Bonus! +${e.coins} Coins for passing round ${e.round} with over ${e.threshold} EP.`, 'good');
+        this.log(`💰 Bonus! +${e.coins} Dollars for passing round ${e.round} with over ${e.threshold} Gold.`, 'good');
       }
     }
 
-    // A cleared (non-final) checkpoint gets its own moment before the next round.
+    // A cleared (non-final) checkpoint gets its own moment, then the next
+    // tranche's goal is announced — before any mascot draft appears.
     if (checkpoint && checkpoint.passed && !checkpoint.final && !this.skipRequested) {
       await this.showCheckpointPopup(checkpoint);
+      await this.showTrancheGoal();
     }
     if (bonus && !this.skipRequested) {
       await this.showAcknowledgePopup('bonus-card', `
         <h2>💰 COIN BONUS!</h2>
-        <p>You cleared round ${bonus.round} with <b>${bonus.ep} EP</b> — over the ${bonus.threshold} stretch
-        target. <b>+${bonus.coins} Coins</b>, banked before this round's interest!</p>`);
+        <p>You cleared round ${bonus.round} with <b>${bonus.ep} Gold</b> — over the ${bonus.threshold} stretch
+        target. <b>+${bonus.coins} Dollars</b>, banked before this round's interest!</p>`);
     }
 
     // Between-round sequence: round banner, then news popups, then coin gain.
@@ -739,7 +745,7 @@ export class UI {
       for (const e of newsEvents) {
         if (!this.skipRequested) await this.showNewsPopup(e);
       }
-      if (!this.skipRequested) await Promise.race([this.animateCoinGain(), this.skipPromise]);
+      if (!this.skipRequested) await Promise.race([this.animateDollarGain(), this.skipPromise]);
     }
 
     this.animating = false;
@@ -796,25 +802,41 @@ export class UI {
   showCheckpointPopup(e) {
     return this.showAcknowledgePopup('checkpoint-card', `
       <h2>✅ CHECKPOINT PASSED!</h2>
-      <p>Round ${e.round}: <b>${e.ep}</b> / ${e.target} EP — the run continues!</p>`);
+      <p>Round ${e.round}: <b>${e.ep}</b> / ${e.target} Gold — the run continues!</p>`);
   }
 
-  // Coins fly from the Roll button to each player's coin bank, then the
+  // Announce the goal for the tranche of rounds that is about to begin
+  // (shown before any mascot draft, so the player picks with the target in mind).
+  showTrancheGoal() {
+    const g = this.game;
+    const target = this.rogueTarget();
+    if (!g.rogue || !target) return Promise.resolve();
+    const bonus = ROGUE.bonuses[target.round];
+    const final = target.round === ROGUE.rounds;
+    return this.showAcknowledgePopup('tranche-card', `
+      <h2>🎯 ${final ? 'FINAL STRETCH!' : `ROUNDS ${g.round + 1}–${target.round}`}</h2>
+      <p>${final ? 'Win the run with' : 'Reach'} <b>${target.ep} Gold</b> by the end of
+      round ${target.round}${final ? '' : ' — or the run ends'}.</p>
+      ${bonus ? `<p>💵 Stretch bonus: finish round ${target.round} with over <b>${bonus.over} Gold</b>
+        and earn <b>+${bonus.coins} Dollars</b> (paid before interest)!</p>` : ''}`);
+  }
+
+  // Dollars fly from the Roll button to each player's coin bank, then the
   // number ticks up.
-  animateCoinGain() {
+  animateDollarGain() {
     const g = this.game;
     const rollRect = $('#roll-btn', this.root)?.getBoundingClientRect()
       ?? { left: window.innerWidth / 2, top: 120, width: 0, height: 0 };
     const sx = rollRect.left + rollRect.width / 2;
     const sy = rollRect.top + rollRect.height / 2;
     return Promise.all(g.players.map(async (player, p) => {
-      const gain = g.lastCoinGain?.[p] ?? 0;
+      const gain = g.lastDollarGain?.[p] ?? 0;
       const coinEl = this.root.querySelector(`.player-panel[data-player="${p}"] [data-info="coins"] b`);
       if (!gain || !coinEl) return;
       const t = coinEl.getBoundingClientRect();
       const float = document.createElement('div');
       float.className = 'float-text coin-float';
-      float.textContent = `+${gain} 🪙`;
+      float.textContent = `+${gain} 💵`;
       float.style.left = `${t.left}px`;
       float.style.top = `${t.top - 10}px`;
       document.body.appendChild(float);
@@ -822,7 +844,7 @@ export class UI {
       await Promise.all([0, 1, 2].map((i) => sleep(i * 150).then(() => new Promise((resolve) => {
         const coin = document.createElement('div');
         coin.className = 'fly-star fly-coin';
-        coin.textContent = '🪙';
+        coin.textContent = '💵';
         coin.style.left = `${sx}px`;
         coin.style.top = `${sy}px`;
         document.body.appendChild(coin);
@@ -840,8 +862,8 @@ export class UI {
     }));
   }
 
-  // Floating "+N EP" at the collected step, and a star that flies to the
-  // player's EP bank — the number ticks up when it lands.
+  // Floating "+N Gold" at the collected step, and a star that flies to the
+  // player's Gold bank — the number ticks up when it lands.
   animateCollect(c) {
     const lane = this.root.querySelector(`.lane[data-mascot="${c.mascotId}"]`);
     if (!lane) return Promise.resolve();
@@ -853,7 +875,7 @@ export class UI {
 
     const float = document.createElement('div');
     float.className = 'float-text';
-    float.textContent = `+${c.amount} EP`;
+    float.textContent = `+${c.amount} Gold`;
     float.style.left = `${x}px`;
     float.style.top = `${y - 12}px`;
     document.body.appendChild(float);
@@ -864,7 +886,7 @@ export class UI {
     const target = epEl.getBoundingClientRect();
     const star = document.createElement('div');
     star.className = 'fly-star';
-    star.textContent = '⭐';
+    star.innerHTML = GOLD;
     star.style.left = `${x}px`;
     star.style.top = `${y}px`;
     document.body.appendChild(star);
@@ -912,7 +934,7 @@ export class UI {
     return count;
   }
 
-  // Float a "-N" over a player's coin/EP stat when they spend.
+  // Float a "-N" over a player's coin/Gold stat when they spend.
   floatSpend(p, stat, amount, icon) {
     if (amount <= 0) return;
     const el = this.root.querySelector(`.player-panel[data-player="${p}"] [data-info="${stat === 'coins' ? 'coins' : 'ep'}"] b`);
@@ -920,7 +942,7 @@ export class UI {
     const rect = el.getBoundingClientRect();
     const float = document.createElement('div');
     float.className = 'float-text spend-float';
-    float.textContent = `-${amount} ${icon}`;
+    float.innerHTML = `-${amount} ${icon}`;
     float.style.left = `${rect.left}px`;
     float.style.top = `${rect.top - 8}px`;
     document.body.appendChild(float);
@@ -972,18 +994,18 @@ export class UI {
       const ep = g.players[0].ep;
       if (g.winner) {
         headline = '👑 Run complete — you win!';
-        detail = `You cleared every checkpoint and finished all ${ROGUE.rounds} rounds with <b>${ep} EP</b> (target: ${ROGUE.targets[ROGUE.rounds]}).`;
+        detail = `You cleared every checkpoint and finished all ${ROGUE.rounds} rounds with <b>${ep} Gold</b> (target: ${ROGUE.targets[ROGUE.rounds]}).`;
       } else {
         const f = g.failedCheckpoint;
         headline = '💥 Run over!';
-        detail = `You needed <b>${f.target} EP</b> by round ${f.round} — you finished it with <b>${ep}</b>. Better luck next run!`;
+        detail = `You needed <b>${f.target} Gold</b> by round ${f.round} — you finished it with <b>${ep}</b>. Better luck next run!`;
       }
     } else if (g.mode === 1) {
       const ep = g.players[0].ep;
       headline = g.winner ? '🎉 A leaderboard score!' : 'Good game!';
       detail = g.winner
-        ? `You scored <b>${ep} EP</b> — over ${CONFIG.onePlayerGoal}!`
-        : `You scored <b>${ep} EP</b>. Get ${CONFIG.onePlayerGoal} to prove you're a Market Party master!`;
+        ? `You scored <b>${ep} Gold</b> — over ${CONFIG.onePlayerGoal}!`
+        : `You scored <b>${ep} Gold</b>. Get ${CONFIG.onePlayerGoal} to prove you're a Market Party master!`;
       leaderboard = `
         ${this.scoreSaved ? '' : `
           <div class="lb-save">
@@ -1039,10 +1061,10 @@ export class UI {
     if (!list.length) return '<p class="hint">No scores yet — finish a 1 player game!</p>';
     return `
       <table class="stats-table lb-table">
-        <tr><th>#</th><th>Name</th><th>EP</th><th>Date</th></tr>
+        <tr><th>#</th><th>Name</th><th>Gold</th><th>Date</th></tr>
         ${list.map((e, i) => `
           <tr class="${highlight === i ? 'lb-highlight' : ''}">
-            <td>${i + 1}</td><td>${escapeHtml(e.name)}</td><td>⭐${e.ep}</td><td>${e.date}</td>
+            <td>${i + 1}</td><td>${escapeHtml(e.name)}</td><td>${GOLD}${e.ep}</td><td>${e.date}</td>
           </tr>`).join('')}
       </table>`;
   }
@@ -1096,47 +1118,48 @@ export class UI {
   showInfo(topic) {
     if (topic === 'coins') {
       this.modal(`
-        <h2>🪙 The Coin Bank</h2>
+        <h2>💵 The Dollar Bank</h2>
         <ul class="info-list">
-          <li>Coins buy <b>Betting Tickets</b>.</li>
-          <li>You start with <b>${CONFIG.startingCoins}</b> and get <b>+${CONFIG.coinsPerRound}</b> after every roll.</li>
-          <li><b>Interest:</b> each round you also earn 1 extra Coin per ${CONFIG.interestDivisor} you're holding
+          <li>Dollars buy <b>Betting Tickets</b>.</li>
+          <li>You start with <b>${CONFIG.startingDollars}</b> and get <b>+${CONFIG.coinsPerRound}</b> after every roll.</li>
+          <li><b>Interest:</b> each round you also earn 1 extra Dollar per ${CONFIG.interestDivisor} you're holding
             (max +${CONFIG.maxInterest}) — saving up pays off.</li>
-          <li>Refreshing your ticket offers costs <b>${CONFIG.refreshCostFirst} Coin</b> the first time each round,
-            then <b>${CONFIG.refreshCostNext} Coins</b> after that; offers refresh free after every roll.</li>
+          <li>Refreshing your ticket offers costs <b>${CONFIG.refreshCostFirst} Dollar</b> the first time each round,
+            then <b>${CONFIG.refreshCostNext} Dollars</b> after that; offers refresh free after every roll.</li>
         </ul>`);
     } else if (topic === 'ep') {
       const rows = EP_LEVELS
-        .map((l) => `<tr><td>Level ${l.level}</td><td>${l.minEP}+ EP</td></tr>`)
+        .map((l) => `<tr><td>Level ${l.level}</td><td>${l.minEP}+ Gold</td></tr>`)
         .join('');
       this.modal(`
-        <h2>⭐ EP &amp; Levels</h2>
+        <h2>${GOLD} Gold &amp; Levels</h2>
         <ul class="info-list">
-          <li>EP (Event Points) is your <b>score</b> — and the currency for <b>Spells</b>.</li>
-          <li>Earn EP when a mascot lands on or passes one of your bounties.</li>
-          <li>Your banked EP sets your <b>Level</b>, and higher levels unlock rarer,
+          <li>Gold bars are your <b>score</b> — and the currency for <b>Spells</b>.</li>
+          <li>Earn Gold when a mascot lands on or passes one of your bounties.</li>
+          <li>Your banked Gold sets your <b>Level</b>, and higher levels unlock rarer,
             bigger tickets and spells in the shop:</li>
         </ul>
-        <table class="stats-table"><tr><th>Level</th><th>EP in bank</th></tr>${rows}</table>
-        <p class="hint">Careful: spending EP on spells can drop your Level (and your score).
+        <table class="stats-table"><tr><th>Level</th><th>Gold in bank</th></tr>${rows}</table>
+        <p class="hint">Careful: spending Gold on spells can drop your Level (and your score).
         ${this.game?.rogue
           ? `Checkpoints: ${Object.entries(ROGUE.targets).map(([r, ep]) => `${ep} by round ${r}`).join(', ')} — the last one wins the run.
-            Stretch bonuses: ${Object.entries(ROGUE.bonuses).map(([r, b]) => `+${b.coins} Coins for over ${b.over} EP at round ${r}`).join(', ')} (paid before interest).`
+            Stretch bonuses: ${Object.entries(ROGUE.bonuses).map(([r, b]) => `+${b.coins} Dollars for over ${b.over} Gold at round ${r}`).join(', ')} (paid before interest).`
           : this.game?.mode === 1
             ? `Score ${CONFIG.onePlayerGoal}+ in ${CONFIG.onePlayerRounds} rounds to make the leaderboard.`
-            : `First player to ${CONFIG.twoPlayerGoal} EP wins.`}</p>`);
+            : `First player to ${CONFIG.twoPlayerGoal} Gold wins.`}</p>`);
     } else if (topic === 'spells') {
       this.modal(`
         <h2>✨ Spells</h2>
         <ul class="info-list">
-          <li>You're offered 2 spells per round; casting costs <b>EP</b>, not Coins.</li>
-          <li><b>Double</b> (10 EP) — double one of your bounties, up to +50.</li>
-          <li><b>Move closer</b> (15 EP) — slide a bounty toward its mascot
+          <li>You're offered 2 spells per round; casting costs <b>Gold</b>, not Dollars.</li>
+          <li><b>Double</b> (10 Gold) — double one of your bounties, up to +50.</li>
+          <li><b>Move closer</b> (15 Gold) — slide a bounty toward its mascot
             (Mousey/Wolf 2 steps, Flixy 4, Bizarro 6). If it reaches the mascot, collect instantly!</li>
-          <li><b>Halve</b> (20 EP) — halve an opponent's bounty, up to −50.</li>
-          <li><b>Steal</b> (50 EP) — take up to 50 EP off an opponent's bounty onto yours.</li>
-          <li><b>Up only / Down only / Freeze</b> (10–30 EP) — control a mascot's next roll.
-            These affect the mascot itself, so <i>both</i> players feel it.</li>
+          <li><b>Halve</b> (20 Gold) — halve an opponent's bounty, up to −50.</li>
+          <li><b>Steal</b> (50 Gold) — take up to 50 Gold off an opponent's bounty onto yours.</li>
+          <li><b>Up only / Down only / Freeze</b> (10–30 Gold) — control a mascot's next roll.
+            These affect the mascot itself, so <i>both</i> players feel it. Freeze (like Halve
+            and Steal) only appears in 2 player games.</li>
         </ul>`);
     } else if (topic === 'news') {
       // Only mascots in the current game can make news.
@@ -1170,7 +1193,7 @@ export class UI {
           const offsets = [t.target1, t.target2].filter((x) => x !== null);
           const targets = offsets.map((x) => this.upDown(x)).join(' & ');
           const prob = collectProbability(m, offsets, horizon, this.newsConstraint(m.id));
-          return `<tr><td>${t.rarity}</td><td>🪙${t.cost}</td><td>⭐${t.reward}</td><td>${targets}</td><td>${oddsLabel(prob)} &middot; ${Math.round(prob * 100)}%</td></tr>`;
+          return `<tr><td>${t.rarity}</td><td>💵${t.cost}</td><td>${GOLD}${t.reward}</td><td>${targets}</td><td>${oddsLabel(prob)} &middot; ${Math.round(prob * 100)}%</td></tr>`;
         }).join('');
       return `
         <div class="bets-section" style="--mc:${m.color}">
@@ -1192,13 +1215,14 @@ export class UI {
     const levelIdx = [0, 1, 2, 3, 4];
     const ticketSums = levelIdx.map((i) => tiers.reduce((s, t) => s + TICKET_TIER_WEIGHTS[t][i], 0));
     const ticketRows = tiers.map((t) => `
-      <tr><td>🪙${t}</td>${levelIdx.map((i) =>
+      <tr><td>💵${t}</td>${levelIdx.map((i) =>
         `<td>${Math.round((TICKET_TIER_WEIGHTS[t][i] / ticketSums[i]) * 100)}%</td>`).join('')}</tr>`).join('');
-    const payoutRows = tiers.map((t) => `<tr><td>🪙${t}</td><td>${PAYOUT_RATIOS[t].toFixed(2)}x</td></tr>`).join('');
+    const payoutRows = tiers.map((t) => `<tr><td>💵${t}</td><td>${PAYOUT_RATIOS[t].toFixed(2)}x</td></tr>`).join('');
 
     const spellNames = {
-      51: 'Double', 52: 'Halve <span class="hint">(2P only)</span>', 53: 'Move EP',
-      54: 'Steal <span class="hint">(2P only)</span>', 55: 'Mascot Up', 56: 'Mascot Down', 57: 'Mascot Freeze',
+      51: 'Double', 52: 'Halve <span class="hint">(2P only)</span>', 53: 'Move Gold',
+      54: 'Steal <span class="hint">(2P only)</span>', 55: 'Mascot Up', 56: 'Mascot Down',
+      57: 'Mascot Freeze <span class="hint">(2P only)</span>',
     };
     const spellTypes = Object.keys(SPELL_TYPE_WEIGHTS).map(Number);
     const spellSums = levelIdx.map((i) => spellTypes.reduce((s, t) => s + SPELL_TYPE_WEIGHTS[t][i], 0));
@@ -1209,24 +1233,24 @@ export class UI {
     const overlay = this.modal(`
       <h2>🤓 Drop Rates and more info</h2>
       <h3 class="geek-h3">Betting Tickets</h3>
-      <p class="hint">Tickets cost 1, 2, 3, 4, 5, or 10 Coins. As your EP Level goes up, you're
+      <p class="hint">Tickets cost 1, 2, 3, 4, 5, or 10 Dollars. As your Gold Level goes up, you're
         more likely to see higher-cost tickets in the shop:</p>
       <table class="stats-table full">
         <tr><th>Cost</th><th>Lvl 1</th><th>Lvl 2</th><th>Lvl 3</th><th>Lvl 4</th><th>Lvl 5</th></tr>
         ${ticketRows}
       </table>
-      <p class="hint">As the cost goes up, the payout multiplier goes up — the more EP you win
-        per Coin. Buying higher-cost tickets is generally better:</p>
+      <p class="hint">As the cost goes up, the payout multiplier goes up — the more Gold you win
+        per Dollar. Buying higher-cost tickets is generally better:</p>
       <table class="stats-table"><tr><th>Cost</th><th>Payout ratio</th></tr>${payoutRows}</table>
       <p style="text-align:center"><button class="btn btn-primary" id="geek-all-bets">Show All Possible Bets</button></p>
       <h3 class="geek-h3">Spells</h3>
-      <p class="hint">Two spell offers per round, paid in EP. Drop rates by EP Level:</p>
+      <p class="hint">Two spell offers per round, paid in Gold. Drop rates by Gold Level:</p>
       <table class="stats-table full">
         <tr><th>Spell</th><th>Lvl 1</th><th>Lvl 2</th><th>Lvl 3</th><th>Lvl 4</th><th>Lvl 5</th></tr>
         ${spellRows}
       </table>
-      <p class="hint"><b>EP Levels</b> — click your ⭐ EP to see how Levels work.<br>
-        <b>Gaining Coins</b> — click your 🪙 Coins to see how the bank works.</p>`, { wide: true });
+      <p class="hint"><b>Gold Levels</b> — click your ${GOLD} Gold to see how Levels work.<br>
+        <b>Gaining Dollars</b> — click your 💵 Dollars to see how the bank works.</p>`, { wide: true });
     $('#geek-all-bets', overlay)?.addEventListener('click', () => {
       overlay.remove();
       this.showAllBets();
