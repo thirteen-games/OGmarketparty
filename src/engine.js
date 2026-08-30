@@ -157,13 +157,15 @@ export class Game {
     let entries = Object.entries(TICKET_TIER_WEIGHTS)
       .map(([tier, w]) => ({ value: Number(tier), weight: w[level - 1] }))
       .filter((e) => e.weight > 0);
-    // Roguelike rarity gates: Super Rare/Epic tickets (tiers 4-5) need a 2nd mascot,
-    // Legendary (tier 10) needs a 3rd. Relative odds among the rest hold.
+    // Roguelike rarity gates by round: Super Rare (tier 4) can appear from
+    // round 4, Epic (tier 5) from round 7, Legendary (tier 10) from round 10.
+    // The shop serving round N+1 is drawn while this.round === N. Relative
+    // odds among the allowed tiers hold.
     if (this.rogue) {
-      const roster = this.activeMascots.length;
       entries = entries.filter((e) => {
-        if (roster < 2 && (e.value === 4 || e.value === 5)) return false;
-        if (roster < 3 && e.value === 10) return false;
+        if (this.round < 3 && e.value === 4) return false;
+        if (this.round < 6 && e.value === 5) return false;
+        if (this.round < 9 && e.value === 10) return false;
         return true;
       });
     }

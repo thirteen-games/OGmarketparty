@@ -463,25 +463,25 @@ test('roguelike: starts with a 2-mascot choice; everything scopes to the roster'
   assert.equal(rolls[0].mascotId, pick);
 });
 
-test('roguelike: slots, rarity gates, and spells all grow with the roster', () => {
+test('roguelike: slots and spells grow with the roster; rarity unlocks by round', () => {
   const tierOf = (id) => id % 100;
   for (let seed = 0; seed < 25; seed++) {
     const g = new Game({ mode: 'rogue', seed });
     g.players[0].ep = 600; // level 5, where epic/legendary weights are highest
     g.chooseMascot(g.pendingChoice[0]);
-    // one mascot: 2 distinct offers, no Epics (tiers 4/5) or Legendaries (10)
+    // one mascot, round 0: 2 distinct offers, nothing above Rare
     let offers = g.players[0].tickets.filter(Boolean);
     assert.equal(offers.length, 2);
     assert.equal(new Set(offers).size, 2, `seed ${seed}: ${offers}`);
-    for (const id of offers) assert.ok(![4, 5, 10].includes(tierOf(id)), `seed ${seed}: epic/legendary too early (${id})`);
+    for (const id of offers) assert.ok(![4, 5, 10].includes(tierOf(id)), `seed ${seed}: high tier too early (${id})`);
     assert.equal(g.spellSlotCount(), 0);
-    // two mascots: 3 offers, Epics allowed, no Legendaries; one spell slot
+    // two mascots: 3 offers and one spell slot (still round 0: no tier 4/5/10)
     g.pendingChoice = g.pickChoice();
     g.chooseMascot(g.pendingChoice[0]);
     offers = g.players[0].tickets.filter(Boolean);
     assert.equal(offers.length, 3);
     assert.equal(new Set(offers).size, 3, `seed ${seed} (2 mascots): ${offers}`);
-    for (const id of offers) assert.notEqual(tierOf(id), 10, `seed ${seed}: legendary too early (${id})`);
+    for (const id of offers) assert.ok(![4, 5, 10].includes(tierOf(id)), `seed ${seed}: high tier too early (${id})`);
     assert.equal(g.spellSlotCount(), 1);
     assert.notEqual(g.players[0].spells[0], null);
     assert.equal(g.players[0].spells[1], null);
@@ -491,6 +491,24 @@ test('roguelike: slots, rarity gates, and spells all grow with the roster', () =
     assert.equal(g.players[0].tickets.filter(Boolean).length, 4);
     assert.equal(g.spellSlotCount(), 2);
     assert.notEqual(g.players[0].spells[1], null);
+    // round gates: Super Rare from the shop drawn at round 3, Epic at 6, Legendary at 9
+    const tiersAt = (round) => {
+      g.round = round;
+      const seen = new Set();
+      for (let i = 0; i < 40; i++) {
+        g.refreshTickets(0, { free: true });
+        for (const id of g.players[0].tickets.filter(Boolean)) seen.add(tierOf(id));
+      }
+      return seen;
+    };
+    const t2 = tiersAt(2);
+    assert.ok(!t2.has(4) && !t2.has(5) && !t2.has(10), `seed ${seed}: high tier before R4 shop`);
+    const t3 = tiersAt(3);
+    assert.ok(!t3.has(5) && !t3.has(10), `seed ${seed}: epic/legendary before their rounds`);
+    const t6 = tiersAt(6);
+    assert.ok(!t6.has(10), `seed ${seed}: legendary before R10 shop`);
+    const t9 = tiersAt(9);
+    assert.ok(t9.has(10) || t9.has(5) || t9.has(4), `seed ${seed}: high tiers never appear at round 9`);
   }
 });
 
