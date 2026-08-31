@@ -26,9 +26,10 @@ export const CONFIG = {
 // propped early-spend styles by 10+ points while savers never touched it.)
 // Tuned by simulation across four player archetypes (max-spend / saver /
 // half-spend / gate-aware spend-then-save); with the round-based rarity
-// unlocks (Super Rare R4 / Epic R7 / Legendary R10) this deliberately hard
-// ladder sims at 44/47/47/62% win rates — flexible, gate-aware play is the
-// clear best strategy, and rigid styles lose more runs than they win.
+// unlocks (Super Rare R4 / Epic R7 / Legendary R10) and the round-8 news
+// unlock this deliberately hard ladder sims at 33/43/43/57% win rates —
+// flexible, gate-aware play is the clear best strategy, and rigid styles
+// lose more runs than they win.
 export const ROGUE = {
   rounds: 15,
   targets: { 3: 50, 6: 300, 9: 600, 12: 1000, 15: 1500 },
@@ -38,18 +39,19 @@ export const ROGUE = {
 // Difficulty ladders. Normal aliases ROGUE.targets/bonuses (same objects),
 // so the balance-sim scripts' --gates/--bonus overrides keep mutating the
 // config a default game actually reads. All three simulated 2026-08-30 with
-// the four-archetype pipeline; win rates quoted as max-spend / saver /
-// half-spend / gate-aware spend->save:
-//   easy   94/82/82/96  — forgiving gates, one stretch bonus
-//   normal 44/48/49/62  — the locked-in hard ladder above
-//   hard   16/12/13/24  — the R6 gate at 400 crushes rigid savers (20%
+// the four-archetype pipeline, under the roguelike news rules (alerts
+// locked until the forced round-7 draw, one live at a time); win rates
+// quoted as max-spend / saver / half-spend / gate-aware spend->save:
+//   easy   88/79/79/96  — forgiving gates, one stretch bonus
+//   normal 33/43/43/57  — the locked-in hard ladder above
+//   hard   11/8/9/19    — the R6 gate at 400 crushes rigid savers (14%
 //                         survival), the middle gates grind spenders, and
-//                         the 1600 finish still cuts ~1 in 5 of gate-aware
-//                         runs that earn R12. Every gate stays live for
-//                         every style. (A 1800 finish inverted the mode:
-//                         savers alive at R12 finished 100% while gate-aware
-//                         died at the door — 60/360/720/1200/1800 + this
-//                         bonus simmed 4/21/21/16.)
+//                         the 1600 finish still cuts gate-aware runs that
+//                         earn R12. Every gate stays live for every style.
+//                         (A 1800 finish inverted the mode: savers alive at
+//                         R12 finished 100% while gate-aware died at the
+//                         door — with pre-news-unlock rules it simmed
+//                         4/21/21/16.)
 export const ROGUE_DIFFICULTIES = {
   easy: {
     label: 'Easy',

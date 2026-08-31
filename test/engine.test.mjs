@@ -551,6 +551,24 @@ test('roguelike: checkpoints end the run or grow the roster', () => {
   assert.deepEqual(Object.values(counts).sort(), [1, 2]); // 3 slots: 1 each + 1 random
 });
 
+test('roguelike news: locked until round 8, forced first alert, one at a time', () => {
+  for (let seed = 0; seed < 10; seed++) {
+    const g = new Game({ mode: 'rogue', seed });
+    g.chooseMascot(g.pendingChoice[0]);
+    let firstAlertRound = null;
+    for (let round = 1; round <= 12; round++) {
+      g.players[0].ep = 5000; // sail through every gate
+      const events = g.roll();
+      if (g.pendingChoice) g.chooseMascot(g.pendingChoice[0]);
+      if (firstAlertRound === null && events.some((e) => e.type === 'news')) firstAlertRound = round;
+      assert.ok(g.news.length <= 1, `seed ${seed}: ${g.news.length} alerts live after round ${round}`);
+      if (round < 7) assert.equal(g.news.length, 0, `seed ${seed}: alert before the round-7 draw`);
+    }
+    // The end-of-round-7 draw is forced, so the first alert opens round 8.
+    assert.equal(firstAlertRound, 7, `seed ${seed}: first alert drawn at round ${firstAlertRound}`);
+  }
+});
+
 test('roguelike difficulties: each ladder gates its own runs', () => {
   // Normal must alias the live ROGUE config — the balance-sim scripts tune
   // by mutating ROGUE.targets/bonuses and expect default games to see it.
@@ -608,18 +626,14 @@ test('roguelike: stretch bonus pays 7 coins before interest', () => {
 test('roguelike: benched mascots make no news; victory after round 15', () => {
   const g = new Game({ mode: 'rogue', seed: 8 });
   g.chooseMascot(g.pendingChoice[0]);
-  const active = g.activeMascots[0];
-  let acc = 0;
-  let rngValue = null;
-  for (const row of NEWS_TABLE) {
-    if (row.mascotId !== active) { rngValue = (acc + 0.5) / 100; break; }
-    acc += row.weight;
+  g.round = 8; // rogue alerts are live from round 8
+  for (let i = 0; i < 20; i++) {
+    g.news = [];
+    const rngValue = i / 20;
+    g.rng = () => rngValue;
+    g.drawNews([]);
+    for (const a of g.news) assert.ok(g.isActive(a.mascotId), 'alert for a benched mascot');
   }
-  g.rng = () => rngValue;
-  const ev = [];
-  g.drawNews(ev);
-  assert.equal(g.news.length, 0, 'inactive-mascot draw must be suppressed');
-  assert.equal(ev.length, 0);
 
   const g2 = new Game({ mode: 'rogue', seed: 8 });
   g2.chooseMascot(g2.pendingChoice[0]);

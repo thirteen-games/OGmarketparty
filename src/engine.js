@@ -529,9 +529,10 @@ export class Game {
   // --- Mascot News ----------------------------------------------------------
   // Redesigned from the prototype: one weighted draw per round (including one
   // before round 1); alerts can overlap, but a draw for an already-alerted
-  // mascot is wasted.
+  // mascot is wasted. Roguelike uses its own draw (see drawRogueNews).
 
   drawNews(events) {
+    if (this.rogue) return this.drawRogueNews(events);
     const r = this.rng() * 100;
     let acc = 0;
     let row = null;
@@ -540,8 +541,31 @@ export class Game {
       if (r < acc) { row = entry; break; }
     }
     if (!row) return; // remaining probability: no alert this round
-    if (!this.isActive(row.mascotId)) return; // roguelike: benched mascots make no news
+    if (!this.isActive(row.mascotId)) return; // benched mascots make no news
     if (this.news.some((a) => a.mascotId === row.mascotId)) return; // wasted draw
+    this.activateAlert(row, events);
+  }
+
+  // Roguelike news: alerts are a mid-run unlock. Nothing before the end of
+  // round 7; that draw is forced to land, so the first alert always opens
+  // round 8 (running rounds 8-10). Afterwards at most one alert can be live
+  // at a time — draws while one is active are skipped, and a non-forced draw
+  // still misses on the weights' remaining probability (quiet round).
+  drawRogueNews(events) {
+    if (this.round < 7 || this.news.length) return;
+    const rows = NEWS_TABLE.filter((row) => this.isActive(row.mascotId));
+    if (!rows.length) return;
+    const forced = this.round === 7;
+    const total = rows.reduce((sum, row) => sum + row.weight, 0);
+    const r = this.rng() * (forced ? total : 100);
+    let acc = 0;
+    for (const row of rows) {
+      acc += row.weight;
+      if (r < acc) return this.activateAlert(row, events);
+    }
+  }
+
+  activateAlert(row, events) {
     this.news.push({ mascotId: row.mascotId, direction: row.direction, newsType: row.newsType, count: 1 });
     this.flags[row.mascotId] = row.direction;
     events.push({
