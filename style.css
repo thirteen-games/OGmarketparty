@@ -600,6 +600,33 @@ main {
   100% { transform: scale(1); }
 }
 
+/* Winning-move celebration */
+.gold-shard {
+  position: fixed; z-index: 42; pointer-events: none; line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(27, 36, 64, 0.5));
+  will-change: transform, opacity;
+}
+.gold-shard .gold-icon { width: 18px; height: 11px; }
+.float-text.collect-big {
+  z-index: 43; color: #ffd21f;
+  text-shadow: 0 2px 0 #1b2440, 0 0 14px rgba(255, 210, 31, 0.55);
+  animation: collectBig 1.7s cubic-bezier(0.2, 1.1, 0.4, 1) forwards;
+}
+.collect-big .gold-icon { width: 1.1em; height: 0.7em; }
+@keyframes collectBig {
+  0% { opacity: 0; transform: translateY(6px) scale(0.4); }
+  12% { opacity: 1; transform: translateY(0) scale(1.15); }
+  22% { transform: translateY(-2px) scale(1); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-64px) scale(1); }
+}
+.fly-gold { transition: none; z-index: 42; }
+.chip.chip-won { animation: chipWon 0.6s ease forwards; }
+@keyframes chipWon {
+  30% { transform: scale(1.6); }
+  100% { transform: scale(0); opacity: 0; }
+}
+
 /* inline gold-bar icon */
 .gold-icon { width: 1.15em; height: 0.72em; vertical-align: -0.02em; display: inline-block; }
 .fly-star .gold-icon { width: 26px; height: 16px; filter: drop-shadow(0 2px 3px rgba(27,36,64,0.5)); }

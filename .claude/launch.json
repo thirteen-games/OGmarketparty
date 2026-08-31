@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "market-party",
-      "runtimeExecutable": "python",
+      "runtimeExecutable": "python3",
       "runtimeArgs": ["serve.py", "8642"],
       "port": 8642
     }

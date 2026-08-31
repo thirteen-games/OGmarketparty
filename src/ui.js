@@ -768,14 +768,12 @@ export class UI {
     for (const { roll, collects } of batches) {
       const m = mascotById(roll.mascotId);
       await this.animateDie(roll);
-      this.updateLane(roll.mascotId, roll.from);
       this.log(`${m.name} rolled ${this.upDown(roll.roll)} → step ${roll.to}.`);
       if (collects.length && !this.skipRequested) {
-        await sleep(350); // let the lane glide before the stars take off
-        await Promise.race([
-          Promise.all(collects.map((c, i) => sleep(i * 180).then(() => this.animateCollect(c)))),
-          this.skipPromise,
-        ]);
+        // A winning move gets the full celebration walk.
+        await this.animateMoveWithCollects(roll, collects);
+      } else {
+        this.updateLane(roll.mascotId, roll.from);
       }
       for (const c of collects) {
         this.log(`💰 ${this.playerName(c.player)}: ${m.name} collected ${GOLD}${c.amount} Gold from step ${c.step}!`, 'good');
@@ -950,46 +948,158 @@ export class UI {
 
   // Floating "+N Gold" at the collected step, and a star that flies to the
   // player's Gold bank — the number ticks up when it lands.
-  animateCollect(c) {
-    const lane = this.root.querySelector(`.lane[data-mascot="${c.mascotId}"]`);
-    if (!lane) return Promise.resolve();
-    const cell = lane.querySelector(`.cell[data-step="${c.step}"]`);
+  // A move that wins a bet gets the full celebration: the token walks its
+  // path cell by cell, eases to a stop on each reward, erupts a splash of
+  // gold, floats the amount big, streams the gold to the winner's bank, and
+  // splashes again when it lands. Every wait races the skip button.
+  async animateMoveWithCollects(roll, collects) {
+    const mascot = mascotById(roll.mascotId);
+    const lane = this.root.querySelector(`.lane[data-mascot="${roll.mascotId}"]`);
+    if (!lane || roll.from === roll.to) {
+      this.updateLane(roll.mascotId, roll.from);
+      return;
+    }
+    const dir = roll.to > roll.from ? 1 : -1;
+    // Rewards grouped by step, ordered along the walk.
+    const byStep = new Map();
+    for (const c of collects) {
+      if (!byStep.has(c.step)) byStep.set(c.step, []);
+      byStep.get(c.step).push(c);
+    }
+    const stops = [...byStep.keys()].sort((a, b) => (a - b) * dir);
+
+    this.centerLaneOnStep(lane, roll.from, false);
+    let nextStop = 0;
+    for (let s = roll.from + dir; dir > 0 ? s <= roll.to : s >= roll.to; s += dir) {
+      if (this.skipRequested) break;
+      const toStop = nextStop < stops.length ? Math.abs(stops[nextStop] - s) : Infinity;
+      // Cruise between rewards, brake hard coming into one.
+      const pace = toStop === 0 ? 330 : toStop === 1 ? 230 : toStop === 2 ? 140 : 70;
+      this.placeToken(lane, mascot, s);
+      this.centerLaneOnStep(lane, s, false);
+      await Promise.race([sleep(pace), this.skipPromise]);
+      if (s === stops[nextStop]) {
+        nextStop += 1;
+        if (!this.skipRequested) await this.celebrateCollects(lane, byStep.get(s));
+      }
+    }
+    // Canonical re-render (trail, header, cleared chips); already centered.
+    this.updateLane(roll.mascotId, roll.to);
+  }
+
+  // Move the token span between cells during a celebration walk. The lane
+  // re-renders canonically once the walk completes.
+  placeToken(lane, mascot, step) {
+    const prev = lane.querySelector('.cell.here');
+    if (prev) {
+      prev.classList.remove('here');
+      prev.querySelector('.token')?.remove();
+      prev.style.background = this.laneShade(mascot.color, Number(prev.dataset.step)).bg;
+    }
+    const cell = lane.querySelector(`.cell[data-step="${step}"]`);
+    if (!cell) return;
+    cell.classList.add('here');
+    cell.style.background = '';
+    const token = document.createElement('span');
+    token.className = 'token';
+    token.innerHTML = mascotSvg(mascot.id, 42);
+    cell.appendChild(token);
+  }
+
+  // The stop-and-splash moment on one reward step (possibly both players').
+  async celebrateCollects(lane, collectsAtStep) {
+    const step = collectsAtStep[0].step;
+    const cell = lane.querySelector(`.cell[data-step="${step}"]`);
     const laneRect = lane.getBoundingClientRect();
     const cellRect = (cell || lane).getBoundingClientRect();
-    const x = cellRect.left + cellRect.width * 0.65;
+    const x = cellRect.left + cellRect.width * 0.55;
     const y = Math.min(Math.max(cellRect.top + cellRect.height / 2, laneRect.top + 14), laneRect.bottom - 14);
+    collectsAtStep.forEach((c, i) => {
+      // The winning chip pops as the gold erupts out of it.
+      lane.querySelector(`.chip[data-player="${c.player}"][data-step="${step}"]`)
+        ?.classList.add('chip-won');
+      this.goldSplash(x, y, Math.min(10 + Math.round(c.amount / 12), 22));
+      const float = document.createElement('div');
+      float.className = 'float-text collect-big';
+      float.innerHTML = `+${c.amount} ${GOLD}`;
+      float.style.fontSize = `${Math.min(1.5 + c.amount / 90, 2.6)}rem`;
+      float.style.left = `${x}px`;
+      float.style.top = `${y - 24 - i * 36}px`;
+      document.body.appendChild(float);
+      setTimeout(() => float.remove(), 1700);
+    });
+    await Promise.race([sleep(650), this.skipPromise]); // savor the splash
+    if (this.skipRequested) return;
+    await Promise.race([
+      Promise.all(collectsAtStep.map((c, i) => sleep(i * 200).then(() => this.streamGoldToBank(c, x, y)))),
+      this.skipPromise,
+    ]);
+    await Promise.race([sleep(250), this.skipPromise]);
+  }
 
-    const float = document.createElement('div');
-    float.className = 'float-text';
-    float.textContent = `+${c.amount} Gold`;
-    float.style.left = `${x}px`;
-    float.style.top = `${y - 12}px`;
-    document.body.appendChild(float);
-    setTimeout(() => float.remove(), 1200);
+  // Radial burst of gold bars from a point; each shard gets its own arc.
+  goldSplash(x, y, n) {
+    for (let i = 0; i < n; i++) {
+      const p = document.createElement('div');
+      p.className = 'gold-shard';
+      p.innerHTML = GOLD;
+      p.style.left = `${x}px`;
+      p.style.top = `${y}px`;
+      document.body.appendChild(p);
+      const ang = Math.random() * Math.PI * 2;
+      const dist = 30 + Math.random() * 70;
+      const dx = Math.cos(ang) * dist;
+      const dy = Math.sin(ang) * dist * 0.8;
+      const spin = () => `rotate(${(Math.random() - 0.5) * 300}deg)`;
+      p.animate([
+        { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+        { transform: `translate(${dx}px, ${dy - 26}px) scale(${0.7 + Math.random() * 0.7}) ${spin()}`, opacity: 1, offset: 0.55 },
+        { transform: `translate(${dx * 1.25}px, ${dy + 46}px) scale(0.5) ${spin()}`, opacity: 0 },
+      ], { duration: 550 + Math.random() * 350, easing: 'cubic-bezier(0.2, 0.7, 0.4, 1)' })
+        .onfinish = () => p.remove();
+    }
+  }
 
+  // A staggered stream of gold arcs from the reward into the player's bank;
+  // the counter ticks up as pieces land and the bank splashes on the last.
+  streamGoldToBank(c, x, y) {
     const epEl = this.root.querySelector(`.player-panel[data-player="${c.player}"] [data-info="ep"] b`);
     if (!epEl) return Promise.resolve();
-    const target = epEl.getBoundingClientRect();
-    const star = document.createElement('div');
-    star.className = 'fly-star';
-    star.innerHTML = GOLD;
-    star.style.left = `${x}px`;
-    star.style.top = `${y}px`;
-    document.body.appendChild(star);
-    const dx = target.left + target.width / 2 - x;
-    const dy = target.top + target.height / 2 - y;
+    const t = epEl.getBoundingClientRect();
+    const tx = t.left + t.width / 2;
+    const ty = t.top + t.height / 2;
+    const n = Math.max(5, Math.min(12, Math.round(c.amount / 12)));
+    const start = Number(epEl.textContent);
     return new Promise((resolve) => {
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        star.style.transform = `translate(${dx}px, ${dy}px) scale(0.6)`;
-      }));
-      setTimeout(() => {
-        star.remove();
-        epEl.textContent = Number(epEl.textContent) + c.amount;
-        const stat = epEl.closest('.stat');
-        stat?.classList.add('ep-bump');
-        setTimeout(() => stat?.classList.remove('ep-bump'), 450);
-        resolve();
-      }, 800);
+      let landed = 0;
+      for (let i = 0; i < n; i++) {
+        setTimeout(() => {
+          const g = document.createElement('div');
+          g.className = 'fly-star fly-gold';
+          g.innerHTML = GOLD;
+          g.style.left = `${x}px`;
+          g.style.top = `${y}px`;
+          document.body.appendChild(g);
+          const midX = (tx - x) / 2 + (Math.random() - 0.5) * 140;
+          const midY = (ty - y) / 2 - 80 - Math.random() * 60;
+          g.animate([
+            { transform: 'translate(0, 0) scale(1.1)' },
+            { transform: `translate(${midX}px, ${midY}px) scale(1.3)`, offset: 0.5 },
+            { transform: `translate(${tx - x}px, ${ty - y}px) scale(0.5)` },
+          ], { duration: 620, easing: 'cubic-bezier(0.3, 0, 0.6, 1)' }).onfinish = () => {
+            g.remove();
+            landed += 1;
+            epEl.textContent = landed === n ? start + c.amount : start + Math.round((c.amount * landed) / n);
+            const stat = epEl.closest('.stat');
+            stat?.classList.add('ep-bump');
+            setTimeout(() => stat?.classList.remove('ep-bump'), 300);
+            if (landed === n) {
+              this.goldSplash(tx, ty, 8);
+              resolve();
+            }
+          };
+        }, i * 70);
+      }
     });
   }
 
