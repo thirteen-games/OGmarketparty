@@ -117,7 +117,8 @@ export const MASCOTS_PER_GAME = 4;
 export const TICKETS = [
   { id: 101, mascotId: 1, rarity: 'Common',    difficulty: 'Medium',    cost: 1,  reward: 12,  target1: 1,  target2: null },
   { id: 201, mascotId: 2, rarity: 'Common',    difficulty: 'Very Easy', cost: 1,  reward: 11,  target1: 1,  target2: null },
-  { id: 301, mascotId: 3, rarity: 'Common',    difficulty: 'Very Easy', cost: 1,  reward: 9,   target1: 1,  target2: null },
+  // Wolf's 1-cost pays 10 (parity is 9) — a deliberate +1 sweetener.
+  { id: 301, mascotId: 3, rarity: 'Common',    difficulty: 'Very Easy', cost: 1,  reward: 10,  target1: 1,  target2: null },
   { id: 401, mascotId: 4, rarity: 'Common',    difficulty: 'Medium',    cost: 1,  reward: 11,  target1: 1,  target2: null },
   { id: 102, mascotId: 1, rarity: 'Common',    difficulty: 'Medium',    cost: 2,  reward: 26,  target1: -1, target2: null },
   { id: 202, mascotId: 2, rarity: 'Common',    difficulty: 'Easy',      cost: 2,  reward: 28,  target1: -1, target2: null },
@@ -125,11 +126,11 @@ export const TICKETS = [
   { id: 402, mascotId: 4, rarity: 'Common',    difficulty: 'Medium',    cost: 2,  reward: 29,  target1: -1, target2: null },
   { id: 103, mascotId: 1, rarity: 'Rare',      difficulty: 'Hard',      cost: 3,  reward: 52,  target1: -2, target2: null },
   { id: 203, mascotId: 2, rarity: 'Rare',      difficulty: 'Easy',      cost: 3,  reward: 50,  target1: 6,  target2: null },
-  { id: 303, mascotId: 3, rarity: 'Rare',      difficulty: 'Easy',      cost: 3,  reward: 46,  target1: 3,  target2: null },
+  { id: 303, mascotId: 3, rarity: 'Rare',      difficulty: 'Hard',      cost: 3,  reward: 101, target1: -1, target2: null },
   { id: 403, mascotId: 4, rarity: 'Rare',      difficulty: 'Easy',      cost: 3,  reward: 43,  target1: 3,  target2: null },
   { id: 104, mascotId: 1, rarity: 'Super Rare', difficulty: 'Very Hard', cost: 4,  reward: 78,  target1: 2,  target2: null },
   { id: 204, mascotId: 2, rarity: 'Super Rare', difficulty: 'Medium',    cost: 4,  reward: 88,  target1: -5, target2: null },
-  { id: 304, mascotId: 3, rarity: 'Super Rare', difficulty: 'Hard',      cost: 4,  reward: 151, target1: -1, target2: null },
+  { id: 304, mascotId: 3, rarity: 'Super Rare', difficulty: 'Easy',      cost: 4,  reward: 69,  target1: 3,  target2: null },
   { id: 404, mascotId: 4, rarity: 'Super Rare', difficulty: 'Easy',      cost: 4,  reward: 74,  target1: -2, target2: null },
   { id: 105, mascotId: 1, rarity: 'Epic',      difficulty: 'Very Easy', cost: 5,  reward: 61,  target1: 2,  target2: -2 },
   { id: 205, mascotId: 2, rarity: 'Epic',      difficulty: 'Easy',      cost: 5,  reward: 105, target1: 12, target2: -10 },
