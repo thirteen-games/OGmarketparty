@@ -44,14 +44,14 @@ export const ROGUE = {
 // quoted as max-spend / saver / half-spend / gate-aware spend->save:
 //   easy   88/79/79/96  — forgiving gates, one stretch bonus
 //   normal 33/43/43/57  — the locked-in hard ladder above
-//   hard   11/8/9/19    — the R6 gate at 400 crushes rigid savers (14%
+//   hard   13/10/11/23  — the R6 gate at 400 crushes rigid savers (14%
 //                         survival), the middle gates grind spenders, and
-//                         the 1600 finish still cuts gate-aware runs that
-//                         earn R12. Every gate stays live for every style.
-//                         (A 1800 finish inverted the mode: savers alive at
-//                         R12 finished 100% while gate-aware died at the
-//                         door — with pre-news-unlock rules it simmed
-//                         4/21/21/16.)
+//                         the 1600 finish still cuts ~28% of gate-aware
+//                         runs that earn R12. Every gate stays live for
+//                         every style. (R9/R12 at 800/1200 simmed
+//                         11/8/9/19; a 1800 finish inverted the mode —
+//                         savers alive at R12 finished 100% while
+//                         gate-aware died at the door.)
 export const ROGUE_DIFFICULTIES = {
   easy: {
     label: 'Easy',
@@ -69,7 +69,7 @@ export const ROGUE_DIFFICULTIES = {
   hard: {
     label: 'Hard',
     emoji: '💀',
-    targets: { 3: 60, 6: 400, 9: 800, 12: 1200, 15: 1600 },
+    targets: { 3: 60, 6: 400, 9: 750, 12: 1150, 15: 1600 },
     bonuses: { 3: { over: 90, coins: 7 } },
   },
 };
