@@ -737,7 +737,13 @@ export class UI {
           else if (res.newValue !== undefined) detail = ` &mdash; step ${step} now ${GOLD}${res.newValue}.`;
           this.log(`${this.playerName(player)} executed: ${spell.description}${detail}`);
         }
-        this.renderGame();
+        // The Move manipulation animates the gold's journey; everything else
+        // just re-renders.
+        if (res.ok && (res.movedTo !== undefined || res.collected !== undefined)) {
+          this.animateMoveSpell(player, res.spell, step, res);
+        } else {
+          this.renderGame();
+        }
       });
     }
     this.showTargetingBanner();
@@ -1098,8 +1104,20 @@ export class UI {
     const start = Number(epEl.textContent);
     return new Promise((resolve) => {
       let landed = 0;
+      let settled = false;
+      const settle = () => {
+        if (settled) return;
+        settled = true;
+        epEl.textContent = start + c.amount;
+        this.goldSplash(tx, ty, 8);
+        resolve();
+      };
+      // Hidden tabs throttle animation events — never let the game hang on
+      // one. The timer covers the full stagger plus flight time.
+      setTimeout(settle, n * 70 + 1500);
       for (let i = 0; i < n; i++) {
         setTimeout(() => {
+          if (settled) return;
           const g = document.createElement('div');
           g.className = 'fly-star fly-gold';
           g.innerHTML = GOLD;
@@ -1115,18 +1133,66 @@ export class UI {
           ], { duration: 620, easing: 'cubic-bezier(0.3, 0, 0.6, 1)' }).onfinish = () => {
             g.remove();
             landed += 1;
-            epEl.textContent = landed === n ? start + c.amount : start + Math.round((c.amount * landed) / n);
+            if (settled) return;
+            epEl.textContent = start + Math.round((c.amount * landed) / n);
             const stat = epEl.closest('.stat');
             stat?.classList.add('ep-bump');
             setTimeout(() => stat?.classList.remove('ep-bump'), 300);
-            if (landed === n) {
-              this.goldSplash(tx, ty, 8);
-              resolve();
-            }
+            if (landed === n) settle();
           };
         }, i * 70);
       }
     });
+  }
+
+  // The Move manipulation gets its own moment: the chip glides down the lane
+  // toward the mascot — and if it reaches them, it pays out with the same
+  // celebration as a rolling collect.
+  async animateMoveSpell(player, spell, fromStep, res) {
+    const g = this.game;
+    const mid = spell.mascotId;
+    const lane = this.root.querySelector(`.lane[data-mascot="${mid}"]`);
+    const chip = lane?.querySelector(`.chip[data-player="${player}"][data-mascot="${mid}"][data-step="${fromStep}"]`);
+    const destStep = res.movedTo !== undefined ? res.movedTo : g.steps[mid];
+    const destCell = lane?.querySelector(`.cell[data-step="${destStep}"]`);
+    if (!chip || !destCell) return this.renderGame();
+    this.animating = true;
+    this.skipRequested = false;
+    this.skipPromise = new Promise(() => {}); // no Skip button outside rolls
+    this.floatSpend(player, 'ep', spell.cost, GOLD);
+
+    // A fixed-position ghost makes the journey; the real chip (whose gold has
+    // already moved in the engine) hides until the re-render.
+    const laneRect = lane.getBoundingClientRect();
+    const from = chip.getBoundingClientRect();
+    const dest = destCell.getBoundingClientRect();
+    const destY = Math.min(Math.max(dest.top + dest.height / 2, laneRect.top + 14), laneRect.bottom - 14);
+    const ghost = chip.cloneNode(true);
+    ghost.classList.add('chip-ghost');
+    ghost.style.left = `${from.left}px`;
+    ghost.style.top = `${from.top}px`;
+    ghost.style.minWidth = `${from.width}px`;
+    ghost.style.height = `${from.height}px`;
+    chip.style.visibility = 'hidden';
+    document.body.appendChild(ghost);
+    const dy = destY - (from.top + from.height / 2);
+    const glide = ghost.animate([
+      { transform: 'translateY(0) scale(1)' },
+      { transform: `translateY(${dy}px) scale(${res.collected ? 0.9 : 1})` },
+    ], { duration: 550, easing: 'cubic-bezier(0.55, 0, 0.7, 1)', fill: 'forwards' });
+    // Race a timer alongside the animation: a hidden tab throttles animation
+    // events, and the game must never wait on one to stay playable.
+    await Promise.race([glide.finished.catch(() => {}), sleep(700)]);
+    ghost.remove();
+    if (res.collected) {
+      // Sync the bank display to "cost paid, winnings not yet landed" so the
+      // celebration's coin stream ticks it up to the true total.
+      const epEl = this.root.querySelector(`.player-panel[data-player="${player}"] [data-info="ep"] b`);
+      if (epEl) epEl.textContent = g.players[player].ep - res.collected;
+      await this.celebrateCollects(lane, [{ player, mascotId: mid, step: destStep, amount: res.collected }]);
+    }
+    this.animating = false;
+    this.renderGame();
   }
 
   // Snapshot of one player's board chips: mascotId -> {step: ep}.
