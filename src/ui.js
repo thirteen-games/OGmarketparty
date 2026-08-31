@@ -2,7 +2,7 @@
 
 import { Game, FLAG } from './engine.js';
 import {
-  MASCOTS, CONFIG, ROGUE, BOARD_MIN, BOARD_MAX, START_STEP,
+  MASCOTS, CONFIG, ROGUE, ROGUE_DIFFICULTIES, BOARD_MIN, BOARD_MAX, START_STEP,
   TICKETS, SPELLS, EP_LEVELS, NEWS_TABLE, NEWS_EMOJI,
   TICKET_TIER_WEIGHTS, SPELL_TYPE_WEIGHTS, PAYOUT_RATIOS,
   mascotById, ticketById, spellById,
@@ -90,11 +90,12 @@ export class UI {
     });
     $('#tutorial-btn', this.root)?.addEventListener('click', () => this.showTutorial());
     $('#vs-bot-btn', this.root)?.addEventListener('click', () => this.showBotPicker());
-    $('#rogue-btn', this.root)?.addEventListener('click', () => this.newGame('rogue'));
+    $('#rogue-btn', this.root)?.addEventListener('click', () => this.showRoguePicker());
     $('#leaderboard-btn', this.root)?.addEventListener('click', () => {
       this.modal(`<h2>🏆 Leaderboard</h2>
         <h3>🎯 Classic</h3>${this.leaderboardHtml()}
-        <h3>🗺️ Roguelike</h3>${this.leaderboardHtml(null, true)}`);
+        ${Object.entries(ROGUE_DIFFICULTIES).map(([key, d]) =>
+          `<h3>${d.emoji} Roguelike &middot; ${d.label}</h3>${this.leaderboardHtml(null, true, key)}`).join('')}`);
     });
   }
 
@@ -115,6 +116,23 @@ export class UI {
     });
   }
 
+  showRoguePicker() {
+    const overlay = this.modal(`
+      <h2>🗺️ Pick your difficulty</h2>
+      <div class="start-buttons rogue-picker">
+        ${Object.entries(ROGUE_DIFFICULTIES).map(([key, d]) => `
+          <button class="btn btn-primary rogue-pick" data-difficulty="${key}">
+            ${d.emoji} <b>${d.label}</b> &mdash; ${d.blurb}
+          </button>`).join('')}
+      </div>`);
+    overlay.querySelectorAll('.rogue-pick').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        overlay.remove();
+        this.newGame('rogue', null, btn.dataset.difficulty);
+      });
+    });
+  }
+
   playerName(p) {
     return p === 1 && this.botLevel ? botName(this.botLevel) : PLAYER_NAMES[p];
   }
@@ -130,9 +148,9 @@ export class UI {
     return slots;
   }
 
-  newGame(mode, botLevel = null) {
+  newGame(mode, botLevel = null, difficulty = 'normal') {
     this.botLevel = botLevel;
-    this.game = new Game({ mode });
+    this.game = new Game({ mode, difficulty });
     this.logLines = [];
     this.targeting = null;
     this.skipPromise = null;
@@ -144,7 +162,7 @@ export class UI {
     this.log(botLevel
       ? `New game vs ${botName(botLevel)}! Make some Bets, then Roll — your opponent moves when you do.`
       : mode === 'rogue'
-        ? `Roguelike run started! Hit every checkpoint or the run ends. Win with ${ROGUE.targets[ROGUE.rounds]} Gold after round ${ROGUE.rounds}.`
+        ? `${ROGUE_DIFFICULTIES[difficulty].emoji} ${ROGUE_DIFFICULTIES[difficulty].label} roguelike run started! Hit every checkpoint or the run ends. Win with ${this.game.rogueCfg.targets[ROGUE.rounds]} Gold after round ${ROGUE.rounds}.`
         : `New ${mode}-player game. Make some Bets, then Roll!`);
     this.renderGame();
     (async () => {
@@ -223,7 +241,7 @@ export class UI {
     $('#restart-btn', this.root).addEventListener('click', () => this.renderStart());
     $('#lb-save-btn', this.root)?.addEventListener('click', () => {
       const name = $('#lb-name', this.root)?.value.trim() || 'Anonymous';
-      this.lastScoreIndex = this.saveScore(name.slice(0, 16), this.game.players[0].ep, this.game.rogue);
+      this.lastScoreIndex = this.saveScore(name.slice(0, 16), this.game.players[0].ep, this.game.rogue, this.game.difficulty);
       this.scoreSaved = true;
       this.renderGame();
     });
@@ -236,8 +254,8 @@ export class UI {
 
   // The next unpassed checkpoint of a roguelike run.
   rogueTarget() {
-    for (const r of Object.keys(ROGUE.targets).map(Number).sort((a, b) => a - b)) {
-      if (r > this.game.round) return { round: r, ep: ROGUE.targets[r] };
+    for (const r of Object.keys(this.game.rogueCfg.targets).map(Number).sort((a, b) => a - b)) {
+      if (r > this.game.round) return { round: r, ep: this.game.rogueCfg.targets[r] };
     }
     return null;
   }
@@ -336,8 +354,8 @@ export class UI {
             g.rogue
               ? `Round <b>${Math.min(g.round + 1, ROGUE.rounds)}</b> / ${ROGUE.rounds}${
                   target ? ` &middot; 🎯 <b>${target.ep}</b> Gold by round ${target.round}` : ''}${
-                  target && ROGUE.bonuses[target.round]
-                    ? ` &middot; 💰 +${ROGUE.bonuses[target.round].coins}💵 if ${ROGUE.bonuses[target.round].over}+`
+                  target && g.rogueCfg.bonuses[target.round]
+                    ? ` &middot; 💰 +${g.rogueCfg.bonuses[target.round].coins}💵 if ${g.rogueCfg.bonuses[target.round].over}+`
                     : ''}`
               : g.mode === 1
                 ? `Round <b>${Math.min(g.round + 1, CONFIG.onePlayerRounds)}</b> / ${CONFIG.onePlayerRounds}`
@@ -881,20 +899,20 @@ export class UI {
     const g = this.game;
     const target = this.rogueTarget();
     if (!g.rogue || !target) return Promise.resolve();
-    const bonus = ROGUE.bonuses[target.round];
+    const bonus = g.rogueCfg.bonuses[target.round];
     const final = target.round === ROGUE.rounds;
     const ep = g.players[0].ep;
     // A hot run can already be past the tranche's checkpoint — celebrate it
     // and point at what actually matters next instead of a stale demand.
     if (ep >= target.ep) {
-      const later = Object.keys(ROGUE.targets).map(Number).filter((r) => r > target.round);
+      const later = Object.keys(g.rogueCfg.targets).map(Number).filter((r) => r > target.round);
       const nextRound = later.length ? Math.min(...later) : null;
       return this.showAcknowledgePopup('tranche-card', `
         <h2>🎯 ${final ? 'FINAL STRETCH!' : `ROUNDS ${g.round + 1}–${target.round}`}</h2>
         <p>You're sitting on <b>${ep} Gold</b> — the ${final ? 'victory target' : `round-${target.round} checkpoint`}
         of ${target.ep} is already banked! 🔥</p>
         ${nextRound
-          ? `<p>Eyes ahead: <b>${ROGUE.targets[nextRound]} Gold</b> by round ${nextRound}.</p>`
+          ? `<p>Eyes ahead: <b>${g.rogueCfg.targets[nextRound]} Gold</b> by round ${nextRound}.</p>`
           : '<p>Play out the run and take the win! 🏆</p>'}`);
     }
     return this.showAcknowledgePopup('tranche-card', `
@@ -1191,17 +1209,18 @@ export class UI {
     let headline, detail, leaderboard = '';
     if (g.rogue) {
       const ep = g.players[0].ep;
+      const diff = ROGUE_DIFFICULTIES[g.difficulty];
       if (g.winner) {
         headline = '👑 Run complete — you win!';
-        detail = `You cleared every checkpoint and finished all ${ROGUE.rounds} rounds with <b>${ep} Gold</b> (target: ${ROGUE.targets[ROGUE.rounds]}).`;
+        detail = `You cleared every ${diff.label} checkpoint and finished all ${ROGUE.rounds} rounds with <b>${ep} Gold</b> (target: ${g.rogueCfg.targets[ROGUE.rounds]}).`;
         leaderboard = `
           ${this.scoreSaved ? '' : `
             <div class="lb-save">
               <input id="lb-name" maxlength="16" placeholder="Your name">
               <button class="btn btn-primary" id="lb-save-btn">Save run</button>
             </div>`}
-          <h3>🗺️ Roguelike Leaderboard</h3>
-          ${this.leaderboardHtml(this.lastScoreIndex, true)}`;
+          <h3>${diff.emoji} Roguelike Leaderboard &middot; ${diff.label}</h3>
+          ${this.leaderboardHtml(this.lastScoreIndex, true, g.difficulty)}`;
       } else {
         const f = g.failedCheckpoint;
         headline = '💥 Run over!';
@@ -1243,28 +1262,35 @@ export class UI {
 
   // --- Leaderboard (local, per browser) ----------------------------------------
 
-  loadLeaderboard(rogue = false) {
+  // Storage key per board. Normal roguelike keeps the pre-difficulty key so
+  // existing saved runs stay on the board they were earned on.
+  lbKey(rogue, difficulty) {
+    if (!rogue) return 'mp-leaderboard';
+    return difficulty === 'normal' ? 'mp-leaderboard-rogue' : `mp-leaderboard-rogue-${difficulty}`;
+  }
+
+  loadLeaderboard(rogue = false, difficulty = 'normal') {
     try {
-      return JSON.parse(localStorage.getItem(rogue ? 'mp-leaderboard-rogue' : 'mp-leaderboard') || '[]');
+      return JSON.parse(localStorage.getItem(this.lbKey(rogue, difficulty)) || '[]');
     } catch {
       return [];
     }
   }
 
-  saveScore(name, ep, rogue = false) {
+  saveScore(name, ep, rogue = false, difficulty = 'normal') {
     const entry = { name, ep, date: new Date().toISOString().slice(0, 10) };
-    const list = this.loadLeaderboard(rogue);
+    const list = this.loadLeaderboard(rogue, difficulty);
     list.push(entry);
     list.sort((a, b) => b.ep - a.ep);
     const top = list.slice(0, 10);
     try {
-      localStorage.setItem(rogue ? 'mp-leaderboard-rogue' : 'mp-leaderboard', JSON.stringify(top));
+      localStorage.setItem(this.lbKey(rogue, difficulty), JSON.stringify(top));
     } catch { /* private mode etc. — the table just won't persist */ }
     return top.indexOf(entry); // -1 if the score didn't crack the top 10
   }
 
-  leaderboardHtml(highlight = null, rogue = false) {
-    const list = this.loadLeaderboard(rogue);
+  leaderboardHtml(highlight = null, rogue = false, difficulty = 'normal') {
+    const list = this.loadLeaderboard(rogue, difficulty);
     if (!list.length) {
       return rogue
         ? '<p class="hint">No winning runs yet — survive all 15 rounds of a roguelike!</p>'
@@ -1353,8 +1379,10 @@ export class UI {
         <table class="stats-table"><tr><th>Level</th><th>Gold in bank</th></tr>${rows}</table>
         <p class="hint">Careful: spending Gold on manipulations can drop your Level (and your score).
         ${this.game?.rogue
-          ? `Checkpoints: ${Object.entries(ROGUE.targets).map(([r, ep]) => `${ep} by round ${r}`).join(', ')} — the last one wins the run.
-            Stretch bonuses: ${Object.entries(ROGUE.bonuses).map(([r, b]) => `+${b.coins} Dollars for ${b.over}+ Gold at round ${r}`).join(', ')} (paid before interest).`
+          ? `Checkpoints: ${Object.entries(this.game.rogueCfg.targets).map(([r, ep]) => `${ep} by round ${r}`).join(', ')} — the last one wins the run.
+            ${Object.keys(this.game.rogueCfg.bonuses).length
+              ? `Stretch bonuses: ${Object.entries(this.game.rogueCfg.bonuses).map(([r, b]) => `+${b.coins} Dollars for ${b.over}+ Gold at round ${r}`).join(', ')} (paid before interest).`
+              : 'No stretch bonuses on this difficulty.'}`
           : this.game?.mode === 1
             ? `Score ${CONFIG.onePlayerGoal}+ in ${CONFIG.onePlayerRounds} rounds to make the leaderboard.`
             : `First player to ${CONFIG.twoPlayerGoal} Gold wins.`}</p>`);

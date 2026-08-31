@@ -4,7 +4,7 @@ import { Game, FLAG } from '../src/engine.js';
 import { collectProbability, oddsLabel } from '../src/odds.js';
 import { BOT_LEVELS, botTakeTurn } from '../src/bot.js';
 import {
-  MASCOTS, TICKETS, SPELLS, CONFIG, ROGUE, START_STEP, NEWS_TABLE,
+  MASCOTS, TICKETS, SPELLS, CONFIG, ROGUE, ROGUE_DIFFICULTIES, START_STEP, NEWS_TABLE,
   epLevelFor, ticketById, spellById, SPELL_TYPES,
 } from '../src/data.js';
 
@@ -549,6 +549,24 @@ test('roguelike: checkpoints end the run or grow the roster', () => {
     counts[m] = (counts[m] || 0) + 1;
   }
   assert.deepEqual(Object.values(counts).sort(), [1, 2]); // 3 slots: 1 each + 1 random
+});
+
+test('roguelike difficulties: each ladder gates its own runs', () => {
+  // Normal must alias the live ROGUE config — the balance-sim scripts tune
+  // by mutating ROGUE.targets/bonuses and expect default games to see it.
+  assert.equal(ROGUE_DIFFICULTIES.normal.targets, ROGUE.targets);
+  assert.equal(ROGUE_DIFFICULTIES.normal.bonuses, ROGUE.bonuses);
+  assert.equal(new Game({ mode: 'rogue', seed: 1 }).rogueCfg, ROGUE_DIFFICULTIES.normal);
+  for (const [key, cfg] of Object.entries(ROGUE_DIFFICULTIES)) {
+    const g = new Game({ mode: 'rogue', seed: 4, difficulty: key });
+    g.chooseMascot(g.pendingChoice[0]);
+    g.roll();
+    g.roll();
+    g.players[0].ep = cfg.targets[3] - 1;
+    g.roll();
+    assert.ok(g.over, `${key}: run should end below its R3 gate`);
+    assert.deepEqual(g.failedCheckpoint, { round: 3, target: cfg.targets[3] });
+  }
 });
 
 test('roguelike: three-mascot shop is 1 each plus 1 random repeat', () => {

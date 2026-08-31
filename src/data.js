@@ -35,6 +35,42 @@ export const ROGUE = {
   bonuses: { 3: { over: 80, coins: 7 } },
 };
 
+// Difficulty ladders. Normal aliases ROGUE.targets/bonuses (same objects),
+// so the balance-sim scripts' --gates/--bonus overrides keep mutating the
+// config a default game actually reads. All three simulated 2026-08-30 with
+// the four-archetype pipeline; win rates quoted as max-spend / saver /
+// half-spend / gate-aware spend->save:
+//   easy   94/82/82/96  — forgiving gates, one stretch bonus
+//   normal 44/48/49/62  — the locked-in hard ladder above
+//   hard   16/20/21/23  — savers bleed at the 60/360 opening, spenders at
+//                         the middle gates; ~1 in 4 for gate-aware play.
+//                         (Final gate stays 1500: every tested finish ≥1600
+//                         handed the win to rigid saving instead — 1800
+//                         simmed at 1/18/18/6.)
+export const ROGUE_DIFFICULTIES = {
+  easy: {
+    label: 'Easy',
+    emoji: '🌱',
+    blurb: 'gentler gates, an early stretch bonus',
+    targets: { 3: 30, 6: 200, 9: 400, 12: 800, 15: 1200 },
+    bonuses: { 3: { over: 60, coins: 7 } },
+  },
+  normal: {
+    label: 'Normal',
+    emoji: '🗺️',
+    blurb: 'the standard ladder',
+    targets: ROGUE.targets,
+    bonuses: ROGUE.bonuses,
+  },
+  hard: {
+    label: 'Hard',
+    emoji: '💀',
+    blurb: 'brutal gates, no bonus',
+    targets: { 3: 60, 6: 360, 9: 720, 12: 1100, 15: 1500 },
+    bonuses: {},
+  },
+};
+
 // EP level thresholds (Game simulation DN11:DO15). Level = highest row <= banked EP.
 export const EP_LEVELS = [
   { level: 1, minEP: 0 },

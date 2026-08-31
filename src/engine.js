@@ -3,7 +3,7 @@
 // lookup tables (see data.js).
 
 import {
-  BOARD_MIN, BOARD_MAX, START_STEP, CONFIG, ROGUE,
+  BOARD_MIN, BOARD_MAX, START_STEP, CONFIG, ROGUE, ROGUE_DIFFICULTIES,
   MASCOTS, MASCOTS_PER_GAME, TICKETS, SPELLS, TICKET_TIER_WEIGHTS, SPELL_TYPE_WEIGHTS,
   NEWS_TABLE, SPELL_TYPES,
   mascotById, ticketById, spellById, epLevelFor,
@@ -36,11 +36,15 @@ function newPlayer() {
 }
 
 export class Game {
-  constructor({ mode = 1, seed } = {}) {
+  constructor({ mode = 1, seed, difficulty = 'normal' } = {}) {
     // Roguelike is single-player with a growing mascot roster and checkpoints.
     this.rogue = mode === 'rogue';
     if (this.rogue) mode = 1;
     if (mode !== 1 && mode !== 2) throw new Error('mode must be 1, 2, or "rogue"');
+    // Difficulty picks the checkpoint/bonus ladder; classic modes ignore it.
+    this.difficulty = this.rogue ? difficulty : null;
+    this.rogueCfg = this.rogue ? ROGUE_DIFFICULTIES[difficulty] : null;
+    if (this.rogue && !this.rogueCfg) throw new Error(`unknown difficulty: ${difficulty}`);
     this.rng = makeRng(seed);
     this.mode = mode;
     this.round = 0;
@@ -478,7 +482,7 @@ export class Game {
 
   checkGameOver(events) {
     if (this.rogue) {
-      const target = ROGUE.targets[this.round];
+      const target = this.rogueCfg.targets[this.round];
       if (target !== undefined) {
         const ep = this.players[0].ep;
         const passed = ep >= target;
@@ -497,7 +501,7 @@ export class Game {
           }
           // Stretch-score Coin bonus, granted here — before incrementCoins —
           // so it counts toward this round's interest.
-          const bonus = ROGUE.bonuses[this.round];
+          const bonus = this.rogueCfg.bonuses[this.round];
           if (bonus && !this.over && ep >= bonus.over) {
             this.players[0].coins += bonus.coins;
             events.push({ type: 'bonus', round: this.round, coins: bonus.coins, threshold: bonus.over, ep });
