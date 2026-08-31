@@ -234,6 +234,22 @@ main {
 @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.2); } }
 
 /* movement trail from the last roll */
+/* Solo bounty steps: the whole cell goes gold, amount centered (edge cells
+   next to the token keep the amount right-aligned so the art can't cover it) */
+.cell.reward { background: linear-gradient(180deg, #ffe98a 0%, #ffd21f 45%, #d9a800 100%); }
+.cell.reward .step-num { color: #1b2440; }
+.cell.reward:not(.reward-edge) .chips {
+  position: absolute; inset: 0; margin: 0;
+  align-items: center; justify-content: center;
+}
+.cell.reward:not(.reward-edge) .chip {
+  background: none; box-shadow: none; clip-path: none;
+  font-size: 1.05rem; font-weight: 800;
+}
+.cell.reward.reward-edge .chip {
+  box-shadow: inset 0 1px 0 #fff7cc, 0 0 0 1.5px #1b2440;
+}
+
 .cell.trail::after {
   content: ''; position: absolute; left: 50%; top: 50%;
   width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%;

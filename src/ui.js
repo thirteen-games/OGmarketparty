@@ -479,10 +479,15 @@ export class UI {
             : '';
         })
         .join('');
+      // Solo modes: a bounty turns its whole step gold with the amount
+      // centered — except adjacent to the token, where the overflowing
+      // mascot art would cover a centered number (keep it right-aligned).
+      const reward = chips && g.players.length === 1 && !here;
+      const rewardCls = reward ? `reward ${Math.abs(s - step) === 1 ? 'reward-edge' : ''}` : '';
       const shade = this.laneShade(mascot.color, s);
       cells.push(`
-        <div class="cell ${here ? 'here' : ''} ${trailCls} ${shade.light ? 'light' : ''}" data-step="${s}"
-          ${here ? '' : `style="background:${shade.bg}"`}>
+        <div class="cell ${here ? 'here' : ''} ${rewardCls} ${trailCls} ${shade.light ? 'light' : ''}" data-step="${s}"
+          ${here || reward ? '' : `style="background:${shade.bg}"`}>
           <span class="step-num">${s}</span>
           ${here ? `<span class="token">${mascotSvg(mascot.id, 42)}</span>` : ''}
           <span class="chips">${chips}</span>
@@ -978,6 +983,9 @@ export class UI {
       return;
     }
     const dir = roll.to > roll.from ? 1 : -1;
+    // Clean lane for the celebration: drop the previous move's trail dots
+    // and origin ring before the token starts stepping.
+    for (const c of lane.querySelectorAll('.cell.trail, .cell.prev')) c.classList.remove('trail', 'prev');
     // Rewards grouped by step, ordered along the walk.
     const byStep = new Map();
     for (const c of collects) {
