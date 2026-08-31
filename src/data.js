@@ -54,21 +54,19 @@ export const ROGUE_DIFFICULTIES = {
   easy: {
     label: 'Easy',
     emoji: '🌱',
-    blurb: 'gentler gates, an early stretch bonus',
     targets: { 3: 30, 6: 200, 9: 400, 12: 800, 15: 1200 },
     bonuses: { 3: { over: 60, coins: 7 } },
   },
+  // Keyed 'normal' (leaderboard storage + sim scripts predate the rename).
   normal: {
-    label: 'Normal',
+    label: 'Medium',
     emoji: '🗺️',
-    blurb: 'the standard ladder',
     targets: ROGUE.targets,
     bonuses: ROGUE.bonuses,
   },
   hard: {
     label: 'Hard',
     emoji: '💀',
-    blurb: 'brutal gates, one early bonus',
     targets: { 3: 60, 6: 400, 9: 800, 12: 1200, 15: 1600 },
     bonuses: { 3: { over: 90, coins: 7 } },
   },

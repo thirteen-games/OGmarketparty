@@ -122,7 +122,7 @@ export class UI {
       <div class="start-buttons rogue-picker">
         ${Object.entries(ROGUE_DIFFICULTIES).map(([key, d]) => `
           <button class="btn btn-primary rogue-pick" data-difficulty="${key}">
-            ${d.emoji} <b>${d.label}</b> &mdash; ${d.blurb}
+            ${d.label}
           </button>`).join('')}
       </div>`);
     overlay.querySelectorAll('.rogue-pick').forEach((btn) => {
